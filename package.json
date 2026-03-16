@@ -1,0 +1,17 @@
+{
+  "name": "nissi-insights",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix frontend\" \"php backend/artisan serve\"",
+    "dev:front": "npm run dev --prefix frontend",
+    "dev:back": "php backend/artisan serve"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

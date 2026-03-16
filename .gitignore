@@ -1,0 +1,49 @@
+# Dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# Testing
+/coverage
+
+# Production
+/build
+/out
+/.next/
+
+# Environment
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.sample
+
+# IDEs and editors
+/.vscode
+/.idea
+/*.swp
+/*.swo
+.DS_Store
+
+# Laravel specific
+/backend/vendor
+/backend/.env
+/backend/.env.backup
+/backend/storage/*.key
+/backend/public/storage
+/backend/public/hot
+/backend/public/storage
+/backend/storage/framework/cache/data/*
+/backend/storage/framework/sessions/*
+/backend/storage/framework/testing/*
+/backend/storage/framework/views/*
+/backend/storage/logs/*
+/backend/npm-debug.log
+/backend/yarn-error.log
+/backend/auth.json
+
+# Digital Assets
+/NI-Digital-Assets
+/Template
+/tmp
