@@ -28,7 +28,7 @@ class SiteSettingController extends Controller
         ]);
 
         $setting = SiteSetting::create($validated);
-        return new SiteSettingResource($setting);
+        return SiteSettingResource::make($setting);
     }
 
     public function show(SiteSetting $siteSetting)
@@ -83,6 +83,18 @@ class SiteSettingController extends Controller
     {
         $settings = SiteSetting::where('group', 'launch')->get()->pluck('value', 'key');
         
+        $menuFile = $settings->get('rsvp_menu_file');
+        
+        // Use default if empty
+        if (!$menuFile) {
+            $menuFile = \Illuminate\Support\Facades\Storage::disk('public')->url('defaults/rsvp-menu.pdf');
+        } else {
+            // Ensure path from DB is converted to URL if it's just a path
+            if (!filter_var($menuFile, FILTER_VALIDATE_URL)) {
+                $menuFile = \Illuminate\Support\Facades\Storage::disk('public')->url($menuFile);
+            }
+        }
+
         return response()->json([
             'isActive' => filter_var($settings->get('rsvp_active', '0'), FILTER_VALIDATE_BOOLEAN),
             'date' => $settings->get('rsvp_date', '2026-06-01 00:00:00'),
@@ -94,7 +106,7 @@ class SiteSettingController extends Controller
             'venue' => $settings->get('rsvp_venue', 'The Sage Delicacy, Gigiri'),
             'address' => $settings->get('rsvp_address', 'Gigiri, Nairobi'),
             'time' => $settings->get('rsvp_time', '7:00-9:00 P.M.'),
-            'menuFile' => $settings->get('rsvp_menu_file', ''),
+            'menuFile' => $menuFile,
         ]);
     }
 }
