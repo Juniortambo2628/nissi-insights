@@ -41,10 +41,23 @@ class SiteSettingSeeder extends Seeder
 
             // Pre-launch RSVP
             ['key' => 'rsvp_active', 'value' => '1', 'type' => 'boolean', 'group' => 'launch'],
-            ['key' => 'rsvp_date', 'value' => '2026-06-01 00:00:00', 'type' => 'text', 'group' => 'launch'],
+            ['key' => 'rsvp_date', 'value' => '2026-03-20 19:00:00', 'type' => 'text', 'group' => 'launch'],
             ['key' => 'rsvp_title', 'value' => 'The Future of Energy Intelligence', 'type' => 'text', 'group' => 'launch'],
             ['key' => 'rsvp_description', 'value' => 'We are preparing to launch a revolutionary market intelligence platform. Register your interest below to be notified when we go live.', 'type' => 'textarea', 'group' => 'launch'],
             ['key' => 'rsvp_media', 'value' => '/assets/videos/hero.mp4', 'type' => 'image', 'group' => 'launch'],
+            ['key' => 'rsvp_bg_light', 'value' => '', 'type' => 'image', 'group' => 'launch'],
+            ['key' => 'rsvp_bg_dark', 'value' => '', 'type' => 'image', 'group' => 'launch'],
+            
+            // RSVP Event Details
+            ['key' => 'rsvp_venue', 'value' => 'The Sage Delicacy, Gigiri', 'type' => 'text', 'group' => 'launch'],
+            ['key' => 'rsvp_address', 'value' => 'Corner of, 183 Gigiri Close, United Nations Cresent, Nairobi', 'type' => 'text', 'group' => 'launch'],
+            ['key' => 'rsvp_time', 'value' => '7:00-9:00 P.M.', 'type' => 'text', 'group' => 'launch'],
+            ['key' => 'rsvp_menu_file', 'value' => '', 'type' => 'file', 'group' => 'launch'],
+
+            // Pillar Heros
+            ['key' => 'hero_pillar_energy_advisory', 'value' => '/NI-Digital-Assets/energy-advisory.jpg', 'type' => 'image', 'group' => 'hero-media'],
+            ['key' => 'hero_pillar_fintech', 'value' => '/NI-Digital-Assets/financial-technology.jpg', 'type' => 'image', 'group' => 'hero-media'],
+            ['key' => 'hero_pillar_international_diplomacy', 'value' => '/NI-Digital-Assets/international-diplomacy.jpg', 'type' => 'image', 'group' => 'hero-media'],
         ];
 
         foreach ($settings as $setting) {

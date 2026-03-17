@@ -67,22 +67,44 @@ const Navbar = () => {
         ]
     }, [navLinksJson])
 
-    // Group services by category for mega menu
+    // Group services by Pillar for mega menu
     const dynamicServiceCategories = React.useMemo(() => {
         if (!services || !Array.isArray(services)) return []
-        const categories: Record<string, any[]> = {}
+        
+        const pillarGroups: Record<number, { title: string, href: string, items: any[] }> = {}
+        const legacyCategories: Record<string, any[]> = {}
+
         services.forEach((s: any) => {
-            if (!categories[s.category]) {
-                categories[s.category] = []
+            if (s.pillar) {
+                const p = s.pillar
+                if (!pillarGroups[p.id]) {
+                    pillarGroups[p.id] = {
+                        title: p.title,
+                        href: `/pillars/${p.slug}`,
+                        items: []
+                    }
+                }
+                pillarGroups[p.id].items.push({ name: s.title, href: `/services/${s.slug}` })
+            } else {
+                if (!legacyCategories[s.category]) {
+                    legacyCategories[s.category] = []
+                }
+                legacyCategories[s.category].push({ name: s.title, href: `/services/${s.slug}` })
             }
-            categories[s.category].push({ name: s.title, href: `/services/${s.slug}` })
         })
 
-        return Object.entries(categories).map(([title, items]) => ({
-            title,
-            href: `/services?category=${encodeURIComponent(title)}`,
-            items
-        }))
+        const result = Object.values(pillarGroups)
+        
+        // Add legacy categories as backfills if any
+        Object.entries(legacyCategories).forEach(([title, items]) => {
+            result.push({
+                title,
+                href: `/services?category=${encodeURIComponent(title)}`,
+                items
+            })
+        })
+
+        return result
     }, [services])
 
     useEffect(() => {

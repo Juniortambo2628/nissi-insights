@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\SubscriberController;
 use App\Http\Controllers\Api\TeamMemberController;
 use App\Http\Controllers\Api\ValueController;
 use App\Http\Controllers\Api\ConsultationRequestController;
+use App\Http\Controllers\Api\PillarController;
 
 /*
 |--------------------------------------------------------------------------
@@ -46,6 +47,10 @@ Route::get('/testimonials', [TestimonialController::class, 'index']);
 Route::get('/clients', [ClientController::class, 'index']);
 Route::get('/team-members', [TeamMemberController::class, 'index']);
 Route::get('/values', [ValueController::class, 'index']);
+
+// Pillars public
+Route::get('/pillars', [PillarController::class, 'index']);
+Route::get('/pillars/{slug}', [PillarController::class, 'show']);
 
 // Public — search, tracking, newsletter
 Route::get('/search', [SearchController::class, 'index']);
@@ -117,6 +122,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/values', [ValueController::class, 'store']);
     Route::put('/values/{value}', [ValueController::class, 'update']);
     Route::delete('/values/{value}', [ValueController::class, 'destroy']);
+
+    // Pillars CRUD
+    Route::post('/pillars', [PillarController::class, 'store']);
+    Route::put('/pillars/{pillar}', [PillarController::class, 'update']);
+    Route::delete('/pillars/{pillar}', [PillarController::class, 'destroy']);
 
     // Consultation Requests
     Route::get('/consultation-requests', [ConsultationRequestController::class, 'index']);

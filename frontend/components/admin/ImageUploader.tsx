@@ -3,7 +3,7 @@
 import React, { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
 import imageCompression from 'browser-image-compression'
-import { Upload, X, Loader2, Image as ImageIcon, Film } from 'lucide-react'
+import { Upload, X, Loader2, Image as ImageIcon, Film, File } from 'lucide-react'
 import api from '@/lib/api'
 
 interface ImageUploaderProps {
@@ -64,7 +64,7 @@ const ImageUploader = ({ value, onChange, accept, maxSizeMB = 2, label = 'Upload
             })
 
             setUploadProgress(100)
-            onChange(response.data.url)
+            onChange(response.data.path)
         } catch (err: any) {
             setError(err?.response?.data?.message || 'Upload failed. Please try again.')
             setPreview(value || null)
@@ -81,7 +81,7 @@ const ImageUploader = ({ value, onChange, accept, maxSizeMB = 2, label = 'Upload
                     const mimeMap: Record<string, string> = {
                         '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png',
                         '.webp': 'image/webp', '.svg': 'image/svg+xml', '.gif': 'image/gif',
-                        '.mp4': 'video/mp4',
+                        '.mp4': 'video/mp4', '.pdf': 'application/pdf',
                     }
                     const mime = mimeMap[type]
                     if (mime) acc[mime] = [type]
@@ -99,7 +99,9 @@ const ImageUploader = ({ value, onChange, accept, maxSizeMB = 2, label = 'Upload
         onChange('')
     }
 
-    const isVideo = preview?.startsWith('data:video') || value?.endsWith('.mp4')
+    const isVideo = preview?.startsWith('data:video') || value?.toLowerCase().endsWith('.mp4') || value?.toLowerCase().endsWith('.webm')
+    const isImage = preview?.startsWith('data:image') || value?.toLowerCase().match(/\.(jpg|jpeg|png|webp|gif|svg)$/i)
+    const isFile = preview?.startsWith('data:application') || value?.toLowerCase().endsWith('.pdf')
 
     return (
         <div className={className}>
@@ -120,9 +122,15 @@ const ImageUploader = ({ value, onChange, accept, maxSizeMB = 2, label = 'Upload
                 {preview || value ? (
                     <div className="relative group">
                         {isVideo ? (
-                            <div className="h-40 flex items-center justify-center bg-black/5">
+                            <div className="h-40 flex flex-col items-center justify-center bg-black/5">
                                 <Film className="h-10 w-10 text-muted-foreground" />
-                                <span className="ml-2 text-sm text-muted-foreground">Video uploaded</span>
+                                <span className="mt-2 text-sm text-muted-foreground font-medium">Video File</span>
+                            </div>
+                        ) : isFile ? (
+                            <div className="h-40 flex flex-col items-center justify-center bg-black/5">
+                                <File className="h-10 w-10 text-muted-foreground" />
+                                <span className="mt-2 text-sm text-muted-foreground font-medium">Document File</span>
+                                <span className="text-[10px] text-muted-foreground/60 max-w-[200px] truncate px-4">{value?.split('/').pop()}</span>
                             </div>
                         ) : (
                             <img

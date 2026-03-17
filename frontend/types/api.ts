@@ -4,8 +4,24 @@ export interface User {
   email: string;
 }
 
+export interface Pillar {
+  id: number;
+  title: string;
+  slug: string;
+  overview: string | null;
+  content: string | null;
+  icon: string | null;
+  image: string | null;
+  is_active: boolean;
+  services?: Service[];
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Service {
   id: number;
+  pillar_id?: number;
+  pillar?: Pillar;
   title: string;
   slug: string;
   category: string;

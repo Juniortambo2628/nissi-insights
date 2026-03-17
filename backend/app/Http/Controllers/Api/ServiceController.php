@@ -12,7 +12,7 @@ class ServiceController extends Controller
 {
     public function index()
     {
-        $services = Service::where('is_active', true)->get();
+        $services = Service::with('pillar')->where('is_active', true)->get();
         return ServiceResource::collection($services);
     }
 

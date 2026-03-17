@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import AdminLayout from '@/components/admin/AdminLayout'
+import { cn } from '@/lib/utils'
 import { useApi } from '@/hooks/use-api'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -20,6 +21,8 @@ interface Rsvp {
     interest: string | null
     consent: boolean
     newsletter: boolean
+    type: 'rsvp' | 'early_access'
+    attendance: 'accept' | 'decline' | null
     created_at: string
 }
 
@@ -37,10 +40,12 @@ export default function AdminRsvpsPage() {
     const handleExport = () => {
         if (!rsvps) return
         
-        const headers = ['Name', 'Email', 'Organization', 'Role', 'Sector', 'Interest', 'Newsletter', 'Date Registered']
+        const headers = ['Type', 'Attendance', 'Name', 'Email', 'Organization', 'Role', 'Sector', 'Interest', 'Newsletter', 'Date Registered']
         const csvContent = [
             headers.join(','),
             ...rsvps.map(r => [
+                `"${r.type === 'rsvp' ? 'Dinner RSVP' : 'Early Access'}"`,
+                `"${r.type === 'rsvp' ? (r.attendance || 'Pending') : 'N/A'}"`,
                 `"${r.name}"`,
                 `"${r.email}"`,
                 `"${r.company || ''}"`,
@@ -117,34 +122,57 @@ export default function AdminRsvpsPage() {
                             <Table>
                                 <TableHeader className="bg-secondary/20">
                                     <TableRow className="border-border/50 hover:bg-transparent">
-                                        <TableHead className="font-semibold">Name</TableHead>
+                                        <TableHead className="font-semibold">Type</TableHead>
+                                        <TableHead className="font-semibold">Status/Name</TableHead>
                                         <TableHead className="font-semibold">Email</TableHead>
                                         <TableHead className="font-semibold hidden md:table-cell">Organization</TableHead>
                                         <TableHead className="font-semibold hidden lg:table-cell">Role</TableHead>
-                                        <TableHead className="font-semibold hidden xl:table-cell">Sector</TableHead>
-                                        <TableHead className="font-semibold hidden xl:table-cell">Interest</TableHead>
+                                        <TableHead className="font-semibold hidden xl:table-cell">Sector/Interest</TableHead>
                                         <TableHead className="font-semibold text-right">Registered</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {filteredRsvps?.map((rsvp) => (
                                         <TableRow key={rsvp.id} className="border-border/50 group hover:bg-secondary/10">
-                                            <TableCell className="font-medium text-foreground/90">{rsvp.name}</TableCell>
                                             <TableCell>
-                                                <a href={`mailto:${rsvp.email}`} className="text-primary hover:underline underline-offset-4">
+                                                <span className={cn(
+                                                    "px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider",
+                                                    rsvp.type === 'rsvp' 
+                                                        ? "bg-blue-500/10 text-blue-500 border border-blue-500/20" 
+                                                        : "bg-primary/10 text-primary border border-primary/20"
+                                                )}>
+                                                    {rsvp.type === 'rsvp' ? 'Dinner' : 'Access'}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex flex-col">
+                                                    <span className="font-medium text-foreground/90">{rsvp.name}</span>
+                                                    {rsvp.type === 'rsvp' && (
+                                                        <span className={cn(
+                                                            "text-[10px] font-bold uppercase",
+                                                            rsvp.attendance === 'accept' ? "text-green-500" : "text-red-500"
+                                                        )}>
+                                                            {rsvp.attendance === 'accept' ? '• Accepted' : '• Declined'}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <a href={`mailto:${rsvp.email}`} className="text-sm text-primary hover:underline underline-offset-4">
                                                     {rsvp.email}
                                                 </a>
                                             </TableCell>
-                                            <TableCell className="text-muted-foreground hidden md:table-cell">{rsvp.company || '-'}</TableCell>
-                                            <TableCell className="text-muted-foreground hidden lg:table-cell">{rsvp.job_title || '-'}</TableCell>
-                                            <TableCell className="text-muted-foreground hidden xl:table-cell capitalize flex items-center gap-1">
-                                                {rsvp.sector || '-'}
+                                            <TableCell className="text-muted-foreground hidden md:table-cell text-sm">{rsvp.company || '-'}</TableCell>
+                                            <TableCell className="text-muted-foreground hidden lg:table-cell text-sm">{rsvp.job_title || '-'}</TableCell>
+                                            <TableCell className="text-muted-foreground hidden xl:table-cell text-sm">
+                                                <div className="flex flex-col">
+                                                    <span className="capitalize">{rsvp.sector || '-'}</span>
+                                                    <span className="text-[10px] text-muted-foreground capitalize">
+                                                        {rsvp.interest ? rsvp.interest.replace(/_/g, ' ') : '-'}
+                                                    </span>
+                                                </div>
                                             </TableCell>
-                                            <TableCell className="text-muted-foreground hidden xl:table-cell capitalize">
-                                                {rsvp.interest ? rsvp.interest.replace('_', ' ') : '-'}
-                                                {rsvp.newsletter && <span className="ml-2 inline-block w-2 h-2 rounded-full bg-primary" title="Subscribed to Newsletter" />}
-                                            </TableCell>
-                                            <TableCell className="text-right text-muted-foreground whitespace-nowrap">
+                                            <TableCell className="text-right text-muted-foreground whitespace-nowrap text-xs">
                                                 {format(new Date(rsvp.created_at), 'MMM d, yyyy')}
                                             </TableCell>
                                         </TableRow>

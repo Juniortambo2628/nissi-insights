@@ -32,6 +32,8 @@ class RsvpController extends Controller
             'interest' => 'nullable|string|max:255',
             'consent' => 'boolean',
             'newsletter' => 'boolean',
+            'attendance' => 'nullable|string|max:255',
+            'type' => 'nullable|string|in:rsvp,early_access',
         ]);
 
         $rsvp = Rsvp::create($validated);

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Plus, Pencil, Trash2, Search, LayoutGrid, List, MoreVertical, ExternalLink, Activity, Shield, Zap, TrendingUp, BarChart, Globe, Mail, Users, Settings } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import api from '@/lib/api'
-import { Service } from '@/types/api'
+import { Service, Pillar } from '@/types/api'
 import { useToast } from '@/hooks/use-toast'
 import { Checkbox } from '@/components/ui/checkbox'
 import { 
@@ -23,6 +23,13 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 import RichTextEditor from '@/components/admin/RichTextEditor'
 import { cn } from '@/lib/utils'
 
@@ -32,6 +39,7 @@ const iconMap: Record<string, React.ElementType> = {
 
 const AdminServicesPage = () => {
     const { data: services, mutate, isLoading } = useApi<Service[]>('/services')
+    const { data: pillars } = useApi<Pillar[]>('/pillars')
     const { toast } = useToast()
     const [searchTerm, setSearchTerm] = useState('')
     const [showForm, setShowForm] = useState(false)
@@ -46,6 +54,7 @@ const AdminServicesPage = () => {
     const [form, setForm] = useState<Partial<Service>>({
         title: '',
         category: '',
+        pillar_id: undefined,
         description: '',
         content: '',
         icon: 'Activity',
@@ -53,7 +62,7 @@ const AdminServicesPage = () => {
     })
 
     const resetForm = () => {
-        setForm({ title: '', category: '', description: '', content: '', icon: 'Activity', is_active: true })
+        setForm({ title: '', category: '', pillar_id: undefined, description: '', content: '', icon: 'Activity', is_active: true })
         setEditingId(null)
         setShowForm(false)
     }
@@ -62,6 +71,7 @@ const AdminServicesPage = () => {
         setForm({
             title: s.title,
             category: s.category || '',
+            pillar_id: s.pillar_id,
             description: s.description || '',
             content: s.content || '',
             icon: s.icon || 'Activity',
@@ -359,7 +369,24 @@ const AdminServicesPage = () => {
                             <Input className="bg-background border-border text-foreground" placeholder="Service Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-muted-foreground">Category</label>
+                            <label className="text-sm font-medium text-muted-foreground">Pillar</label>
+                            <Select 
+                                value={form.pillar_id?.toString() || "none"} 
+                                onValueChange={(val) => setForm({ ...form, pillar_id: val === "none" ? undefined : parseInt(val) })}
+                            >
+                                <SelectTrigger className="bg-background border-border text-foreground">
+                                    <SelectValue placeholder="Select a pillar" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">No Pillar</SelectItem>
+                                    {pillars?.map(p => (
+                                        <SelectItem key={p.id} value={p.id.toString()}>{p.title}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-muted-foreground">Category (Legacy)</label>
                             <Input className="bg-background border-border text-foreground" placeholder="Category (e.g. Energy Advisory)" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
                         </div>
                         <div className="space-y-2 md:col-span-2">

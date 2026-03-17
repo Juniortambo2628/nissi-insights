@@ -89,6 +89,12 @@ class SiteSettingController extends Controller
             'title' => $settings->get('rsvp_title', 'Coming Soon'),
             'description' => $settings->get('rsvp_description', ''),
             'media' => $settings->get('rsvp_media', ''),
+            'bgLight' => $settings->get('rsvp_bg_light', ''),
+            'bgDark' => $settings->get('rsvp_bg_dark', ''),
+            'venue' => $settings->get('rsvp_venue', 'The Sage Delicacy, Gigiri'),
+            'address' => $settings->get('rsvp_address', 'Gigiri, Nairobi'),
+            'time' => $settings->get('rsvp_time', '7:00-9:00 P.M.'),
+            'menuFile' => $settings->get('rsvp_menu_file', ''),
         ]);
     }
 }

@@ -15,5 +15,7 @@ class Rsvp extends Model
         'interest',
         'consent',
         'newsletter',
+        'attendance',
+        'type',
     ];
 }

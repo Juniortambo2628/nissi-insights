@@ -74,40 +74,19 @@ export default function ServiceDetailPage() {
                 videoSrc={videoSrc}
             />
 
-            {/* Problem → Solution */}
+            {/* Service Detail Content */}
             <section className="py-24 bg-background">
-                <div className="max-w-[1400px] mx-auto px-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-20">
-                        <motion.div
-                            initial={{ opacity: 0, x: -20 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                        >
-                            <span className="text-red-400 font-bold text-[10px] uppercase tracking-[0.3em] mb-4 block">The Challenge</span>
-                            <h2 className="text-3xl font-bold text-foreground mb-6">
-                                Navigating complexity requires specialist knowledge.
-                            </h2>
-                            <p className="text-muted-foreground leading-relaxed text-lg">
-                                Markets across energy, fintech, and sovereign domains are becoming increasingly complex. Decision-makers face information overload, regulatory uncertainty, and risk exposure that can fundamentally affect outcomes. Without deep domain expertise, opportunities are missed and capital is inefficiently deployed.
-                            </p>
-                        </motion.div>
-
-                        <motion.div
-                            initial={{ opacity: 0, x: 20 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                        >
-                            <span className="text-emerald-400 font-bold text-[10px] uppercase tracking-[0.3em] mb-4 block">Our Solution</span>
-                            <h2 className="text-3xl font-bold text-foreground mb-6">
-                                {service.title}
-                            </h2>
-                            <div 
-                                className="text-muted-foreground leading-relaxed text-lg mb-6 prose prose-invert dark:prose-invert max-w-none prose-p:leading-relaxed prose-p:text-muted-foreground"
-                                dangerouslySetInnerHTML={{ __html: service.content || service.description || '' }} 
-                            />
-                            <p className="text-muted-foreground leading-relaxed">
-                                Our team brings decades of combined experience across global markets, providing actionable intelligence that drives confident decision-making and measurable results.
-                            </p>
-                        </motion.div>
-                    </div>
+                <div className="max-w-[1000px] mx-auto px-6">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        className="prose prose-invert lg:prose-xl max-w-none"
+                    >
+                        <div 
+                            className="text-muted-foreground leading-relaxed text-lg mb-12 prose-p:leading-relaxed prose-p:text-muted-foreground prose-headings:text-foreground prose-strong:text-foreground prose-ul:text-muted-foreground"
+                            dangerouslySetInnerHTML={{ __html: service.content || service.description || '' }} 
+                        />
+                    </motion.div>
                 </div>
             </section>
 

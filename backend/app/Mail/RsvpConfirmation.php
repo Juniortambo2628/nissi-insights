@@ -29,8 +29,20 @@ class RsvpConfirmation extends Mailable
      */
     public function envelope(): Envelope
     {
+        $subject = 'Receipt of Your Request - Nissi Insights';
+        
+        if ($this->rsvp->type === 'early_access') {
+            $subject = 'Hold tight, your access is requested! - Nissi Insights';
+        } elseif ($this->rsvp->type === 'rsvp') {
+            if ($this->rsvp->attendance === 'accepted') {
+                $subject = 'Seat Reserved: See you at the Nissi Insights Launch! - Nissi Insights';
+            } else {
+                $subject = 'RSVP Received: We\'ll miss you - Nissi Insights';
+            }
+        }
+
         return new Envelope(
-            subject: 'Hold tight, your access is requested! - Nissi Insights',
+            subject: $subject,
         );
     }
 

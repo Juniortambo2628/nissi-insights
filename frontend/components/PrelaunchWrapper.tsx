@@ -13,6 +13,12 @@ interface PrelaunchWrapperProps {
         title: string
         description: string
         media: string
+        bgLight?: string
+        bgDark?: string
+        venue?: string
+        address?: string
+        time?: string
+        menuFile?: string
     } | null
 }
 
@@ -51,6 +57,12 @@ export default function PrelaunchWrapper({ children, launchSettings: initialSett
                 title={launchSettings.title}
                 description={launchSettings.description}
                 media={launchSettings.media}
+                bgLight={launchSettings.bgLight}
+                bgDark={launchSettings.bgDark}
+                venue={launchSettings.venue}
+                address={launchSettings.address}
+                time={launchSettings.time}
+                menuFile={launchSettings.menuFile}
             />
         )
     }

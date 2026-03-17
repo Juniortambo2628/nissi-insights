@@ -22,7 +22,8 @@ import {
     Zap,
     Mail,
     ShieldCheck,
-    Rocket
+    Rocket,
+    Globe
 } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
@@ -59,6 +60,7 @@ const AdminSidebar = () => {
     const menuItems = [
         { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
         { name: 'Services', href: '/admin/services', icon: Briefcase },
+        { name: 'Pillars', href: '/admin/pillars', icon: Globe },
         { name: 'Insights', href: '/admin/insights', icon: FileText },
         { name: 'Case Studies', href: '/admin/case-studies', icon: FolderOpen },
         { name: 'Team', href: '/admin/team', icon: UserCircle },

@@ -23,6 +23,7 @@ import ImageUploader from '@/components/admin/ImageUploader'
 import { SiteSetting } from '@/types/api'
 import { useToast } from '@/hooks/use-toast'
 import { Reorder } from 'framer-motion'
+import { getMediaUrl } from '@/lib/utils'
 
 const AdminSettingsPage = () => {
     const { data: settingsByGroup, mutate, isLoading } = useApi<Record<string, SiteSetting[]>>('/settings')
@@ -62,6 +63,9 @@ const AdminSettingsPage = () => {
         { key: 'hero_client_impact_media', label: 'Client Impact Hero', type: 'media' },
         { key: 'hero_contact_media', label: 'Contact Page Hero', type: 'media' },
         { key: 'hero_consultation_media', label: 'Consultation Hero', type: 'media' },
+        { key: 'hero_pillar_energy_advisory', label: 'Pillar: Energy Advisory Hero', type: 'media' },
+        { key: 'hero_pillar_fintech', label: 'Pillar: Fintech Hero', type: 'media' },
+        { key: 'hero_pillar_international_diplomacy', label: 'Pillar: Diplomacy Hero', type: 'media' },
     ]
 
     const handleSaveAll = async () => {
@@ -129,10 +133,11 @@ const AdminSettingsPage = () => {
                 </span>
             </div>
             <div>
-                {setting.type === 'image' || setting.key.includes('logo') || setting.key.includes('favicon') || setting.key.includes('image') ? (
+                {setting.type === 'image' || setting.type === 'file' || setting.key.includes('logo') || setting.key.includes('favicon') || setting.key.includes('image') ? (
                     <ImageUploader 
-                        value={localSettings[setting.key] ?? setting.value ?? ''}
+                        value={getMediaUrl(localSettings[setting.key] ?? setting.value ?? '')}
                         onChange={(url) => setLocalSettings((prev) => ({ ...prev, [setting.key]: url }))}
+                        accept={setting.type === 'file' ? ['.pdf'] : undefined}
                         className="w-full"
                         label=""
                     />
@@ -265,8 +270,28 @@ const AdminSettingsPage = () => {
                                         </div>
                                     </CardHeader>
                                     <CardContent className="p-6 space-y-8">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t border-border/50">
+                                            <div className="space-y-4">
+                                                <Label className="text-sm font-bold text-foreground/80">RSVP BACKGROUND (LIGHT MODE)</Label>
+                                                <ImageUploader 
+                                                    value={getMediaUrl(localSettings['rsvp_bg_light'] || '')}
+                                                    onChange={(url) => setLocalSettings(prev => ({ ...prev, rsvp_bg_light: url }))}
+                                                    label=""
+                                                />
+                                            </div>
+                                            <div className="space-y-4">
+                                                <Label className="text-sm font-bold text-foreground/80">RSVP BACKGROUND (DARK MODE)</Label>
+                                                <ImageUploader 
+                                                    value={getMediaUrl(localSettings['rsvp_bg_dark'] || '')}
+                                                    onChange={(url) => setLocalSettings(prev => ({ ...prev, rsvp_bg_dark: url }))}
+                                                    label=""
+                                                />
+                                            </div>
+                                        </div>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                            {settingsByGroup?.['launch']?.map(renderSetting)}
+                                            {settingsByGroup?.['launch']
+                                                ?.filter(s => !['rsvp_bg_light', 'rsvp_bg_dark'].includes(s.key))
+                                                ?.map(renderSetting)}
                                         </div>
                                     </CardContent>
                                 </Card>

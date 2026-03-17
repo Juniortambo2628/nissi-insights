@@ -3,23 +3,22 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Service extends Model
+class Pillar extends Model
 {
     protected $fillable = [
-        'pillar_id',
         'title',
         'slug',
-        'category',
-        'description',
+        'overview',
         'content',
         'icon',
         'image',
         'is_active',
     ];
 
-    public function pillar()
+    public function services(): HasMany
     {
-        return $this->belongsTo(Pillar::class);
+        return $this->hasMany(Service::class);
     }
 }

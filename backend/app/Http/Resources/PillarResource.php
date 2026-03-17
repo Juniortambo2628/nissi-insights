@@ -5,7 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class ServiceResource extends JsonResource
+class PillarResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
@@ -13,10 +13,7 @@ class ServiceResource extends JsonResource
             'id' => $this->id,
             'title' => $this->title,
             'slug' => $this->slug,
-            'category' => $this->category,
-            'pillar_id' => $this->pillar_id,
-            'pillar' => new PillarResource($this->whenLoaded('pillar')),
-            'description' => $this->description,
+            'overview' => $this->overview,
             'content' => $this->content,
             'icon' => $this->icon,
             'image' => $this->image,
