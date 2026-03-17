@@ -33,7 +33,7 @@ class SiteSettingController extends Controller
 
     public function show(SiteSetting $siteSetting)
     {
-        return new SiteSettingResource($siteSetting);
+        return SiteSettingResource::make($siteSetting);
     }
 
     public function update(Request $request, SiteSetting $siteSetting)
@@ -43,7 +43,7 @@ class SiteSettingController extends Controller
         ]);
 
         $siteSetting->update($validated);
-        return new SiteSettingResource($siteSetting);
+        return SiteSettingResource::make($siteSetting);
     }
 
     public function destroy(SiteSetting $siteSetting)
