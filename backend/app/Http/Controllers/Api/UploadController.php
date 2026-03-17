@@ -17,8 +17,10 @@ class UploadController extends Controller
         $file = $request->file('file');
         $path = $file->store('uploads', 'public');
 
+        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
+        $disk = Storage::disk('public');
         return response()->json([
-            'url' => Storage::disk('public')->url($path),
+            'url' => $disk->url($path),
             'path' => $path,
             'filename' => $file->getClientOriginalName(),
             'size' => $file->getSize(),
@@ -46,8 +48,10 @@ class UploadController extends Controller
             abort(404);
         }
 
-        $file = Storage::disk('public')->get($path);
-        $mime = Storage::disk('public')->mimeType($path);
+        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
+        $disk = Storage::disk('public');
+        $file = $disk->get($path);
+        $mime = $disk->mimeType($path);
 
         return response($file, 200)
             ->header('Content-Type', $mime)

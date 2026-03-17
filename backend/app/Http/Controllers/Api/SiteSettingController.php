@@ -91,7 +91,9 @@ class SiteSettingController extends Controller
         } else {
             // Ensure path from DB is converted to URL if it's just a path
             if (!filter_var($menuFile, FILTER_VALIDATE_URL)) {
-                $menuFile = \Illuminate\Support\Facades\Storage::disk('public')->url($menuFile);
+                /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
+                $disk = \Illuminate\Support\Facades\Storage::disk('public');
+                $menuFile = $disk->url($menuFile);
             }
         }
 
