@@ -87,7 +87,7 @@ class SiteSettingController extends Controller
         
         // Use default if empty
         if (!$menuFile) {
-            $menuFile = \Illuminate\Support\Facades\Storage::disk('public')->url('defaults/rsvp-menu.pdf');
+            $menuFile = asset('assets/defaults/rsvp-menu.pdf');
         } else {
             // Ensure path from DB is converted to URL if it's just a path
             if (!filter_var($menuFile, FILTER_VALIDATE_URL)) {

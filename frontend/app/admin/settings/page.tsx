@@ -287,6 +287,15 @@ const AdminSettingsPage = () => {
                                                     label=""
                                                 />
                                             </div>
+                                            <div className="space-y-4">
+                                                <Label className="text-sm font-bold text-foreground/80">RSVP DINNER MENU (PDF)</Label>
+                                                <ImageUploader 
+                                                    value={getMediaUrl(localSettings['rsvp_menu_file'] || '')}
+                                                    onChange={(url) => setLocalSettings(prev => ({ ...prev, rsvp_menu_file: url }))}
+                                                    accept={['.pdf']}
+                                                    label=""
+                                                />
+                                            </div>
                                         </div>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                             {settingsByGroup?.['launch']
