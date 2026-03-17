@@ -15,6 +15,7 @@ class Service extends Model
         'content',
         'icon',
         'image',
+        'video_url',
         'is_active',
     ];
 

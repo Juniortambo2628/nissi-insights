@@ -20,6 +20,7 @@ return new class extends Migration
             $table->longText('content')->nullable();
             $table->string('icon')->nullable();
             $table->string('image')->nullable();
+            $table->string('video_url')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });

@@ -13,7 +13,7 @@ class TestimonialClientSeeder extends Seeder
         // Testimonials
         $testimonials = [
             [
-                'client_name' => 'Dr. Sarah Mitchell',
+                'name' => 'Dr. Sarah Mitchell',
                 'role' => 'Chief Investment Officer',
                 'company' => 'Nordic Energy Capital',
                 'quote' => 'Nissi Insights delivered an exceptional due diligence report that gave our board full confidence to proceed with a £200M offshore wind investment. Their sector expertise is unmatched.',
@@ -22,7 +22,7 @@ class TestimonialClientSeeder extends Seeder
                 'order' => 1,
             ],
             [
-                'client_name' => 'James Okonkwo',
+                'name' => 'James Okonkwo',
                 'role' => 'CEO',
                 'company' => 'AfriPay Technologies',
                 'quote' => 'Their fintech regulatory mapping across 5 African markets saved us 12 months of research and helped us launch ahead of schedule. A true strategic partner.',
@@ -31,7 +31,7 @@ class TestimonialClientSeeder extends Seeder
                 'order' => 2,
             ],
             [
-                'client_name' => 'Ambassador Helena Voss',
+                'name' => 'Ambassador Helena Voss',
                 'role' => 'Senior Diplomatic Advisor',
                 'company' => 'European External Action Service',
                 'quote' => 'The team\'s understanding of sovereign stakeholder dynamics is remarkable. They facilitated connections that would have taken years to build through traditional channels.',
@@ -40,7 +40,7 @@ class TestimonialClientSeeder extends Seeder
                 'order' => 3,
             ],
             [
-                'client_name' => 'Richard Chen',
+                'name' => 'Richard Chen',
                 'role' => 'Managing Director',
                 'company' => 'Pacific Infrastructure Fund',
                 'quote' => 'We\'ve engaged Nissi Insights on three separate transactions. Their commercial advisory consistently identifies value others miss.',
@@ -49,7 +49,7 @@ class TestimonialClientSeeder extends Seeder
                 'order' => 4,
             ],
             [
-                'client_name' => 'Fatima Al-Rashid',
+                'name' => 'Fatima Al-Rashid',
                 'role' => 'Head of Strategy',
                 'company' => 'Gulf Sovereign Partners',
                 'quote' => 'Their cross-border treaty negotiation support was instrumental in unlocking $500M in co-investment opportunities for our fund.',
@@ -60,7 +60,7 @@ class TestimonialClientSeeder extends Seeder
         ];
 
         foreach ($testimonials as $t) {
-            Testimonial::updateOrCreate(['client_name' => $t['client_name']], $t);
+            Testimonial::updateOrCreate(['name' => $t['name']], $t);
         }
 
         // Client logos
