@@ -18,6 +18,10 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'nissi-insights.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'api.nissi-insights.com',
+      },
     ],
   },
 };

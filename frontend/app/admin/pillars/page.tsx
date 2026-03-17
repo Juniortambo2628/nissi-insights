@@ -200,7 +200,7 @@ const AdminPillarsPage = () => {
                         </div>
                         <div className="space-y-2 md:col-span-2">
                             <label className="text-sm font-medium text-muted-foreground">Short Overview</label>
-                            <Input className="bg-background border-border text-foreground" placeholder="Brief overview of the pillar" value={form.overview} onChange={(e) => setForm({ ...form, overview: e.target.value })} />
+                            <Input className="bg-background border-border text-foreground" placeholder="Brief overview of the pillar" value={form.overview || ''} onChange={(e) => setForm({ ...form, overview: e.target.value })} />
                         </div>
                         
                         <div className="md:col-span-2">

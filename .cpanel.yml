@@ -1,0 +1,5 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/viafgsed/public_html/api/
+    - /bin/cp -R backend/public/* $DEPLOYPATH
