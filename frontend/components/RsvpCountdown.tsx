@@ -128,7 +128,7 @@ export default function RsvpCountdown({
 
     return (
         <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-background text-foreground selection:bg-primary selection:text-white">
-            <div className="absolute inset-0 z-0">
+            <div className="absolute inset-0 z-0 hidden md:block">
                 {isVideo ? (
                     <video 
                         src={bgMedia} 
