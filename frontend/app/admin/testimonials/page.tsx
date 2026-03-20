@@ -9,6 +9,7 @@ import { Plus, Pencil, Trash2, Star, Quote, Save, X, User } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import ImageUploader from '@/components/admin/ImageUploader'
 import api from '@/lib/api'
+import { getMediaUrl } from '@/lib/utils'
 
 import { 
   Dialog, 
@@ -257,7 +258,7 @@ const AdminTestimonialsPage = () => {
                                 </blockquote>
                                 <div className="border-t border-border/50 pt-3 flex items-center gap-3">
                                     {t.avatar ? (
-                                        <img src={t.avatar} alt={t.name} className="w-8 h-8 rounded-full object-cover" />
+                                        <img src={getMediaUrl(t.avatar)} alt={t.name} className="w-8 h-8 rounded-full object-cover" />
                                     ) : (
                                         <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                                             <User size={14} />

@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/components/AuthProvider'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,7 +15,12 @@ const LoginPage = () => {
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
     const [isLoading, setIsLoading] = useState(false)
+    const emailRef = useRef<HTMLInputElement>(null)
     const { login } = useAuth()
+ 
+    useEffect(() => {
+        emailRef.current?.focus()
+    }, [])
 
     // Helper to get setting value
     const getSetting = (key: string, defaultValue: string) => {
@@ -69,7 +74,7 @@ const LoginPage = () => {
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                                 required
                                 autoComplete="email"
-                                autoFocus
+                                ref={emailRef}
                                 className="bg-background/50"
                             />
                         </div>

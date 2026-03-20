@@ -9,7 +9,7 @@ import { motion } from 'framer-motion'
 import { ArrowRight, Clock, Tag } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { cn } from '@/lib/utils'
+import { cn, getMediaUrl } from '@/lib/utils'
 import ViewToggle, { ViewMode } from '@/components/ViewToggle'
 
 export default function InsightsPage() {
@@ -105,7 +105,7 @@ export default function InsightsPage() {
                                                 viewMode === 'grid' ? "h-56 w-full" : "h-64 md:h-auto md:w-80"
                                             )}>
                                                 <Image
-                                                    src={insight.image}
+                                                    src={getMediaUrl(insight.image)}
                                                     alt={insight.title}
                                                     fill
                                                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"

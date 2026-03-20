@@ -11,6 +11,7 @@ import { ArrowRight, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import SocialShare from '@/components/SocialShare'
+import { getMediaUrl } from '@/lib/utils'
 
 export default function CaseStudyDetailPage() {
     const params = useParams()
@@ -173,7 +174,7 @@ export default function CaseStudyDetailPage() {
                             {relatedStudies.map((rs: any) => (
                                 <Link key={rs.id} href={`/case-studies/${rs.slug}`} className="group block relative aspect-[21/9] overflow-hidden border border-border/50 bg-card">
                                     {rs.image && (
-                                        <Image src={rs.image} alt={rs.title} fill className="object-cover opacity-60 group-hover:opacity-20 transition-all duration-700" />
+                                        <Image src={getMediaUrl(rs.image)} alt={rs.title} fill className="object-cover opacity-60 group-hover:opacity-20 transition-all duration-700" />
                                     )}
                                     <div className="absolute inset-0 p-8 flex flex-col justify-end bg-gradient-to-t from-background to-transparent">
                                         <span className="text-primary font-bold text-[10px] uppercase tracking-widest mb-2">{rs.client_name}</span>

@@ -10,7 +10,7 @@ import { ArrowRight, Info } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Tooltip } from '@/components/ui/tooltip'
-import { cn } from '@/lib/utils'
+import { cn, getMediaUrl } from '@/lib/utils'
 import ViewToggle, { ViewMode } from '@/components/ViewToggle'
 
 export default function CaseStudiesPage() {
@@ -104,7 +104,7 @@ export default function CaseStudiesPage() {
                                                 viewMode === 'grid' ? "absolute inset-0" : "h-64 md:h-full md:w-[45%]"
                                             )}>
                                                 <Image
-                                                    src={cs.image}
+                                                    src={getMediaUrl(cs.image)}
                                                     alt={cs.title}
                                                     fill
                                                     className="object-cover opacity-60 group-hover:opacity-40 group-hover:scale-105 transition-all duration-700"

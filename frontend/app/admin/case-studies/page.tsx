@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Plus, Pencil, Trash2, Search, Save, Star, LayoutGrid, List, MoreVertical, ExternalLink } from 'lucide-react'
 import ImageUploader from '@/components/admin/ImageUploader'
 import api from '@/lib/api'
+import { getMediaUrl } from '@/lib/utils'
 import { CaseStudy } from '@/types/api'
 import { useToast } from '@/hooks/use-toast'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -269,7 +270,7 @@ const AdminCaseStudiesPage = () => {
 
                                         <div className="aspect-video relative overflow-hidden bg-secondary/30">
                                             {cs.image ? (
-                                                <img src={cs.image} alt={cs.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                                <img src={getMediaUrl(cs.image)} alt={cs.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                                             ) : (
                                                 <div className="w-full h-full flex items-center justify-center text-primary/20">
                                                     <Star size={48} />
@@ -330,7 +331,7 @@ const AdminCaseStudiesPage = () => {
                                                 <td className="p-4">
                                                     <div className="flex items-center gap-4">
                                                         <div className="w-10 h-10 rounded bg-secondary overflow-hidden shrink-0">
-                                                            {cs.image ? <img src={cs.image} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-primary/40"><Star size={16} /></div>}
+                                                            {cs.image ? <img src={getMediaUrl(cs.image)} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-primary/40"><Star size={16} /></div>}
                                                         </div>
                                                         <div className="font-bold line-clamp-1">{cs.title}</div>
                                                     </div>

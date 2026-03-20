@@ -9,4 +9,18 @@ const api = axios.create({
     }
 });
 
+// Add a request interceptor to ensure the token is always up to date
+api.interceptors.request.use(
+    (config) => {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
+
 export default api;

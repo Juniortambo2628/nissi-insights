@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea'
 import ImageUploader from '@/components/admin/ImageUploader'
 import api from '@/lib/api'
 import { useToast } from '@/hooks/use-toast'
-import { cn } from '@/lib/utils'
+import { cn, getMediaUrl } from '@/lib/utils'
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -233,7 +233,7 @@ export default function AdminTeamPage() {
 
                                         <div className="w-24 h-24 rounded-full bg-primary/10 mx-auto mb-4 overflow-hidden border border-primary/20">
                                             {member.image ? (
-                                                <img src={member.image} alt={member.name} className="w-full h-full object-cover" />
+                                                <img src={getMediaUrl(member.image)} alt={member.name} className="w-full h-full object-cover" />
                                             ) : (
                                                 <div className="w-full h-full flex items-center justify-center">
                                                     <User size={40} className="text-primary/40" />
@@ -284,7 +284,7 @@ export default function AdminTeamPage() {
                                                 <td className="p-4">
                                                     <div className="flex items-center gap-3">
                                                         <div className="w-10 h-10 rounded-full bg-primary/10 overflow-hidden border border-primary/20 shrink-0">
-                                                            {member.image ? <img src={member.image} className="w-full h-full object-cover" /> : <User size={20} className="m-auto mt-2.5 text-primary/40" />}
+                                                            {member.image ? <img src={getMediaUrl(member.image)} className="w-full h-full object-cover" /> : <User size={20} className="m-auto mt-2.5 text-primary/40" />}
                                                         </div>
                                                         <div>
                                                             <div className="font-bold">{member.name}</div>

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { useApi } from '@/hooks/use-api'
 import { ArrowRight, Linkedin, Zap, Landmark, Globe, Shield, Star, Award, Heart, Info, X } from 'lucide-react'
 import Link from 'next/link'
+import { getMediaUrl } from '@/lib/utils'
 import {
     Dialog,
     DialogContent,
@@ -111,23 +112,32 @@ export default function AboutPage() {
                                 initial={{ opacity: 0, y: 20 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 transition={{ delay: index * 0.1 }}
-                                className="bg-white border border-slate-100 p-8 text-center flex flex-col group relative"
+                                className="bg-card/40 backdrop-blur-md border border-border/50 p-8 text-center flex flex-col group relative hover:shadow-2xl hover:border-primary/30 transition-all duration-500 overflow-hidden"
                             >
-                                <div className="w-32 h-32 rounded-full bg-gradient-to-br from-primary/20 to-blue-900/20 mx-auto mb-6 flex items-center justify-center overflow-hidden border border-primary/10">
+                                {/* Decorative Corner Glow */}
+                                <div className="absolute -top-12 -right-12 w-24 h-24 bg-primary/10 blur-[40px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                                
+                                <div className="relative z-10 w-40 h-40 rounded-full bg-gradient-to-br from-primary/10 to-blue-900/10 mx-auto mb-8 flex items-center justify-center overflow-hidden border border-border/50 group-hover:border-primary/30 transition-all duration-700">
                                     {member.image ? (
-                                        <img src={member.image} alt={member.name} className="w-full h-full object-cover" />
+                                        <img 
+                                            src={getMediaUrl(member.image)} 
+                                            alt={member.name} 
+                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 grayscale-[30%] group-hover:grayscale-0" 
+                                        />
                                     ) : (
-                                        <span className="text-3xl font-bold text-primary/40">
+                                        <span className="text-4xl font-bold text-primary/40">
                                             {member.name.split(' ').map((n: string) => n[0]).join('')}
                                         </span>
                                     )}
                                 </div>
 
-                                <h3 className="text-xl font-bold text-foreground mb-1">{member.name}</h3>
-                                <span className="text-primary font-bold text-sm uppercase tracking-wider block mb-3">{member.role}</span>
+                                <div className="relative z-10 space-y-2 mb-6">
+                                    <h3 className="text-2xl font-bold text-foreground group-hover:text-primary transition-colors duration-300">{member.name}</h3>
+                                    <span className="text-primary font-bold text-[10px] uppercase tracking-[0.2em] block">{member.role}</span>
+                                </div>
                                 
-                                <p className="text-muted-foreground text-sm leading-relaxed mb-4 line-clamp-3 flex-1 px-2">
-                                    {member.bio}
+                                <p className="relative z-10 text-muted-foreground text-sm leading-relaxed mb-8 line-clamp-3 flex-1 px-4 italic">
+                                    "{member.bio}"
                                 </p>
 
                                 <div className="flex flex-col gap-4 mt-auto">
@@ -142,7 +152,7 @@ export default function AboutPage() {
                                                 <div className="flex items-center gap-6">
                                                     <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-primary/20 shrink-0">
                                                         {member.image ? (
-                                                            <img src={member.image} alt={member.name} className="w-full h-full object-cover" />
+                                                            <img src={getMediaUrl(member.image)} alt={member.name} className="w-full h-full object-cover" />
                                                         ) : (
                                                             <div className="w-full h-full bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary">
                                                                 {member.name.split(' ').map((n: string) => n[0]).join('')}

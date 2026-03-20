@@ -81,6 +81,7 @@ class SiteSettingController extends Controller
 
     public function getLaunchSettings()
     {
+        \Illuminate\Support\Facades\Log::info('getLaunchSettings called');
         $settings = SiteSetting::where('group', 'launch')->get()->pluck('value', 'key');
         
         $menuFile = $settings->get('rsvp_menu_file');

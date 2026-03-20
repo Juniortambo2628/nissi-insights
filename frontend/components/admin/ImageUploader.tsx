@@ -5,6 +5,7 @@ import { useDropzone } from 'react-dropzone'
 import imageCompression from 'browser-image-compression'
 import { Upload, X, Loader2, Image as ImageIcon, Film, File } from 'lucide-react'
 import api from '@/lib/api'
+import { getMediaUrl } from '@/lib/utils'
 
 interface ImageUploaderProps {
     value?: string
@@ -134,7 +135,7 @@ const ImageUploader = ({ value, onChange, accept, maxSizeMB = 2, label = 'Upload
                             </div>
                         ) : (
                             <img
-                                src={preview || value}
+                                src={preview?.startsWith('data:') ? preview : getMediaUrl(value)}
                                 alt="Preview"
                                 className="w-full h-40 object-cover"
                             />

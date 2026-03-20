@@ -50,10 +50,19 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   let launchSettings = null;
   try {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
-    const response = await fetch(`${apiUrl}/site-settings/launch`, { next: { revalidate: 60 } });
-    launchSettings = await response.json();
+    const response = await fetch(`${apiUrl}/settings/launch`, { 
+      next: { revalidate: 60 },
+      headers: { 'Accept': 'application/json' }
+    });
+    
+    if (response.ok) {
+        launchSettings = await response.json();
+    } else {
+        const text = await response.text();
+        console.error(`Failed to fetch launch settings: ${response.status} ${response.statusText}`, text.substring(0, 100));
+    }
   } catch (error) {
-    console.error('Failed to fetch launch settings in RootLayout:', error);
+    console.error('Network error fetching launch settings in RootLayout:', error);
   }
   
   return (

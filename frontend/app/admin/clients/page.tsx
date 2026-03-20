@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Plus, Pencil, Trash2, Building2, Save, X, ExternalLink } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import api from '@/lib/api'
+import { getMediaUrl } from '@/lib/utils'
 
 import ImageUploader from '@/components/admin/ImageUploader'
 
@@ -222,7 +223,7 @@ const AdminClientsPage = () => {
                                     </div>
                                 </div>
                                 {client.logo ? (
-                                    <img src={client.logo} alt={client.name} className="h-8 object-contain mb-3 opacity-70" />
+                                    <img src={getMediaUrl(client.logo)} alt={client.name} className="h-8 object-contain mb-3 opacity-70" />
                                 ) : (
                                     <div className="h-8 mb-3 flex items-center">
                                         <Building2 size={24} className="text-muted-foreground" />

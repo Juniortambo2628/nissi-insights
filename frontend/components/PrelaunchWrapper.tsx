@@ -31,7 +31,7 @@ export default function PrelaunchWrapper({ children, launchSettings: initialSett
         const checkSettings = async () => {
             try {
                 // @ts-ignore
-                const { data } = await api.get('/site-settings/launch')
+                const { data } = await api.get('/settings/launch')
                 if (JSON.stringify(data) !== JSON.stringify(launchSettings)) {
                     setLaunchSettings(data)
                 }

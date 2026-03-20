@@ -41,7 +41,7 @@ Route::get('/case-studies/{caseStudy:slug}', [CaseStudyController::class, 'show'
 
 Route::get('/stats', [StatController::class, 'index']);
 Route::get('/settings', [SiteSettingController::class, 'index']);
-Route::get('/site-settings/launch', [SiteSettingController::class, 'getLaunchSettings']);
+Route::get('/settings/launch', [SiteSettingController::class, 'getLaunchSettings']);
 
 Route::get('/testimonials', [TestimonialController::class, 'index']);
 Route::get('/clients', [ClientController::class, 'index']);

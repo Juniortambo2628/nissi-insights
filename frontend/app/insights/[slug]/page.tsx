@@ -12,6 +12,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { readingTime } from '@/lib/reading-time'
 import SocialShare from '@/components/SocialShare'
+import { getMediaUrl } from '@/lib/utils'
 
 export default function InsightDetailPage() {
     const params = useParams()
@@ -125,7 +126,7 @@ export default function InsightDetailPage() {
                                 <Link key={ri.id} href={`/insights/${ri.slug}`} className="group block">
                                     <div className="relative h-48 mb-6 overflow-hidden border border-border/50 group-hover:border-primary/40 transition-colors bg-card">
                                         {ri.image ? (
-                                            <Image src={ri.image} alt={ri.title} fill className="object-cover opacity-80 group-hover:opacity-100 transition-all group-hover:scale-105" />
+                                            <Image src={getMediaUrl(ri.image)} alt={ri.title} fill className="object-cover opacity-80 group-hover:opacity-100 transition-all group-hover:scale-105" />
                                         ) : (
                                             <div className="w-full h-full bg-secondary/20 flex items-center justify-center text-muted-foreground/20">NI</div>
                                         )}
