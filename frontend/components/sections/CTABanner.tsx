@@ -85,9 +85,11 @@ const CTABanner = () => {
                             variant="outline"
                             size="lg"
                             className="h-14 px-10 text-base font-bold rounded-none border-white/40 text-white hover:bg-white/10 backdrop-blur-sm transition-all group"
+                            asChild
                         >
-                            <Download className="mr-2 h-5 w-5 transition-transform group-hover:-translate-y-1" />
-                            Download Free Report
+                            <Link href="/events">
+                                Our Events
+                            </Link>
                         </Button>
                         <Button
                             variant="ghost"

@@ -30,6 +30,7 @@ const AdminSettingsPage = () => {
     const { toast } = useToast()
     const [localSettings, setLocalSettings] = useState<Record<string, string>>({})
     const [navLinks, setNavLinks] = useState<{name: string, href: string}[]>([])
+    const [addresses, setAddresses] = useState<{label: string, address: string, phone: string, map_url: string}[]>([])
     const [isSavingAll, setIsSavingAll] = useState(false)
 
     // Sync local state when data loads
@@ -44,6 +45,13 @@ const AdminSettingsPage = () => {
                             setNavLinks(JSON.parse(s.value || '[]'))
                         } catch (e) {
                             console.error("Failed to parse local nav links", e)
+                        }
+                    }
+                    if (s.key === 'business_addresses') {
+                        try {
+                            setAddresses(JSON.parse(s.value || '[]'))
+                        } catch (e) {
+                            console.error("Failed to parse business addresses", e)
                         }
                     }
                 })
@@ -84,6 +92,9 @@ const AdminSettingsPage = () => {
                 
                 if (key === 'main_nav_links') {
                     finalValue = JSON.stringify(navLinks)
+                }
+                if (key === 'business_addresses') {
+                    finalValue = JSON.stringify(addresses)
                 }
 
                 return {
@@ -203,6 +214,8 @@ const AdminSettingsPage = () => {
                     <TabsList className="bg-secondary/10 border border-border p-1 mb-8 overflow-x-auto justify-start h-auto">
                         <TabsTrigger value="general" className="gap-2 px-6 py-2 content-center text-foreground"><Globe size={14} /> General</TabsTrigger>
                         <TabsTrigger value="branding" className="gap-2 px-6 py-2 text-foreground"><Palette size={14} /> Branding</TabsTrigger>
+                        <TabsTrigger value="about" className="gap-2 px-6 py-2 text-foreground"><ShieldCheck size={14} /> About Us</TabsTrigger>
+                        <TabsTrigger value="contact" className="gap-2 px-6 py-2 text-foreground"><Mail size={14} /> Contact Details</TabsTrigger>
                         <TabsTrigger value="launch" className="gap-2 px-6 py-2 text-foreground"><Rocket size={14} /> Launch</TabsTrigger>
                         <TabsTrigger value="hero-media" className="gap-2 px-6 py-2 text-foreground"><Layout size={14} /> Page Hero Media</TabsTrigger>
                         <TabsTrigger value="navigation" className="gap-2 px-6 py-2 text-foreground"><ListOrdered size={14} /> Navigation</TabsTrigger>
@@ -254,6 +267,116 @@ const AdminSettingsPage = () => {
                                         </div>
                                     </CardContent>
                                 </Card>
+                            </TabsContent>
+
+                            <TabsContent value="about" className="focus-visible:outline-none focus-visible:ring-0">
+                                <Card className="bg-secondary/5 border-border max-w-4xl">
+                                    <CardHeader className="bg-secondary/10 border-b border-border">
+                                        <CardTitle className="text-foreground">About Us Page Content</CardTitle>
+                                        <CardDescription className="text-muted-foreground">Manage the story, mission, and vision of Nissi Insights.</CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="p-6">
+                                        <div className="grid grid-cols-1 gap-8">
+                                            {settingsByGroup?.['about']?.map(renderSetting)}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+
+                            <TabsContent value="contact" className="focus-visible:outline-none focus-visible:ring-0">
+                                <div className="space-y-8">
+                                    <Card className="bg-secondary/5 border-border max-w-4xl">
+                                        <CardHeader className="bg-secondary/10 border-b border-border">
+                                            <CardTitle className="text-foreground">Contact Information</CardTitle>
+                                            <CardDescription className="text-muted-foreground">Global contact email and primary phone.</CardDescription>
+                                        </CardHeader>
+                                        <CardContent className="p-6">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                {settingsByGroup?.['contact']?.filter(s => s.key !== 'business_addresses').map(renderSetting)}
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+
+                                    <Card className="bg-secondary/5 border-border max-w-5xl">
+                                        <CardHeader className="bg-secondary/10 border-b border-border">
+                                            <div className="flex items-center justify-between">
+                                                <CardTitle className="text-foreground">Business Addresses</CardTitle>
+                                                <Button 
+                                                    size="sm" 
+                                                    variant="outline" 
+                                                    className="h-9 px-4 text-xs font-bold gap-2 bg-background border-border text-foreground hover:bg-secondary"
+                                                    onClick={() => setAddresses([...addresses, { label: 'New Office', address: '', phone: '', map_url: '' }])}
+                                                >
+                                                    <Plus size={14} /> Add Address
+                                                </Button>
+                                            </div>
+                                            <CardDescription className="text-muted-foreground">Manage your global office locations.</CardDescription>
+                                        </CardHeader>
+                                        <CardContent className="p-6">
+                                            <div className="space-y-6">
+                                                {addresses.map((addr, index) => (
+                                                    <div key={index} className="bg-secondary/10 border border-border p-6 rounded-xl space-y-4 group transition-all hover:border-primary/30">
+                                                        <div className="flex justify-between items-start">
+                                                            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                                <div className="space-y-1">
+                                                                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Label (e.g. London Office)</Label>
+                                                                    <Input 
+                                                                        value={addr.label} 
+                                                                        onChange={(e) => {
+                                                                            const newAddrs = [...addresses]
+                                                                            newAddrs[index].label = e.target.value
+                                                                            setAddresses(newAddrs)
+                                                                        }}
+                                                                        className="h-10 bg-background border-border text-foreground"
+                                                                    />
+                                                                </div>
+                                                                <div className="space-y-1">
+                                                                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Phone Number</Label>
+                                                                    <Input 
+                                                                        value={addr.phone} 
+                                                                        onChange={(e) => {
+                                                                            const newAddrs = [...addresses]
+                                                                            newAddrs[index].phone = e.target.value
+                                                                            setAddresses(newAddrs)
+                                                                        }}
+                                                                        className="h-10 bg-background border-border text-foreground"
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                            <Button 
+                                                                variant="ghost" 
+                                                                size="icon" 
+                                                                className="text-muted-foreground/30 hover:text-red-500 hover:bg-red-500/10 h-10 w-10 ml-4"
+                                                                onClick={() => setAddresses(addresses.filter((_, i) => i !== index))}
+                                                            >
+                                                                <Trash2 size={18} />
+                                                            </Button>
+                                                        </div>
+                                                        <div className="grid grid-cols-1 gap-4">
+                                                            <div className="space-y-1">
+                                                                <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Full Address</Label>
+                                                                <Textarea 
+                                                                    value={addr.address} 
+                                                                    onChange={(e) => {
+                                                                        const newAddrs = [...addresses]
+                                                                        newAddrs[index].address = e.target.value
+                                                                        setAddresses(newAddrs)
+                                                                    }}
+                                                                    className="bg-background border-border text-foreground min-h-[60px]"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                {addresses.length === 0 && (
+                                                    <div className="text-center py-12 border-2 border-dashed border-border/50 rounded-xl">
+                                                        <p className="text-muted-foreground">No addresses added yet.</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </div>
                             </TabsContent>
 
                             <TabsContent value="launch" className="focus-visible:outline-none focus-visible:ring-0">

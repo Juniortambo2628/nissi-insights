@@ -6,6 +6,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { useApi } from '@/hooks/use-api'
+import { getMediaUrl } from '@/lib/utils'
 
 const ValueProposition = () => {
     const { data: settingsByGroup } = useApi('/settings')
@@ -30,7 +31,7 @@ const ValueProposition = () => {
         {
             title: getSetting('vp_energy_title', 'Energy Advisory'),
             description: getSetting('vp_energy_description', 'Due diligence, commercial advisory, route-to-market strategy, and transaction support for green commodity trading, renewable investment, bankability, and carbon strategy.'),
-            image: getSetting('vp_energy_image', 'https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=900&q=80'),
+            image: getMediaUrl(getSetting('vp_energy_image', '/NI-Digital-Assets/energy-advisory.jpg')),
             href: '/pillars/energy-advisory',
             stats: getSetting('vp_energy_stats', '8 Specialised Services'),
             tag: getSetting('vp_energy_tag', 'Core Pillar'),
@@ -38,7 +39,7 @@ const ValueProposition = () => {
         {
             title: getSetting('vp_fintech_title', 'Fintech'),
             description: getSetting('vp_fintech_description', 'Strategic commercial model design, go-to-market advisory, regulatory compliance, capital raising, and M&A transaction support for financial technology ventures.'),
-            image: getSetting('vp_fintech_image', 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=900&q=80'),
+            image: getMediaUrl(getSetting('vp_fintech_image', '/NI-Digital-Assets/financial-technology.jpg')),
             href: '/pillars/fintech',
             stats: getSetting('vp_fintech_stats', '6 Specialised Services'),
             tag: getSetting('vp_fintech_tag', 'Core Pillar'),
@@ -46,7 +47,7 @@ const ValueProposition = () => {
         {
             title: getSetting('vp_diplomacy_title', 'International Diplomacy'),
             description: getSetting('vp_diplomacy_description', 'Sovereign engagement, cross-border deal enablement, geopolitical risk advisory, and reputation positioning for governments and multinationals.'),
-            image: getSetting('vp_diplomacy_image', '/assets/international-diplomacy.jpg').replace('/NI-Digital-Assets/', '/assets/'),
+            image: getMediaUrl(getSetting('vp_diplomacy_image', '/NI-Digital-Assets/international-diplomacy.jpg')),
             href: '/pillars/international-diplomacy',
             stats: getSetting('vp_diplomacy_stats', '4 Specialised Services'),
             tag: getSetting('vp_diplomacy_tag', 'Core Pillar'),

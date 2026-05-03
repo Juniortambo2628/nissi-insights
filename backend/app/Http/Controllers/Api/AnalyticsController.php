@@ -7,6 +7,8 @@ use App\Models\PageView;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use App\Models\Event;
+use App\Models\EventRegistration;
 
 class AnalyticsController extends Controller
 {
@@ -53,7 +55,7 @@ class AnalyticsController extends Controller
         // Views over time (last 14 days)
         $viewsOverTime = PageView::where('created_at', '>=', Carbon::now()->subDays(14))
             ->select(DB::raw('DATE(created_at) as date'), DB::raw('COUNT(*) as views'))
-            ->groupBy('date')
+            ->groupBy(DB::raw('DATE(created_at)'))
             ->orderBy('date')
             ->get();
 
@@ -76,6 +78,47 @@ class AnalyticsController extends Controller
             'top_pages' => $topPages,
             'views_over_time' => $viewsOverTime,
             'top_referrers' => $topReferrers,
+        ]);
+    }
+
+    public function eventAnalytics()
+    {
+        $eventsCount = Event::count();
+        $totalRegistrations = EventRegistration::count();
+        $totalAttendance = EventRegistration::where('attended', true)->count();
+        
+        $attendanceRate = $totalRegistrations > 0 
+            ? round(($totalAttendance / $totalRegistrations) * 100, 1) 
+            : 0;
+
+        // Registrations per event
+        $registrationsByEvent = Event::withCount('registrations')
+            ->orderByDesc('registrations_count')
+            ->limit(10)
+            ->get();
+
+        // Growth: Registrations over last 30 days
+        $registrationsOverTime = EventRegistration::where('created_at', '>=', Carbon::now()->subDays(30))
+            ->select(DB::raw('DATE(created_at) as date'), DB::raw('COUNT(*) as count'))
+            ->groupBy(DB::raw('DATE(created_at)'))
+            ->orderBy('date')
+            ->get();
+
+        // Upcoming events with registration counts
+        $upcomingEvents = Event::where('date', '>=', Carbon::now())
+            ->where('is_published', true)
+            ->withCount('registrations')
+            ->orderBy('date')
+            ->get();
+
+        return response()->json([
+            'total_events' => $eventsCount,
+            'total_registrations' => $totalRegistrations,
+            'total_attendance' => $totalAttendance,
+            'attendance_rate' => $attendanceRate,
+            'registrations_by_event' => $registrationsByEvent,
+            'registrations_over_time' => $registrationsOverTime,
+            'upcoming_events' => $upcomingEvents
         ]);
     }
 }

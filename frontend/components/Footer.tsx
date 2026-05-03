@@ -26,7 +26,15 @@ const Footer = () => {
     const logoWhiteBg = getSetting('logo_light', '/logos/nissi-landscape-white.png')
     const logoBlackBg = getSetting('logo_dark', '/logos/nissi-landscape-black.png')
     const contactEmail = getSetting('contact_email', 'info@nissiinsights.com')
-    const contactAddress = getSetting('contact_address', 'London, United Kingdom')
+    const businessAddresses = React.useMemo(() => {
+        const setting = (Object.values(settingsByGroup || {}).flat() as any[]).find(s => s.key === 'business_addresses')
+        if (!setting?.value) return []
+        try {
+            return JSON.parse(setting.value)
+        } catch (e) {
+            return []
+        }
+    }, [settingsByGroup])
 
     React.useEffect(() => {
         setMounted(true)
@@ -116,17 +124,22 @@ const Footer = () => {
                     {/* Column 4: Contact */}
                     <div>
                         <h4 className="text-foreground font-bold text-sm uppercase tracking-widest mb-6">Contact</h4>
-                        <ul className="space-y-4 text-sm">
+                        <ul className="space-y-6 text-sm">
                             <li className="text-muted-foreground">
                                 <span className="text-foreground font-semibold block mb-1">Email</span>
                                 <a href={`mailto:${contactEmail}`} className="hover:text-primary transition-colors">
                                     {contactEmail}
                                 </a>
                             </li>
-                            <li className="text-muted-foreground">
-                                <span className="text-foreground font-semibold block mb-1">Location</span>
-                                {contactAddress}
-                            </li>
+                            {businessAddresses.map((addr: any, i: number) => (
+                                <li key={i} className="text-muted-foreground">
+                                    <span className="text-foreground font-semibold block mb-1">{addr.label}</span>
+                                    <div className="space-y-1">
+                                        <p className="leading-relaxed opacity-80">{addr.address}</p>
+                                        {addr.phone && <p className="text-xs font-bold text-primary">{addr.phone}</p>}
+                                    </div>
+                                </li>
+                            ))}
                         </ul>
 
                         <div className="mt-8">

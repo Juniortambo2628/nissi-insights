@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { Search, X, ArrowRight, FileText, Briefcase, FolderOpen } from 'lucide-react'
+import { Search, X, ArrowRight, FileText, Briefcase, FolderOpen, Calendar } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import api from '@/lib/api'
@@ -20,10 +20,16 @@ interface SearchResult {
 const SearchDialog = () => {
     const [isOpen, setIsOpen] = useState(false)
     const [query, setQuery] = useState('')
-    const [results, setResults] = useState<{ services: SearchResult[], insights: SearchResult[], case_studies: SearchResult[] }>({ services: [], insights: [], case_studies: [] })
+    const [results, setResults] = useState<{ 
+        services: SearchResult[], 
+        insights: SearchResult[], 
+        case_studies: SearchResult[], 
+        events: SearchResult[],
+        pillars: SearchResult[]
+    }>({ services: [], insights: [], case_studies: [], events: [], pillars: [] })
     const [isSearching, setIsSearching] = useState(false)
     const [selectedIndex, setSelectedIndex] = useState(0)
-    const [searchType, setSearchType] = useState<'all' | 'services' | 'insights' | 'case_studies'>('all')
+    const [searchType, setSearchType] = useState<'all' | 'services' | 'insights' | 'case_studies' | 'events' | 'pillars'>('all')
     const inputRef = useRef<HTMLInputElement>(null)
     const debounceRef = useRef<NodeJS.Timeout | undefined>(undefined)
 
@@ -45,14 +51,14 @@ const SearchDialog = () => {
             setTimeout(() => inputRef.current?.focus(), 100)
         } else {
             setQuery('')
-            setResults({ services: [], insights: [], case_studies: [] })
+            setResults({ services: [], insights: [], case_studies: [], events: [], pillars: [] })
             setSelectedIndex(0)
         }
     }, [isOpen])
 
     const search = useCallback(async (q: string, type: string) => {
         if (q.length < 2) {
-            setResults({ services: [], insights: [], case_studies: [] })
+            setResults({ services: [], insights: [], case_studies: [], events: [], pillars: [] })
             return
         }
         setIsSearching(true)
@@ -78,12 +84,14 @@ const SearchDialog = () => {
 
     const allResults = [
         ...results.services.map(r => ({ ...r, type: 'service' as const, href: `/services/${r.slug}` })),
+        ...results.pillars.map(r => ({ ...r, type: 'pillar' as const, href: `/pillars/${r.slug}` })),
         ...results.insights.map(r => ({ ...r, type: 'insight' as const, href: `/insights/${r.slug}` })),
         ...results.case_studies.map(r => ({ ...r, type: 'case_study' as const, href: `/case-studies/${r.slug}` })),
+        ...results.events.map(r => ({ ...r, type: 'event' as const, href: `/events/${r.slug}` })),
     ]
 
-    const typeIcons = { service: Briefcase, insight: FileText, case_study: FolderOpen }
-    const typeLabels = { service: 'Service', insight: 'Insight', case_study: 'Case Study' }
+    const typeIcons = { service: Briefcase, insight: FileText, case_study: FolderOpen, event: Calendar, pillar: Search }
+    const typeLabels = { service: 'Service', insight: 'Insight', case_study: 'Case Study', event: 'Event', pillar: 'Pillar' }
 
     return (
         <>
@@ -139,9 +147,11 @@ const SearchDialog = () => {
                             <div className="flex items-center gap-2 px-5 py-2 border-b border-border bg-secondary/5">
                                 {[
                                     { id: 'all', label: 'All' },
+                                    { id: 'pillars', label: 'Pillars' },
                                     { id: 'services', label: 'Services' },
                                     { id: 'insights', label: 'Insights' },
-                                    { id: 'case_studies', label: 'Case Studies' }
+                                    { id: 'case_studies', label: 'Case Studies' },
+                                    { id: 'events', label: 'Events' }
                                 ].map(f => (
                                     <button
                                         key={f.id}

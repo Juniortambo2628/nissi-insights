@@ -16,6 +16,7 @@ import {
     Building2,
     FolderOpen,
     PenTool,
+    BookOpen,
     Users,
     MessageSquare,
     UserCircle,
@@ -23,7 +24,10 @@ import {
     Mail,
     ShieldCheck,
     Rocket,
-    Globe
+    Globe,
+    Calendar,
+    UserCheck,
+    Activity
 } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
@@ -61,9 +65,13 @@ const AdminSidebar = () => {
         { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
         { name: 'Services', href: '/admin/services', icon: Briefcase },
         { name: 'Pillars', href: '/admin/pillars', icon: Globe },
+        { name: 'Knowledge Base', href: '/admin/knowledge-base', icon: BookOpen },
         { name: 'Insights', href: '/admin/insights', icon: FileText },
         { name: 'Case Studies', href: '/admin/case-studies', icon: FolderOpen },
         { name: 'Team', href: '/admin/team', icon: UserCircle },
+        { name: 'Events', href: '/admin/events', icon: Calendar },
+        { name: 'Registrations', href: '/admin/registrations', icon: UserCheck },
+        { name: 'Event Analytics', href: '/admin/analytics/events', icon: Activity },
         { name: 'Widgets', href: '/admin/widgets', icon: Zap },
         { name: 'RSVPs', href: '/admin/rsvps', icon: Rocket },
         { name: 'Requests', href: '/admin/requests', icon: MessageSquare },

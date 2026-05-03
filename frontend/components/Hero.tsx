@@ -153,13 +153,8 @@ const Hero = () => {
                                 <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                             </Link>
                         </Button>
-                        <Button
-                            variant="outline"
-                            size="lg"
-                            className="h-14 px-10 text-base font-bold rounded-none border-foreground/20 text-foreground hover:bg-foreground/10 backdrop-blur-sm transition-all group"
-                        >
-                            <Download className="mr-2 h-5 w-5" />
-                            Download Free Report
+                        <Button variant="outline" size="lg" className="border-white/20 text-white hover:bg-white/10 rounded-none px-8 h-14 font-bold uppercase tracking-widest text-xs" asChild>
+                            <Link href="/events">Our Events</Link>
                         </Button>
                     </motion.div>
 

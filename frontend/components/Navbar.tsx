@@ -60,6 +60,8 @@ const Navbar = () => {
         }
         return [
             { name: 'Insights', href: '/insights' },
+            { name: 'Knowledgebase', href: '/knowledge-base' },
+            { name: 'Events', href: '/events' },
             { name: 'Case Studies', href: '/case-studies' },
             { name: 'Client Impact', href: '/client-impact' },
             { name: 'About', href: '/about' },
@@ -131,19 +133,19 @@ const Navbar = () => {
                             alt="Nissi Insights Logo"
                             width={240}
                             height={60}
-                            className="h-14 w-auto object-contain"
+                            className="h-10 w-auto max-w-[180px] object-contain"
                             priority
                         />
                     ) : (
-                        <div className="h-14 w-40 animate-pulse bg-muted/20 rounded" />
+                        <div className="h-10 w-40 animate-pulse bg-muted/20 rounded" />
                     )}
                 </Link>
 
                 {/* Desktop Menu */}
-                <div className="hidden lg:flex items-center gap-5">
+                <div className="hidden lg:flex items-center gap-4">
                     {/* Advisory Dropdown Trigger */}
                     <button
-                        className="text-[13px] font-bold uppercase tracking-widest hover:text-primary transition-colors text-foreground/90 flex items-center gap-1"
+                        className="text-[11px] font-bold uppercase tracking-wider hover:text-primary transition-colors text-foreground/90 flex items-center gap-1"
                         onMouseEnter={() => setIsMegaMenuOpen(true)}
                     >
                         Advisory <ChevronDown className="h-3 w-3" />
@@ -153,7 +155,7 @@ const Navbar = () => {
                         <Link
                             key={link.name}
                             href={link.href}
-                            className="text-[13px] font-bold uppercase tracking-widest hover:text-primary transition-colors text-foreground/90"
+                            className="text-[11px] font-bold uppercase tracking-wider hover:text-primary transition-colors text-foreground/90"
                         >
                             {link.name}
                         </Link>
@@ -243,7 +245,17 @@ const Navbar = () => {
                             {link.name}
                         </Link>
                     ))}
-                    <Button className="w-full rounded-none mt-2">Request a Consultation</Button>
+                    
+                    <div className="py-4 border-t border-border/50 mt-2">
+                        <div className="flex items-center justify-between px-2">
+                            <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Search Platform</span>
+                            <SearchDialog />
+                        </div>
+                    </div>
+
+                    <Button className="w-full rounded-none mt-2" asChild>
+                        <Link href="/consultation">Request a Consultation</Link>
+                    </Button>
                 </div>
             )}
         </nav>

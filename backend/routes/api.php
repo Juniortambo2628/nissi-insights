@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\TeamMemberController;
 use App\Http\Controllers\Api\ValueController;
 use App\Http\Controllers\Api\ConsultationRequestController;
 use App\Http\Controllers\Api\PillarController;
+use App\Http\Controllers\Api\ResourceController;
 
 /*
 |--------------------------------------------------------------------------
@@ -26,9 +27,18 @@ use App\Http\Controllers\Api\PillarController;
 
 use App\Http\Controllers\RsvpController;
 
+use App\Http\Controllers\Api\EventController;
+use App\Http\Controllers\Api\EventRegistrationController;
+use App\Http\Controllers\Api\StockController;
+
 // Public routes
 Route::post('/rsvps', [RsvpController::class, 'store']);
 Route::post('/login', [AuthController::class, 'login']);
+
+Route::get('/events', [EventController::class, 'index']);
+Route::get('/events/{slug}', [EventController::class, 'show']);
+Route::post('/events/register', [EventRegistrationController::class, 'store']);
+Route::get('/stocks', [StockController::class, 'index']);
 
 Route::get('/services', [ServiceController::class, 'index']);
 Route::get('/services/{service:slug}', [ServiceController::class, 'show']);
@@ -51,6 +61,10 @@ Route::get('/values', [ValueController::class, 'index']);
 // Pillars public
 Route::get('/pillars', [PillarController::class, 'index']);
 Route::get('/pillars/{slug}', [PillarController::class, 'show']);
+
+// Knowledge Base public
+Route::get('/resources', [ResourceController::class, 'index']);
+Route::get('/resources/{slug}', [ResourceController::class, 'show']);
 
 // Public — search, tracking, newsletter
 Route::get('/search', [SearchController::class, 'index']);
@@ -108,6 +122,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Analytics (admin)
     Route::get('/analytics/summary', [AnalyticsController::class, 'summary']);
+    Route::get('/analytics/events', [AnalyticsController::class, 'eventAnalytics']);
 
     // Subscribers (admin)
     Route::get('/subscribers', [SubscriberController::class, 'index']);
@@ -128,10 +143,25 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/pillars/{pillar}', [PillarController::class, 'update']);
     Route::delete('/pillars/{pillar}', [PillarController::class, 'destroy']);
 
+    // Knowledge Base (Resources) CRUD
+    Route::post('/resources', [ResourceController::class, 'store']);
+    Route::put('/resources/{resource}', [ResourceController::class, 'update']);
+    Route::delete('/resources/{resource}', [ResourceController::class, 'destroy']);
+
     // Consultation Requests
     Route::get('/consultation-requests', [ConsultationRequestController::class, 'index']);
     Route::put('/consultation-requests/{consultationRequest}', [ConsultationRequestController::class, 'update']);
     Route::delete('/consultation-requests/{consultationRequest}', [ConsultationRequestController::class, 'destroy']);
+
+    // Events CRUD
+    Route::post('/events', [EventController::class, 'store']);
+    Route::put('/events/{event}', [EventController::class, 'update']);
+    Route::delete('/events/{event}', [EventController::class, 'destroy']);
+
+    // Event Registrations
+    Route::get('/event-registrations', [EventRegistrationController::class, 'index']);
+    Route::put('/event-registrations/{eventRegistration}', [EventRegistrationController::class, 'update']);
+    Route::delete('/event-registrations/{eventRegistration}', [EventRegistrationController::class, 'destroy']);
 
     // Email Templates
     Route::post('/email-templates/preview', [\App\Http\Controllers\Api\EmailTemplateController::class, 'preview']);

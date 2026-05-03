@@ -10,7 +10,7 @@ import { motion } from 'framer-motion'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import { Pillar } from '@/types/api'
-import { cn } from '@/lib/utils'
+import { cn, getMediaUrl } from '@/lib/utils'
 
 export default function PillarPage() {
     const { slug } = useParams()
@@ -39,7 +39,7 @@ export default function PillarPage() {
                 tagline="Our Strategic Pillar"
                 title={pillar.title}
                 subtitle={pillar.overview || ''}
-                bgImage={heroMedia}
+                bgImage={getMediaUrl(heroMedia)}
             />
 
             {/* Pillar Content */}

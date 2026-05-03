@@ -7,6 +7,7 @@ import { useApi } from '@/hooks/use-api'
 import { ArrowRight, ArrowUpRight, Clock, Tag } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+import { getMediaUrl } from '@/lib/utils'
 
 const InsightsSection = () => {
     const { data: insights, isLoading, isError } = useApi('/insights')
@@ -64,7 +65,7 @@ const InsightsSection = () => {
                             <div className="relative h-full min-h-[500px] overflow-hidden bg-card border border-border/50">
                                 {featured.image && (
                                     <Image
-                                        src={featured.image}
+                                        src={getMediaUrl(featured.image)}
                                         alt={featured.title}
                                         fill
                                         sizes="(max-width: 1024px) 100vw, 50vw"
@@ -118,7 +119,7 @@ const InsightsSection = () => {
                                         {insight.image && (
                                             <div className="relative w-32 h-auto shrink-0 overflow-hidden hidden sm:block">
                                                 <Image
-                                                    src={insight.image}
+                                                    src={getMediaUrl(insight.image)}
                                                     alt={insight.title}
                                                     fill
                                                     sizes="128px"
