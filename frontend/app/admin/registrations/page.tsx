@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import AdminLayout from '@/components/admin/AdminLayout'
 import { useApi } from '@/hooks/use-api'
@@ -32,7 +32,7 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 
-const AdminRegistrationsPage = () => {
+const AdminRegistrationsContent = () => {
     const searchParams = useSearchParams()
     const router = useRouter()
     const eventId = searchParams.get('event_id')
@@ -248,6 +248,23 @@ const AdminRegistrationsPage = () => {
                 </div>
             </div>
         </AdminLayout>
+    )
+}
+
+const AdminRegistrationsPage = () => {
+    return (
+        <Suspense fallback={
+            <AdminLayout>
+                <div className="space-y-8 flex items-center justify-center min-h-[60vh]">
+                    <div className="flex flex-col items-center gap-4 text-muted-foreground">
+                        <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+                        <p className="text-sm font-medium">Loading registrations...</p>
+                    </div>
+                </div>
+            </AdminLayout>
+        }>
+            <AdminRegistrationsContent />
+        </Suspense>
     )
 }
 
