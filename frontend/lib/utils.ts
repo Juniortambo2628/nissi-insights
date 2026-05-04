@@ -28,7 +28,11 @@ export function getMediaUrl(path: string | undefined | null) {
     return `${baseUrl}/storage/${cleanPath}`
   }
 
-  // Fallback: if it's not starting with storage, uploads, or files, but it's not a local asset, 
-  // we might still want to prefix it if it's a relative path from the DB
-  return path.startsWith('/') ? path : `${baseUrl}/storage/${cleanPath}`
+  // If the path starts with '/' it could be a local Next.js public asset (e.g. /NI-Digital-Assets/...)
+  if (path.startsWith('/')) {
+    return path
+  }
+
+  // Fallback: bare filenames from the DB (e.g. hash.png) — route through API storage
+  return `${baseUrl}/storage/uploads/${cleanPath}`
 }
