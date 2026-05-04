@@ -4,8 +4,8 @@ use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
-// Production paths - Laravel app lives at /home/viafgsed/nissi-insights-core
-$appBase = '/home/viafgsed/nissi-insights-core';
+// Production paths - Laravel app lives at ../../nissi-insights-core relative to this file
+$appBase = __DIR__ . '/../../nissi-insights-core';
 
 // Determine if the application is in maintenance mode...
 if (file_exists($maintenance = $appBase.'/storage/framework/maintenance.php')) {
