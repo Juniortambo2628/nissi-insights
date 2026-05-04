@@ -83,11 +83,11 @@ const SearchDialog = () => {
     }
 
     const allResults = [
-        ...results.services.map(r => ({ ...r, type: 'service' as const, href: `/services/${r.slug}` })),
-        ...results.pillars.map(r => ({ ...r, type: 'pillar' as const, href: `/pillars/${r.slug}` })),
-        ...results.insights.map(r => ({ ...r, type: 'insight' as const, href: `/insights/${r.slug}` })),
-        ...results.case_studies.map(r => ({ ...r, type: 'case_study' as const, href: `/case-studies/${r.slug}` })),
-        ...results.events.map(r => ({ ...r, type: 'event' as const, href: `/events/${r.slug}` })),
+        ...(results.services || []).map(r => ({ ...r, type: 'service' as const, href: `/services/${r.slug}` })),
+        ...(results.pillars || []).map(r => ({ ...r, type: 'pillar' as const, href: `/pillars/${r.slug}` })),
+        ...(results.insights || []).map(r => ({ ...r, type: 'insight' as const, href: `/insights/${r.slug}` })),
+        ...(results.case_studies || []).map(r => ({ ...r, type: 'case_study' as const, href: `/case-studies/${r.slug}` })),
+        ...(results.events || []).map(r => ({ ...r, type: 'event' as const, href: `/events/${r.slug}` })),
     ]
 
     const typeIcons = { service: Briefcase, insight: FileText, case_study: FolderOpen, event: Calendar, pillar: Search }

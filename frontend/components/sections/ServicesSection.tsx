@@ -46,7 +46,24 @@ const ServicesSection = () => {
         'International Diplomacy': getSetting('services_video_diplomacy', '/assets/videos/services/international-diplomacy-video.mp4'),
     }
 
-    if (servicesLoading) return <div className="py-20 text-center text-white/40">Loading services...</div>
+    if (servicesLoading) {
+        return (
+            <div className="w-full py-32 bg-background">
+                <div className="max-w-[1400px] mx-auto px-6">
+                    <div className="h-4 w-32 bg-primary/20 animate-pulse mb-6" />
+                    <div className="h-12 w-1/2 bg-foreground/10 animate-pulse mb-16" />
+                    <div className="grid grid-cols-1 lg:grid-cols-5 gap-12">
+                        <div className="lg:col-span-2 aspect-[3/4] bg-secondary/10 animate-pulse rounded-xl" />
+                        <div className="lg:col-span-3 space-y-8">
+                            {[1, 2, 3, 4, 5].map(i => (
+                                <div key={i} className="h-20 w-full bg-secondary/5 animate-pulse rounded-lg" />
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )
+    }
     if (servicesError) return null
 
     const filteredServices = activeCategory === 'All'

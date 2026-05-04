@@ -15,7 +15,7 @@ class SearchController extends Controller
     public function index(Request $request)
     {
         $q = $request->get('q', '');
-        $type = $request->get('type', 'all'); // all, services, insights, case_studies
+        $type = $request->get('type', 'all'); // all, services, insights, case_studies, events, pillars
 
         if (strlen($q) < 2) {
             return response()->json([
@@ -64,7 +64,8 @@ class SearchController extends Controller
                 ->where(function ($query) use ($q, $words) {
                     $query->where('title', 'like', "%{$q}%")
                         ->orWhere('excerpt', 'like', "%{$q}%")
-                        ->orWhere('category', 'like', "%{$q}%");
+                        ->orWhere('category', 'like', "%{$q}%")
+                        ->orWhere('content', 'like', "%{$q}%");
                         
                     foreach ($words as $word) {
                         if (strlen($word) > 2) {
@@ -85,7 +86,9 @@ class SearchController extends Controller
             $results['case_studies'] = CaseStudy::where(function ($query) use ($q) {
                     $query->where('title', 'like', "%{$q}%")
                         ->orWhere('client_name', 'like', "%{$q}%")
-                        ->orWhere('description', 'like', "%{$q}%");
+                        ->orWhere('description', 'like', "%{$q}%")
+                        ->orWhere('challenge', 'like', "%{$q}%")
+                        ->orWhere('solution', 'like', "%{$q}%");
                 })
                 ->orderByRaw("CASE 
                     WHEN title LIKE ? THEN 1 
@@ -120,9 +123,11 @@ class SearchController extends Controller
         }
 
         if ($type === 'all' || $type === 'pillars') {
-            $results['pillars'] = Pillar::where(function ($query) use ($q, $words) {
+            $results['pillars'] = Pillar::where('is_active', true)
+                ->where(function ($query) use ($q, $words) {
                     $query->where('title', 'like', "%{$q}%")
-                        ->orWhere('overview', 'like', "%{$q}%");
+                        ->orWhere('overview', 'like', "%{$q}%")
+                        ->orWhere('content', 'like', "%{$q}%");
                         
                     foreach ($words as $word) {
                         if (strlen($word) > 2) {

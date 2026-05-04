@@ -28,7 +28,24 @@ export default function PillarPage() {
 
     const heroMedia = getHeroMedia() || pillar?.image || '/NI-Digital-Assets/financial-technology.jpg'
 
-    if (isLoading) return <div className="min-h-screen bg-background" />
+    if (isLoading) {
+        return (
+            <main className="flex min-h-screen flex-col bg-background">
+                <Navbar />
+                <div className="h-[60vh] bg-secondary/10 animate-pulse" />
+                <div className="max-w-[1200px] mx-auto px-6 py-24 w-full">
+                    <div className="h-4 w-32 bg-primary/20 animate-pulse mb-12" />
+                    <div className="h-40 w-full bg-foreground/5 animate-pulse mb-24" />
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className="h-64 bg-secondary/10 rounded-xl animate-pulse" />
+                        ))}
+                    </div>
+                </div>
+                <Footer />
+            </main>
+        )
+    }
     if (!pillar) return <div className="min-h-screen bg-background flex items-center justify-center">Pillar not found</div>
 
     return (

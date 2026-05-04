@@ -15,7 +15,25 @@ const KnowledgeBasePage = () => {
     const [searchQuery, setSearchQuery] = useState('')
     const [activeType, setActiveType] = useState('All')
 
-    if (isLoading) return <div className="min-h-screen flex items-center justify-center pt-24"><div className="animate-spin border-t-2 border-primary h-8 w-8 rounded-full" /></div>
+    if (isLoading) {
+        return (
+            <div className="flex min-h-screen flex-col bg-background relative">
+                <Navbar />
+                <main className="flex-1 bg-background pt-32 pb-24">
+                    <div className="max-w-[1400px] mx-auto px-6">
+                        <div className="h-4 w-32 bg-primary/20 animate-pulse mb-6" />
+                        <div className="h-12 w-1/2 bg-foreground/10 animate-pulse mb-16" />
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {[1, 2, 3, 4, 5, 6].map(i => (
+                                <div key={i} className="h-64 bg-secondary/10 border border-border/20 rounded-xl animate-pulse" />
+                            ))}
+                        </div>
+                    </div>
+                </main>
+                <Footer />
+            </div>
+        )
+    }
     if (isError) return <div className="min-h-screen flex items-center justify-center pt-24 text-muted-foreground">Failed to load resources.</div>
 
     // Extract unique types

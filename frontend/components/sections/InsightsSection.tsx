@@ -12,7 +12,24 @@ import { getMediaUrl } from '@/lib/utils'
 const InsightsSection = () => {
     const { data: insights, isLoading, isError } = useApi('/insights')
 
-    if (isLoading) return <div className="py-20 text-center text-white/40">Loading insights...</div>
+    if (isLoading) {
+        return (
+            <section id="insights" className="w-full py-32 bg-secondary/20 relative">
+                <div className="max-w-[1400px] mx-auto px-6">
+                    <div className="h-4 w-32 bg-primary/20 animate-pulse mb-6" />
+                    <div className="h-12 w-1/2 bg-foreground/10 animate-pulse mb-16" />
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div className="aspect-[16/10] bg-secondary/10 animate-pulse rounded-lg" />
+                        <div className="space-y-6">
+                            {[1, 2, 3].map(i => (
+                                <div key={i} className="h-32 bg-secondary/10 animate-pulse rounded-lg" />
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </section>
+        )
+    }
     if (isError || !insights || insights.length === 0) {
         return (
             <section id="insights" className="w-full py-32 bg-secondary/20 relative">

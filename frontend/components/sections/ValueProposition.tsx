@@ -9,7 +9,7 @@ import { useApi } from '@/hooks/use-api'
 import { getMediaUrl } from '@/lib/utils'
 
 const ValueProposition = () => {
-    const { data: settingsByGroup } = useApi('/settings')
+    const { data: settingsByGroup, isLoading } = useApi<Record<string, any[]>>('/settings')
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
     const { scrollY } = useScroll()
     const sectionScale = useTransform(scrollY, [200, 900], [0.95, 1])
@@ -54,6 +54,23 @@ const ValueProposition = () => {
         },
     ]
 
+
+    if (isLoading) {
+        return (
+            <section className="w-full py-0 bg-background relative overflow-hidden">
+                <div className="max-w-[1400px] mx-auto px-6 pt-24 pb-16">
+                    <div className="h-4 w-32 bg-primary/20 animate-pulse mb-4" />
+                    <div className="h-12 w-2/3 bg-foreground/10 animate-pulse mb-6" />
+                    <div className="h-20 w-1/2 bg-muted-foreground/10 animate-pulse" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 min-h-[600px]">
+                    {[1, 2, 3].map(i => (
+                        <div key={i} className="relative h-[600px] bg-secondary/10 animate-pulse border-r border-border/5" />
+                    ))}
+                </div>
+            </section>
+        )
+    }
 
     return (
         <motion.section className="w-full py-0 bg-background relative overflow-hidden" style={{ scale: sectionScale, opacity: sectionOpacity }}>
