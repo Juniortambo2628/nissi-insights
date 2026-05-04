@@ -25,7 +25,7 @@ export default function InsightsPage() {
         return setting?.value || defaultValue
     }
 
-    const heroMedia = getSetting('hero_insights_media', 'https://cdn.pixabay.com/video/2021/09/20/89324-609800721_large.mp4')
+    const heroMedia = getMediaUrl(getSetting('hero_insights_media', 'https://cdn.pixabay.com/video/2021/09/20/89324-609800721_large.mp4'))
 
     const categories = ['All', 'Energy', 'Fintech', 'Diplomacy', 'Market Analysis']
     const [activeCategory, setActiveCategory] = React.useState('All')

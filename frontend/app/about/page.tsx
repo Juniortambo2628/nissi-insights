@@ -38,7 +38,7 @@ export default function AboutPage() {
     const title = getSetting('about_title', 'Trusted intelligence for a complex world.')
     const tagline = getSetting('about_tagline', 'About Us')
     const story = getSetting('about_story', 'Nissi Insights provides strategic advisory and market intelligence to help decision-makers navigate the energy transition, financial technology, and international markets.')
-    const heroImage = getSetting('hero_about_media', '/NI-Digital-Assets/international-diplomacy.jpg')
+    const heroImage = getMediaUrl(getSetting('hero_about_media', '/NI-Digital-Assets/international-diplomacy.jpg'))
     const missionTitle = getSetting('about_mission_title', 'Our Mission')
     const missionText = getSetting('about_mission_text', 'To provide actionable intelligence that drives confident decision-making.')
     const visionTitle = getSetting('about_vision_title', 'Our Vision')

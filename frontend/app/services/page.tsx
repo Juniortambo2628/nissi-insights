@@ -7,7 +7,7 @@ import Footer from '@/components/Footer'
 import { motion } from 'framer-motion'
 import { ArrowRight, Zap, Landmark, Globe } from 'lucide-react'
 import Link from 'next/link'
-import { cn } from '@/lib/utils'
+import { cn, getMediaUrl } from '@/lib/utils'
 import ViewToggle, { ViewMode } from '@/components/ViewToggle'
 
 const categoryMeta: Record<string, { icon: any; color: string; gradient: string; description: string }> = {
@@ -47,7 +47,7 @@ export default function ServicesIndexPage() {
         return setting?.value || defaultValue
     }
 
-    const heroMedia = getSetting('hero_services_media', '/NI-Digital-Assets/financial-technology.jpg')
+    const heroMedia = getMediaUrl(getSetting('hero_services_media', '/NI-Digital-Assets/financial-technology.jpg'))
 
     const categories = Object.keys(categoryMeta)
 

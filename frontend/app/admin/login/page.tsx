@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import Image from 'next/image'
 import { useApi } from '@/hooks/use-api'
+import { getMediaUrl } from '@/lib/utils'
 
 const LoginPage = () => {
     const { data: settingsByGroup } = useApi('/settings')
@@ -30,7 +31,7 @@ const LoginPage = () => {
         return setting?.value || defaultValue
     }
 
-    const logo = getSetting('logo_dark', '/assets/logos/logo-dark-bg.png')
+    const logo = getMediaUrl(getSetting('logo_dark', '/assets/logos/logo-dark-bg.png'))
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()

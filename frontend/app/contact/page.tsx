@@ -12,6 +12,7 @@ import { motion } from 'framer-motion'
 import { useApi } from '@/hooks/use-api'
 import api from '@/lib/api'
 import { useToast } from '@/hooks/use-toast'
+import { getMediaUrl } from '@/lib/utils'
 
 export default function ContactPage() {
     const { data: settingsByGroup } = useApi('/settings')
@@ -31,7 +32,7 @@ export default function ContactPage() {
     const contactAddress = getSetting('contact_address', 'Level 32, One Canada Square\nCanary Wharf, London, E14 5AB')
     const mapUrl = getSetting('contact_map_url', 'https://www.google.com/maps/embed?...')
 
-    const heroMedia = getSetting('hero_contact_media', 'https://cdn.pixabay.com/video/2019/02/10/21262-316279619_large.mp4')
+    const heroMedia = getMediaUrl(getSetting('hero_contact_media', 'https://cdn.pixabay.com/video/2019/02/10/21262-316279619_large.mp4'))
 
     return (
         <main className="flex min-h-screen flex-col bg-background">

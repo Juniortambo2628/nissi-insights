@@ -8,6 +8,7 @@ import TestimonialsSection from "@/components/sections/TestimonialsSection";
 import ClientsSection from "@/components/sections/ClientsSection";
 import CTABanner from "@/components/sections/CTABanner";
 import VideoHero from "@/components/VideoHero";
+import { getMediaUrl } from '@/lib/utils'
 import CaseStudiesPreview from "@/components/sections/CaseStudiesPreview";
 
 export default function ClientImpactPage() {
@@ -21,7 +22,7 @@ export default function ClientImpactPage() {
         return setting?.value || defaultValue
     }
 
-    const heroMedia = getSetting('hero_client_impact_media', '/assets/videos/hero/01-energy.mp4')
+    const heroMedia = getMediaUrl(getSetting('hero_client_impact_media', '/assets/videos/hero/01-energy.mp4'))
 
     return (
         <main className="flex min-h-screen flex-col relative bg-background">

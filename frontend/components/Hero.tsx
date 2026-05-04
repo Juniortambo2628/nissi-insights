@@ -7,6 +7,7 @@ import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { ArrowRight, Download } from 'lucide-react'
 import { useApi } from '@/hooks/use-api'
+import { getMediaUrl } from '@/lib/utils'
 
 const Hero = () => {
     const { data: settingsByGroup } = useApi('/settings')
@@ -27,9 +28,9 @@ const Hero = () => {
     }
 
     const videos = [
-        getSetting('hero_home_video_1', '/assets/videos/hero/01-energy.mp4'),
-        getSetting('hero_home_video_2', '/assets/videos/hero/02-fintech.mp4'),
-        getSetting('hero_home_video_3', '/assets/videos/hero/03-diplomacy.mp4')
+        getMediaUrl(getSetting('hero_home_video_1', '/assets/videos/hero/01-energy.mp4')),
+        getMediaUrl(getSetting('hero_home_video_2', '/assets/videos/hero/02-fintech.mp4')),
+        getMediaUrl(getSetting('hero_home_video_3', '/assets/videos/hero/03-diplomacy.mp4'))
     ]
 
     const handleVideoEnd = () => {

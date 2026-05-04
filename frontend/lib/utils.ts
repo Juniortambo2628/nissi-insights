@@ -13,8 +13,8 @@ export function getMediaUrl(path: string | undefined | null) {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
   let cleanPath = path.startsWith('/') ? path.substring(1) : path
   
-  // If use specifically points to 'assets/', it's a frontend local asset
-  if (cleanPath.startsWith('assets/')) {
+  // If use specifically points to local folders, it's a frontend local asset
+  if (cleanPath.startsWith('assets/') || cleanPath.startsWith('logos/') || cleanPath.startsWith('NI-Digital-Assets/')) {
     return path // Return as is for local Next.js public assets
   }
 

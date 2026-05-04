@@ -26,7 +26,7 @@ export default function CaseStudiesPage() {
         return setting?.value || defaultValue
     }
 
-    const heroMedia = getSetting('hero_case_studies_media', 'https://cdn.pixabay.com/video/2020/06/05/40063-428753399_large.mp4')
+    const heroMedia = getMediaUrl(getSetting('hero_case_studies_media', 'https://cdn.pixabay.com/video/2020/06/05/40063-428753399_large.mp4'))
 
     const categories = ['All', 'Energy Advisory', 'Fintech', 'International Diplomacy']
     const [activeCategory, setActiveCategory] = React.useState('All')

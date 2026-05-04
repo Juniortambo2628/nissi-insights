@@ -7,6 +7,7 @@ import { ArrowRight } from 'lucide-react'
 import NewsletterSignup from './NewsletterSignup'
 import { useApi } from '@/hooks/use-api'
 import { useTheme } from 'next-themes'
+import { getMediaUrl } from '@/lib/utils'
 
 const Footer = () => {
     const { theme } = useTheme()
@@ -23,8 +24,8 @@ const Footer = () => {
         return setting?.value || defaultValue
     }
 
-    const logoWhiteBg = getSetting('logo_light', '/logos/nissi-landscape-white.png')
-    const logoBlackBg = getSetting('logo_dark', '/logos/nissi-landscape-black.png')
+    const logoWhiteBg = getMediaUrl(getSetting('logo_light', '/logos/nissi-landscape-white.png'))
+    const logoBlackBg = getMediaUrl(getSetting('logo_dark', '/logos/nissi-landscape-black.png'))
     const contactEmail = getSetting('contact_email', 'info@nissiinsights.com')
     const businessAddresses = React.useMemo(() => {
         const setting = (Object.values(settingsByGroup || {}).flat() as any[]).find(s => s.key === 'business_addresses')

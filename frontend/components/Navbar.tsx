@@ -28,8 +28,8 @@ const Navbar = () => {
         return setting?.value || defaultValue
     }
 
-    const logoWhiteBg = getSetting('logo_light', '/logos/nissi-landscape-white.png')
-    const logoBlackBg = getSetting('logo_dark', '/logos/nissi-landscape-black.png')
+    const logoWhiteBg = getMediaUrl(getSetting('logo_light', '/logos/nissi-landscape-white.png'))
+    const logoBlackBg = getMediaUrl(getSetting('logo_dark', '/logos/nissi-landscape-black.png'))
     
     // Stabilize logo for hydration
     const [logo, setLogo] = useState(logoWhiteBg)

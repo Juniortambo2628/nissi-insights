@@ -14,6 +14,7 @@ import { useApi } from '@/hooks/use-api'
 
 import { useToast } from '@/hooks/use-toast'
 import api from '@/lib/api'
+import { getMediaUrl } from '@/lib/utils'
 
 export default function ConsultationPage() {
     const { data: settingsByGroup } = useApi('/settings')
@@ -28,7 +29,7 @@ export default function ConsultationPage() {
         return setting?.value || defaultValue
     }
 
-    const heroMedia = getSetting('hero_consultation_media', 'https://cdn.pixabay.com/video/2016/11/28/6355-193847498_large.mp4')
+    const heroMedia = getMediaUrl(getSetting('hero_consultation_media', 'https://cdn.pixabay.com/video/2016/11/28/6355-193847498_large.mp4'))
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
