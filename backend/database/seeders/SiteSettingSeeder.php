@@ -18,6 +18,7 @@ class SiteSettingSeeder extends Seeder
                 ['name' => 'Advisory', 'href' => '#'],
                 ['name' => 'Insights', 'href' => '/insights'],
                 ['name' => 'Events', 'href' => '/events'],
+                ['name' => 'Knowledge Hub', 'href' => '/knowledge-base'],
                 ['name' => 'Case Studies', 'href' => '/case-studies'],
                 ['name' => 'About', 'href' => '/about'],
                 ['name' => 'Contact', 'href' => '/contact'],
@@ -65,6 +66,7 @@ class SiteSettingSeeder extends Seeder
             ['key' => 'rsvp_address', 'value' => 'Corner of, 183 Gigiri Close, United Nations Cresent, Nairobi', 'type' => 'text', 'group' => 'launch'],
             ['key' => 'rsvp_time', 'value' => '7:00-9:00 P.M.', 'type' => 'text', 'group' => 'launch'],
             ['key' => 'rsvp_menu_file', 'value' => '', 'type' => 'file', 'group' => 'launch'],
+            ['key' => 'rsvp_polling_enabled', 'value' => '0', 'type' => 'boolean', 'group' => 'launch'],
 
             // Pillar Heros
             ['key' => 'hero_pillar_energy_advisory', 'value' => '/NI-Digital-Assets/energy-advisory.jpg', 'type' => 'image', 'group' => 'hero-media'],

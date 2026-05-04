@@ -422,7 +422,12 @@ const AdminSettingsPage = () => {
                                         </div>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                             {settingsByGroup?.['launch']
-                                                ?.filter(s => !['rsvp_bg_light', 'rsvp_bg_dark'].includes(s.key))
+                                                ?.filter(s => !['rsvp_bg_light', 'rsvp_bg_dark', 'rsvp_polling_enabled'].includes(s.key))
+                                                ?.map(renderSetting)}
+                                        </div>
+                                        <div className="pt-6 border-t border-border/50">
+                                            {settingsByGroup?.['launch']
+                                                ?.filter(s => s.key === 'rsvp_polling_enabled')
                                                 ?.map(renderSetting)}
                                         </div>
                                     </CardContent>
@@ -519,7 +524,7 @@ const AdminSettingsPage = () => {
                                                             <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Link Destination</Label>
                                                             <div className="flex gap-2">
                                                                 <Select
-                                                                    value={['/', '/services', '/insights', '/case-studies', '/about', '/contact'].includes(link.href) ? link.href : 'custom'}
+                                                                    value={['/', '/services', '/insights', '/events', '/knowledge-base', '/case-studies', '/about', '/contact', '/client-impact', '/consultation', '/pillars/energy-advisory', '/pillars/fintech', '/pillars/international-diplomacy'].includes(link.href) ? link.href : 'custom'}
                                                                     onValueChange={(val) => {
                                                                         const newLinks = [...navLinks]
                                                                         if (val !== 'custom') {
@@ -535,14 +540,21 @@ const AdminSettingsPage = () => {
                                                                         <SelectItem value="/">Home Page</SelectItem>
                                                                         <SelectItem value="/services">Services Page</SelectItem>
                                                                         <SelectItem value="/insights">Insights Page</SelectItem>
+                                                                        <SelectItem value="/events">Events Page</SelectItem>
+                                                                        <SelectItem value="/knowledge-base">Knowledge Hub</SelectItem>
                                                                         <SelectItem value="/case-studies">Case Studies Page</SelectItem>
                                                                         <SelectItem value="/about">About Us Page</SelectItem>
                                                                         <SelectItem value="/contact">Contact Page</SelectItem>
+                                                                        <SelectItem value="/client-impact">Client Impact</SelectItem>
+                                                                        <SelectItem value="/consultation">Consultation</SelectItem>
+                                                                        <SelectItem value="/pillars/energy-advisory">Pillar: Energy Advisory</SelectItem>
+                                                                        <SelectItem value="/pillars/fintech">Pillar: Fintech</SelectItem>
+                                                                        <SelectItem value="/pillars/international-diplomacy">Pillar: International Diplomacy</SelectItem>
                                                                         <SelectItem value="custom">Custom Path...</SelectItem>
                                                                     </SelectContent>
                                                                 </Select>
                                                                 
-                                                                {(!['/', '/services', '/insights', '/case-studies', '/about', '/contact'].includes(link.href)) && (
+                                                                {(!['/', '/services', '/insights', '/events', '/knowledge-base', '/case-studies', '/about', '/contact', '/client-impact', '/consultation', '/pillars/energy-advisory', '/pillars/fintech', '/pillars/international-diplomacy'].includes(link.href)) && (
                                                                     <Input 
                                                                         value={link.href} 
                                                                         onChange={(e) => {

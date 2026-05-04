@@ -110,6 +110,7 @@ class SiteSettingController extends Controller
             'address' => $settings->get('rsvp_address', 'Gigiri, Nairobi'),
             'time' => $settings->get('rsvp_time', '7:00-9:00 P.M.'),
             'menuFile' => $menuFile,
+            'rsvp_polling_enabled' => filter_var($settings->get('rsvp_polling_enabled', '0'), FILTER_VALIDATE_BOOLEAN),
         ]);
     }
 }

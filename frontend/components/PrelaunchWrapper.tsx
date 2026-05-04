@@ -19,6 +19,7 @@ interface PrelaunchWrapperProps {
         address?: string
         time?: string
         menuFile?: string
+        rsvp_polling_enabled?: boolean
     } | null
 }
 
@@ -40,9 +41,11 @@ export default function PrelaunchWrapper({ children, launchSettings: initialSett
             }
         }
 
+        if (!launchSettings?.rsvp_polling_enabled) return;
+
         const interval = setInterval(checkSettings, 10000) // Poll every 10s
         return () => clearInterval(interval)
-    }, [launchSettings])
+    }, [launchSettings?.rsvp_polling_enabled])
 
     // Always permit access to the admin dashboard
     if (pathname?.startsWith('/admin')) {
