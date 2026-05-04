@@ -7,20 +7,13 @@ import { Button } from '@/components/ui/button'
 import { ArrowRight, Download, Mail } from 'lucide-react'
 import Link from 'next/link'
 import { useApi } from '@/hooks/use-api'
+import { useSettings } from '@/hooks/use-settings'
 
 
 const CTABanner = () => {
-    const { data: settingsByGroup } = useApi('/settings')
+    const { getSetting } = useSettings()
     const { scrollY } = useScroll()
     const backgroundY = useTransform(scrollY, [0, 5000], [0, -60])
-
-    // Helper to get setting value
-    const getSetting = (key: string, defaultValue: string) => {
-        if (!settingsByGroup) return defaultValue
-        const allSettings = Object.values(settingsByGroup).flat() as any[]
-        const setting = allSettings.find(s => s.key === key)
-        return setting?.value || defaultValue
-    }
 
     const badgeText = getSetting('cta_badge', 'Limited availability — book your slot')
     const title = getSetting('cta_title', 'Ready to unlock your\nstrategic advantage?')

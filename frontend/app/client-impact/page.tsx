@@ -10,17 +10,10 @@ import CTABanner from "@/components/sections/CTABanner";
 import VideoHero from "@/components/VideoHero";
 import { getMediaUrl } from '@/lib/utils'
 import CaseStudiesPreview from "@/components/sections/CaseStudiesPreview";
+import { useSettings } from '@/hooks/use-settings'
 
 export default function ClientImpactPage() {
-    const { data: settingsByGroup } = useApi('/settings')
-
-    // Helper to get setting value
-    const getSetting = (key: string, defaultValue: string) => {
-        if (!settingsByGroup) return defaultValue
-        const allSettings = Object.values(settingsByGroup).flat() as any[]
-        const setting = allSettings.find(s => s.key === key)
-        return setting?.value || defaultValue
-    }
+    const { getSetting } = useSettings()
 
     const heroMedia = getMediaUrl(getSetting('hero_client_impact_media', '/assets/videos/hero/01-energy.mp4'))
 

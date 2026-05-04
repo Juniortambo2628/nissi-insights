@@ -9,21 +9,14 @@ import { useApi } from '@/hooks/use-api'
 import { useTheme } from 'next-themes'
 import { getMediaUrl } from '@/lib/utils'
 import EnergyStocks from './sections/EnergyStocks'
+import { useSettings } from '@/hooks/use-settings'
 
 const Footer = () => {
     const { theme } = useTheme()
     const [mounted, setMounted] = React.useState(false)
-    const { data: settingsByGroup } = useApi('/settings')
+    const { getSetting, settingsByGroup } = useSettings()
 
     const { data: services } = useApi('/services')
-
-    // Helper to get setting value
-    const getSetting = (key: string, defaultValue: string) => {
-        if (!settingsByGroup) return defaultValue
-        const allSettings = Object.values(settingsByGroup).flat() as any[]
-        const setting = allSettings.find(s => s.key === key)
-        return setting?.value || defaultValue
-    }
 
     const logoWhiteBg = getMediaUrl(getSetting('logo_light', '/logos/nissi-landscape-white.png'))
     const logoBlackBg = getMediaUrl(getSetting('logo_dark', '/logos/nissi-landscape-black.png'))

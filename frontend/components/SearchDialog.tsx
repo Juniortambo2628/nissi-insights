@@ -25,11 +25,12 @@ const SearchDialog = () => {
         insights: SearchResult[], 
         case_studies: SearchResult[], 
         events: SearchResult[],
-        pillars: SearchResult[]
-    }>({ services: [], insights: [], case_studies: [], events: [], pillars: [] })
+        pillars: SearchResult[],
+        resources: SearchResult[]
+    }>({ services: [], insights: [], case_studies: [], events: [], pillars: [], resources: [] })
     const [isSearching, setIsSearching] = useState(false)
     const [selectedIndex, setSelectedIndex] = useState(0)
-    const [searchType, setSearchType] = useState<'all' | 'services' | 'insights' | 'case_studies' | 'events' | 'pillars'>('all')
+    const [searchType, setSearchType] = useState<'all' | 'services' | 'insights' | 'case_studies' | 'events' | 'pillars' | 'resources'>('all')
     const inputRef = useRef<HTMLInputElement>(null)
     const debounceRef = useRef<NodeJS.Timeout | undefined>(undefined)
 
@@ -51,14 +52,14 @@ const SearchDialog = () => {
             setTimeout(() => inputRef.current?.focus(), 100)
         } else {
             setQuery('')
-            setResults({ services: [], insights: [], case_studies: [], events: [], pillars: [] })
+            setResults({ services: [], insights: [], case_studies: [], events: [], pillars: [], resources: [] })
             setSelectedIndex(0)
         }
     }, [isOpen])
 
     const search = useCallback(async (q: string, type: string) => {
         if (q.length < 2) {
-            setResults({ services: [], insights: [], case_studies: [], events: [], pillars: [] })
+            setResults({ services: [], insights: [], case_studies: [], events: [], pillars: [], resources: [] })
             return
         }
         setIsSearching(true)
@@ -88,10 +89,11 @@ const SearchDialog = () => {
         ...(results.insights || []).map(r => ({ ...r, type: 'insight' as const, href: `/insights/${r.slug}` })),
         ...(results.case_studies || []).map(r => ({ ...r, type: 'case_study' as const, href: `/case-studies/${r.slug}` })),
         ...(results.events || []).map(r => ({ ...r, type: 'event' as const, href: `/events/${r.slug}` })),
+        ...(results.resources || []).map(r => ({ ...r, type: 'resource' as const, href: `/knowledge-base/${r.slug}` })),
     ]
 
-    const typeIcons = { service: Briefcase, insight: FileText, case_study: FolderOpen, event: Calendar, pillar: Search }
-    const typeLabels = { service: 'Service', insight: 'Insight', case_study: 'Case Study', event: 'Event', pillar: 'Pillar' }
+    const typeIcons = { service: Briefcase, insight: FileText, case_study: FolderOpen, event: Calendar, pillar: Search, resource: FileText }
+    const typeLabels = { service: 'Service', insight: 'Insight', case_study: 'Case Study', event: 'Event', pillar: 'Pillar', resource: 'Resource' }
 
     return (
         <>
@@ -151,7 +153,8 @@ const SearchDialog = () => {
                                     { id: 'services', label: 'Services' },
                                     { id: 'insights', label: 'Insights' },
                                     { id: 'case_studies', label: 'Case Studies' },
-                                    { id: 'events', label: 'Events' }
+                                    { id: 'events', label: 'Events' },
+                                    { id: 'resources', label: 'Knowledge Base' }
                                 ].map(f => (
                                     <button
                                         key={f.id}

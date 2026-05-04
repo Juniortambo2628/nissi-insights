@@ -11,23 +11,16 @@ import { motion } from 'framer-motion'
 import { Calendar, Clock, Globe, Briefcase, CheckCircle2 } from 'lucide-react'
 
 import { useApi } from '@/hooks/use-api'
+import { useSettings } from '@/hooks/use-settings'
 
 import { useToast } from '@/hooks/use-toast'
 import api from '@/lib/api'
 import { getMediaUrl } from '@/lib/utils'
 
 export default function ConsultationPage() {
-    const { data: settingsByGroup } = useApi('/settings')
+    const { getSetting } = useSettings()
     const { toast } = useToast()
     const [isSubmitting, setIsSubmitting] = React.useState(false)
-
-    // Helper to get setting value
-    const getSetting = (key: string, defaultValue: string) => {
-        if (!settingsByGroup) return defaultValue
-        const allSettings = Object.values(settingsByGroup).flat() as any[]
-        const setting = allSettings.find(s => s.key === key)
-        return setting?.value || defaultValue
-    }
 
     const heroMedia = getMediaUrl(getSetting('hero_consultation_media', 'https://cdn.pixabay.com/video/2016/11/28/6355-193847498_large.mp4'))
 

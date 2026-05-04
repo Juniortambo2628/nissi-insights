@@ -9,6 +9,7 @@ import { ArrowRight, Zap, Landmark, Globe } from 'lucide-react'
 import Link from 'next/link'
 import { cn, getMediaUrl } from '@/lib/utils'
 import ViewToggle, { ViewMode } from '@/components/ViewToggle'
+import { useSettings } from '@/hooks/use-settings'
 
 const categoryMeta: Record<string, { icon: any; color: string; gradient: string; description: string }> = {
     'Energy Advisory': {
@@ -35,17 +36,9 @@ const categoryMeta: Record<string, { icon: any; color: string; gradient: string;
 import VideoHero from '@/components/VideoHero'
 
 export default function ServicesIndexPage() {
-    const { data: settingsByGroup } = useApi('/settings')
+    const { getSetting } = useSettings()
     const { data: services, isLoading } = useApi('/services')
     const [viewMode, setViewMode] = React.useState<ViewMode>('grid')
-
-    // Helper to get setting value
-    const getSetting = (key: string, defaultValue: string) => {
-        if (!settingsByGroup) return defaultValue
-        const allSettings = Object.values(settingsByGroup).flat() as any[]
-        const setting = allSettings.find(s => s.key === key)
-        return setting?.value || defaultValue
-    }
 
     const heroMedia = getMediaUrl(getSetting('hero_services_media', '/NI-Digital-Assets/financial-technology.jpg'))
 

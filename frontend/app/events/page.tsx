@@ -11,6 +11,7 @@ import api from '@/lib/api'
 import { format } from 'date-fns'
 import { getMediaUrl } from '@/lib/utils'
 import { useApi } from '@/hooks/use-api'
+import { useSettings } from '@/hooks/use-settings'
 
 interface Event {
     id: number
@@ -27,15 +28,7 @@ const EventsPage = () => {
     const [events, setEvents] = useState<Event[]>([])
     const [isLoading, setIsLoading] = useState(true)
 
-    const { data: settingsByGroup } = useApi('/settings')
-    
-    // Helper to get setting value
-    const getSetting = (key: string, defaultValue: string) => {
-        if (!settingsByGroup) return defaultValue
-        const allSettings = Object.values(settingsByGroup).flat() as any[]
-        const setting = allSettings.find(s => s.key === key)
-        return setting?.value || defaultValue
-    }
+    const { getSetting } = useSettings()
 
     const heroImage = getSetting('hero_events_media', '/NI-Digital-Assets/corporate-event.jpg')
 

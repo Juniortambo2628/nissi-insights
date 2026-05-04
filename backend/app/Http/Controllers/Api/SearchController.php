@@ -8,6 +8,7 @@ use App\Models\Insight;
 use App\Models\CaseStudy;
 use App\Models\Event;
 use App\Models\Pillar;
+use App\Models\Resource;
 use Illuminate\Http\Request;
 
 class SearchController extends Controller
@@ -23,7 +24,8 @@ class SearchController extends Controller
                 'insights' => [], 
                 'case_studies' => [],
                 'events' => [],
-                'pillars' => []
+                'pillars' => [],
+                'resources' => []
             ]);
         }
 
@@ -33,6 +35,7 @@ class SearchController extends Controller
             'case_studies' => [],
             'events' => [],
             'pillars' => [],
+            'resources' => [],
         ];
 
         $words = explode(' ', $q);
@@ -141,6 +144,28 @@ class SearchController extends Controller
                     ELSE 3 END", ["{$q}", "{$q}%"])
                 ->select('id', 'title', 'slug', 'overview')
                 ->limit(5)
+                ->get();
+        }
+        
+        if ($type === 'all' || $type === 'resources') {
+            $results['resources'] = Resource::where('is_published', true)
+                ->where(function ($query) use ($q, $words) {
+                    $query->where('title', 'like', "%{$q}%")
+                        ->orWhere('description', 'like', "%{$q}%")
+                        ->orWhere('type', 'like', "%{$q}%");
+                        
+                    foreach ($words as $word) {
+                        if (strlen($word) > 2) {
+                            $query->orWhere('title', 'like', "%{$word}%");
+                        }
+                    }
+                })
+                ->orderByRaw("CASE 
+                    WHEN title LIKE ? THEN 1 
+                    WHEN title LIKE ? THEN 2 
+                    ELSE 3 END", ["{$q}", "{$q}%"])
+                ->select('id', 'title', 'slug', 'type', 'description')
+                ->limit(10)
                 ->get();
         }
 

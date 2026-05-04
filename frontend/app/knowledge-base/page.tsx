@@ -10,20 +10,13 @@ import { getMediaUrl } from '@/lib/utils'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import VideoHero from '@/components/VideoHero'
+import { useSettings } from '@/hooks/use-settings'
 
 const KnowledgeBasePage = () => {
     const { data: resources, isLoading, isError } = useApi('/resources')
-    const { data: settingsByGroup } = useApi('/settings')
+    const { getSetting } = useSettings()
     const [searchQuery, setSearchQuery] = useState('')
     const [activeType, setActiveType] = useState('All')
-
-    // Helper to get setting value
-    const getSetting = (key: string, defaultValue: string) => {
-        if (!settingsByGroup) return defaultValue
-        const allSettings = Object.values(settingsByGroup).flat() as any[]
-        const setting = allSettings.find(s => s.key === key)
-        return setting?.value || defaultValue
-    }
 
     const heroImage = getSetting('hero_knowledge_base_media', '/NI-Digital-Assets/financial-technology.jpg')
 

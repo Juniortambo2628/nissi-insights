@@ -10,6 +10,7 @@ import { useApi } from '@/hooks/use-api'
 import { ArrowRight, Linkedin, Zap, Landmark, Globe, Shield, Star, Award, Heart, Info, X } from 'lucide-react'
 import Link from 'next/link'
 import { getMediaUrl } from '@/lib/utils'
+import { useSettings } from '@/hooks/use-settings'
 import {
     Dialog,
     DialogContent,
@@ -23,17 +24,9 @@ const availableIcons: Record<string, any> = {
 }
 
 export default function AboutPage() {
-    const { data: settingsByGroup } = useApi('/settings')
+    const { getSetting } = useSettings()
     const { data: team } = useApi<any[]>('/team-members')
     const { data: values } = useApi<any[]>('/values')
-    
-    // Helper to get setting value
-    const getSetting = (key: string, defaultValue: string) => {
-        if (!settingsByGroup) return defaultValue
-        const allSettings = Object.values(settingsByGroup).flat() as any[]
-        const setting = allSettings.find(s => s.key === key)
-        return setting?.value || defaultValue
-    }
 
     const title = getSetting('about_title', 'Trusted intelligence for a complex world.')
     const tagline = getSetting('about_tagline', 'About Us')

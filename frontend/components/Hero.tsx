@@ -8,9 +8,10 @@ import { Button } from '@/components/ui/button'
 import { ArrowRight, Download } from 'lucide-react'
 import { useApi } from '@/hooks/use-api'
 import { getMediaUrl } from '@/lib/utils'
+import { useSettings } from '@/hooks/use-settings'
 
 const Hero = () => {
-    const { data: settingsByGroup } = useApi('/settings')
+    const { getSetting } = useSettings()
     const { scrollY } = useScroll()
     const y = useTransform(scrollY, [0, 800], [0, 200])
     const opacity = useTransform(scrollY, [0, 600], [1, 0])
@@ -18,14 +19,6 @@ const Hero = () => {
 
     const [currentWord, setCurrentWord] = useState(0)
     const [videoIndex, setVideoIndex] = useState(0)
-    
-    // Helper to get setting value
-    const getSetting = (key: string, defaultValue: string) => {
-        if (!settingsByGroup) return defaultValue
-        const allSettings = Object.values(settingsByGroup).flat() as any[]
-        const setting = allSettings.find(s => s.key === key)
-        return setting?.value || defaultValue
-    }
 
     const videos = [
         getMediaUrl(getSetting('hero_home_video_1', '/assets/videos/hero/01-energy.mp4')),
@@ -154,7 +147,7 @@ const Hero = () => {
                                 <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                             </Link>
                         </Button>
-                        <Button variant="outline" size="lg" className="border-white/20 text-black dark:text-white hover:bg-white/10 rounded-none px-8 h-14 font-bold uppercase tracking-widest text-xs" asChild>
+                        <Button variant="outline" size="lg" className="border-foreground/20 text-foreground hover:bg-foreground/10 rounded-none px-8 h-14 font-bold uppercase tracking-widest text-xs" asChild>
                             <Link href="/events">Our Events</Link>
                         </Button>
                     </motion.div>

@@ -6,6 +6,7 @@ import { useApi } from '@/hooks/use-api'
 import { ArrowRight, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+import { useSettings } from '@/hooks/use-settings'
 
 const categories = ['All', 'Energy Advisory', 'Fintech', 'International Diplomacy']
 
@@ -21,20 +22,12 @@ const MAX_SERVICES_SHOWN = 7
 
 const ServicesSection = () => {
     const { data: services, isLoading: servicesLoading, isError: servicesError } = useApi('/services')
-    const { data: settingsByGroup } = useApi('/settings')
+    const { getSetting } = useSettings()
     
     const [activeCategory, setActiveCategory] = useState('All')
     const [expandedService, setExpandedService] = useState<number | null>(null)
     const { scrollY } = useScroll()
     const sectionScale = useTransform(scrollY, [0, 4000], [0.98, 1])
-
-    // Helper to get setting value
-    const getSetting = (key: string, defaultValue: string) => {
-        if (!settingsByGroup) return defaultValue
-        const allSettings = Object.values(settingsByGroup).flat() as any[]
-        const setting = allSettings.find(s => s.key === key)
-        return setting?.value || defaultValue
-    }
 
     const sectionTagline = getSetting('services_tagline', 'Our Services')
     const sectionTitle = getSetting('services_title', 'Explore our portfolio')

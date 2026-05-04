@@ -1,22 +1,24 @@
-import { useApi } from './use-api'
-import { SiteSetting } from '@/types/api'
+"use client"
+
+import { useApi } from "./use-api"
 
 export function useSettings() {
-    const { data: settingsByGroup, isLoading, isError } = useApi<Record<string, SiteSetting[]>>('/settings')
+    const { data: settingsByGroup, isLoading, isError } = useApi('/settings')
 
-    const getSetting = (key: string) => {
-        if (!settingsByGroup) return null
-        for (const group of Object.values(settingsByGroup)) {
-            const setting = group.find(s => s.key === key)
-            if (setting) return setting.value
-        }
-        return null
+    const getSetting = (key: string, defaultValue: string = '') => {
+        if (!settingsByGroup) return defaultValue
+        
+        // Settings can be grouped or a flat list depending on API response
+        // Usually it's { groupName: [ {key, value}, ... ] }
+        const allSettings = Object.values(settingsByGroup).flat() as any[]
+        const setting = allSettings.find(s => s.key === key)
+        return setting?.value ?? defaultValue
     }
 
-    const isEnabled = (key: string) => {
-        const val = getSetting(key)
-        return val === '1' || val === 'true'
+    return {
+        getSetting,
+        settingsByGroup,
+        isLoading,
+        isError
     }
-
-    return { getSetting, isEnabled, isLoading, isError }
 }

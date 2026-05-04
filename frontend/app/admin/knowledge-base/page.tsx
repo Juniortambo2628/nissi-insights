@@ -52,7 +52,9 @@ const AdminKnowledgeBasePage = () => {
         title: '',
         type: 'White Paper',
         description: '',
+        content: '',
         file_path: '',
+        external_link: '',
         thumbnail: '',
         tags: [] as string[],
         is_published: false
@@ -71,12 +73,13 @@ const AdminKnowledgeBasePage = () => {
                     parsedTags = []
                 }
             }
-            
             setFormData({
                 title: resource.title,
                 type: resource.type,
                 description: resource.description || '',
+                content: resource.content || '',
                 file_path: resource.file_path || '',
+                external_link: resource.external_link || '',
                 thumbnail: resource.thumbnail || '',
                 tags: parsedTags,
                 is_published: !!resource.is_published
@@ -87,7 +90,9 @@ const AdminKnowledgeBasePage = () => {
                 title: '',
                 type: 'White Paper',
                 description: '',
+                content: '',
                 file_path: '',
+                external_link: '',
                 thumbnail: '',
                 tags: [],
                 is_published: false
@@ -238,8 +243,12 @@ const AdminKnowledgeBasePage = () => {
                                 </select>
                             </div>
                             <div className="space-y-2">
-                                <Label>Description</Label>
-                                <Textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="Brief summary of the resource..." className="min-h-[100px]" />
+                                <Label>Description (Short)</Label>
+                                <Textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="Brief summary of the resource..." className="min-h-[80px]" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Detailed Content</Label>
+                                <Textarea value={formData.content} onChange={e => setFormData({...formData, content: e.target.value})} placeholder="Full content or executive summary..." className="min-h-[200px]" />
                             </div>
                             <div className="space-y-2">
                                 <Label>Tags (Comma separated)</Label>
@@ -264,6 +273,11 @@ const AdminKnowledgeBasePage = () => {
                                     label=""
                                 />
                                 <p className="text-[10px] text-muted-foreground mt-1">Upload the resource document.</p>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>External Link (Optional)</Label>
+                                <Input value={formData.external_link} onChange={e => setFormData({...formData, external_link: e.target.value})} placeholder="https://example.com/report" />
+                                <p className="text-[10px] text-muted-foreground mt-1">Provide an external link if the resource is hosted elsewhere.</p>
                             </div>
                             <div className="flex items-center justify-between p-4 bg-secondary/10 rounded-lg">
                                 <div className="space-y-0.5">

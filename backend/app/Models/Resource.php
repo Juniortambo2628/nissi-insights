@@ -13,6 +13,8 @@ class Resource extends Model
         'file_path',
         'thumbnail',
         'description',
+        'content',
+        'external_link',
         'tags',
         'is_published',
     ];

@@ -8,10 +8,11 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import Image from 'next/image'
 import { useApi } from '@/hooks/use-api'
+import { useSettings } from '@/hooks/use-settings'
 import { getMediaUrl } from '@/lib/utils'
 
 const LoginPage = () => {
-    const { data: settingsByGroup } = useApi('/settings')
+    const { getSetting } = useSettings()
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
@@ -22,14 +23,6 @@ const LoginPage = () => {
     useEffect(() => {
         emailRef.current?.focus()
     }, [])
-
-    // Helper to get setting value
-    const getSetting = (key: string, defaultValue: string) => {
-        if (!settingsByGroup) return defaultValue
-        const allSettings = Object.values(settingsByGroup).flat() as any[]
-        const setting = allSettings.find(s => s.key === key)
-        return setting?.value || defaultValue
-    }
 
     const logo = getMediaUrl(getSetting('logo_dark', '/assets/logos/logo-dark-bg.png'))
 

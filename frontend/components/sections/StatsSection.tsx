@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { motion, useInView, useScroll, useTransform } from 'framer-motion'
 import Image from 'next/image'
 import { useApi } from '@/hooks/use-api'
+import { useSettings } from '@/hooks/use-settings'
 
 function AnimatedCounter({ target, suffix = '' }: { target: string; suffix?: string }) {
     const ref = useRef<HTMLSpanElement>(null)
@@ -40,17 +41,9 @@ function AnimatedCounter({ target, suffix = '' }: { target: string; suffix?: str
 
 const StatsSection = () => {
     const { data: stats, isLoading: statsLoading } = useApi('/stats')
-    const { data: settingsByGroup } = useApi('/settings')
+    const { getSetting } = useSettings()
     const { scrollY } = useScroll()
     const backgroundY = useTransform(scrollY, [0, 3000], [0, -80])
-
-    // Helper to get setting value
-    const getSetting = (key: string, defaultValue: string) => {
-        if (!settingsByGroup) return defaultValue
-        const allSettings = Object.values(settingsByGroup).flat() as any[]
-        const setting = allSettings.find(s => s.key === key)
-        return setting?.value || defaultValue
-    }
 
     const sectionTagline = getSetting('stats_tagline', 'Proven Impact')
     const sectionTitle = getSetting('stats_title', 'Numbers that speak for themselves.')

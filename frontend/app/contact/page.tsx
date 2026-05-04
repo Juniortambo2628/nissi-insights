@@ -13,19 +13,12 @@ import { useApi } from '@/hooks/use-api'
 import api from '@/lib/api'
 import { useToast } from '@/hooks/use-toast'
 import { getMediaUrl } from '@/lib/utils'
+import { useSettings } from '@/hooks/use-settings'
 
 export default function ContactPage() {
-    const { data: settingsByGroup } = useApi('/settings')
+    const { getSetting } = useSettings()
     const { toast } = useToast()
     const [isSubmitting, setIsSubmitting] = useState(false)
-
-    // Helper to get setting value
-    const getSetting = (key: string, defaultValue: string) => {
-        if (!settingsByGroup) return defaultValue
-        const allSettings = Object.values(settingsByGroup).flat() as any[]
-        const setting = allSettings.find(s => s.key === key)
-        return setting?.value || defaultValue
-    }
 
     const contactEmail = getSetting('contact_email', 'advisory@nissi-insights.com')
     const contactPhone = getSetting('contact_phone', '+44 (0) 20 7123 4567')

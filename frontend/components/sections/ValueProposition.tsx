@@ -7,21 +7,10 @@ import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { useApi } from '@/hooks/use-api'
 import { getMediaUrl } from '@/lib/utils'
+import { useSettings } from '@/hooks/use-settings'
 
 const ValueProposition = () => {
-    const { data: settingsByGroup, isLoading } = useApi<Record<string, any[]>>('/settings')
-    const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
-    const { scrollY } = useScroll()
-    const sectionScale = useTransform(scrollY, [200, 900], [0.95, 1])
-    const sectionOpacity = useTransform(scrollY, [200, 600], [0.7, 1])
-
-    // Helper to get setting value
-    const getSetting = (key: string, defaultValue: string) => {
-        if (!settingsByGroup) return defaultValue
-        const allSettings = Object.values(settingsByGroup).flat() as any[]
-        const setting = allSettings.find(s => s.key === key)
-        return setting?.value || defaultValue
-    }
+    const { getSetting, isLoading } = useSettings()
 
     const tagline = getSetting('vp_section_tagline', 'What We Do')
     const title = getSetting('vp_section_title', 'Three Pillars of Trusted Intelligence')

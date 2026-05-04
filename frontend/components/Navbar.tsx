@@ -10,23 +10,16 @@ import SearchDialog from './SearchDialog'
 import { ThemeToggle } from './ThemeToggle'
 import { useApi } from '@/hooks/use-api'
 import { useTheme } from 'next-themes'
+import { useSettings } from '@/hooks/use-settings'
 
 const Navbar = () => {
     const { theme } = useTheme()
     const { data: services } = useApi('/services')
-    const { data: settingsByGroup } = useApi('/settings')
+    const { getSetting, settingsByGroup } = useSettings()
     const [isScrolled, setIsScrolled] = useState(false)
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false)
     const [mounted, setMounted] = useState(false)
-
-    // Helper to get setting value
-    const getSetting = (key: string, defaultValue: string) => {
-        if (!settingsByGroup) return defaultValue
-        const allSettings = Object.values(settingsByGroup).flat() as any[]
-        const setting = allSettings.find(s => s.key === key)
-        return setting?.value || defaultValue
-    }
 
     const logoWhiteBg = getMediaUrl(getSetting('logo_light', '/logos/nissi-landscape-white.png'))
     const logoBlackBg = getMediaUrl(getSetting('logo_dark', '/logos/nissi-landscape-black.png'))

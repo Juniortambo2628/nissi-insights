@@ -12,19 +12,12 @@ import Image from 'next/image'
 import { Tooltip } from '@/components/ui/tooltip'
 import { cn, getMediaUrl } from '@/lib/utils'
 import ViewToggle, { ViewMode } from '@/components/ViewToggle'
+import { useSettings } from '@/hooks/use-settings'
 
 export default function CaseStudiesPage() {
-    const { data: settingsByGroup } = useApi('/settings')
+    const { getSetting } = useSettings()
     const { data: caseStudies, isLoading } = useApi('/case-studies')
     const [viewMode, setViewMode] = React.useState<ViewMode>('grid')
-
-    // Helper to get setting value
-    const getSetting = (key: string, defaultValue: string) => {
-        if (!settingsByGroup) return defaultValue
-        const allSettings = Object.values(settingsByGroup).flat() as any[]
-        const setting = allSettings.find(s => s.key === key)
-        return setting?.value || defaultValue
-    }
 
     const heroMedia = getMediaUrl(getSetting('hero_case_studies_media', 'https://cdn.pixabay.com/video/2020/06/05/40063-428753399_large.mp4'))
 

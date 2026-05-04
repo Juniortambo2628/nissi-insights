@@ -11,19 +11,12 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { cn, getMediaUrl } from '@/lib/utils'
 import ViewToggle, { ViewMode } from '@/components/ViewToggle'
+import { useSettings } from '@/hooks/use-settings'
 
 export default function InsightsPage() {
-    const { data: settingsByGroup } = useApi('/settings')
+    const { getSetting } = useSettings()
     const { data: insights, isLoading } = useApi('/insights')
     const [viewMode, setViewMode] = React.useState<ViewMode>('grid')
-
-    // Helper to get setting value
-    const getSetting = (key: string, defaultValue: string) => {
-        if (!settingsByGroup) return defaultValue
-        const allSettings = Object.values(settingsByGroup).flat() as any[]
-        const setting = allSettings.find(s => s.key === key)
-        return setting?.value || defaultValue
-    }
 
     const heroMedia = getMediaUrl(getSetting('hero_insights_media', 'https://cdn.pixabay.com/video/2021/09/20/89324-609800721_large.mp4'))
 

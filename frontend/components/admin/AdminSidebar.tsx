@@ -33,21 +33,14 @@ import {
 import { cn, getMediaUrl } from '@/lib/utils'
 import { useAuth } from '@/components/AuthProvider'
 import { useApi } from '@/hooks/use-api'
+import { useSettings } from '@/hooks/use-settings'
 import { useTheme } from 'next-themes'
 import { AdminThemeToggle } from './AdminThemeToggle'
 
 const AdminSidebar = () => {
     const pathname = usePathname()
     const { logout } = useAuth()
-    const { data: settingsByGroup } = useApi('/settings')
-
-    // Helper to get setting value
-    const getSetting = (key: string, defaultValue: string) => {
-        if (!settingsByGroup) return defaultValue
-        const allSettings = Object.values(settingsByGroup).flat() as any[]
-        const setting = allSettings.find(s => s.key === key)
-        return setting?.value || defaultValue
-    }
+    const { getSetting } = useSettings()
 
     const { theme } = useTheme()
     const [mounted, setMounted] = React.useState(false)
@@ -56,8 +49,8 @@ const AdminSidebar = () => {
         setMounted(true)
     }, [])
 
-    const logoWhiteBg = getSetting('logo_light', '/logos/nissi-landscape-black.png') // Dark logo for white bg
-    const logoBlackBg = getSetting('logo_dark', '/logos/nissi-landscape-white.png') // Light logo for black bg
+    const logoWhiteBg = getSetting('logo_light', '/assets/logos/nissi-landscape-black.png') // Dark logo for white bg
+    const logoBlackBg = getSetting('logo_dark', '/assets/logos/nissi-landscape-white.png') // Light logo for black bg
     
     // In light theme, we use the logo designed for light backgrounds (the dark logo)
     // In dark theme, we use the logo designed for dark backgrounds (the light logo)
