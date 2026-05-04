@@ -5,7 +5,7 @@ deployment:
     - export APPPATH=/home/viafgsed/nissi-insights-core
     # Deploy public assets to the API document root
     - /bin/cp -R backend/public/* $DEPLOYPATH/
-    # Override index.php with production version (correct paths)
+    # Specifically ensure the production index.php is used
     - /bin/cp backend/public/index.production.php $DEPLOYPATH/index.php
     # Deploy backend application code to nissi-insights-core
     - /bin/cp -R backend/app $APPPATH/
