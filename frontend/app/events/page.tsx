@@ -10,6 +10,7 @@ import VideoHero from '@/components/VideoHero'
 import api from '@/lib/api'
 import { format } from 'date-fns'
 import { getMediaUrl } from '@/lib/utils'
+import { useApi } from '@/hooks/use-api'
 
 interface Event {
     id: number
