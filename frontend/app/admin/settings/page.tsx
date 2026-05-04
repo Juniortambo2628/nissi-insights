@@ -29,7 +29,7 @@ const AdminSettingsPage = () => {
     const { data: settingsByGroup, mutate, isLoading } = useApi<Record<string, SiteSetting[]>>('/settings')
     const { toast } = useToast()
     const [localSettings, setLocalSettings] = useState<Record<string, string>>({})
-    const [navLinks, setNavLinks] = useState<{name: string, href: string}[]>([])
+    const [navLinks, setNavLinks] = useState<{id: string, name: string, href: string}[]>([])
     const [addresses, setAddresses] = useState<{label: string, address: string, phone: string, map_url: string}[]>([])
     const [isSavingAll, setIsSavingAll] = useState(false)
 
@@ -42,7 +42,11 @@ const AdminSettingsPage = () => {
                     flat[s.key] = s.value || ''
                     if (s.key === 'main_nav_links') {
                         try {
-                            setNavLinks(JSON.parse(s.value || '[]'))
+                            const parsed = JSON.parse(s.value || '[]')
+                            setNavLinks(parsed.map((l: any, i: number) => ({ 
+                                ...l, 
+                                id: l.id || `link-${i}-${Math.random().toString(36).substr(2, 9)}` 
+                            })))
                         } catch (e) {
                             console.error("Failed to parse local nav links", e)
                         }
@@ -91,7 +95,8 @@ const AdminSettingsPage = () => {
                 let finalValue = value
                 
                 if (key === 'main_nav_links') {
-                    finalValue = JSON.stringify(navLinks)
+                    // Remove the temporary IDs before saving
+                    finalValue = JSON.stringify(navLinks.map(({ id, ...rest }) => rest))
                 }
                 if (key === 'business_addresses') {
                     finalValue = JSON.stringify(addresses)
@@ -490,7 +495,7 @@ const AdminSettingsPage = () => {
                                                 size="sm" 
                                                 variant="outline" 
                                                 className="h-9 px-4 text-xs font-bold gap-2 bg-background border-border text-foreground hover:bg-secondary"
-                                                onClick={() => setNavLinks([...navLinks, { name: 'New Link', href: '/' }])}
+                                                onClick={() => setNavLinks([...navLinks, { id: `new-${Date.now()}`, name: 'New Link', href: '/' }])}
                                             >
                                                 <Plus size={14} /> Add New Link
                                             </Button>
@@ -500,7 +505,7 @@ const AdminSettingsPage = () => {
                                         <Reorder.Group axis="y" values={navLinks} onReorder={setNavLinks} className="space-y-4">
                                             {navLinks.map((link, index) => (
                                                 <Reorder.Item 
-                                                    key={link.name + index} 
+                                                    key={link.id} 
                                                     value={link}
                                                     className="flex items-center gap-6 bg-secondary/10 border border-border p-4 rounded-xl cursor-grab active:cursor-grabbing group transition-all hover:border-primary/30"
                                                 >
@@ -529,6 +534,27 @@ const AdminSettingsPage = () => {
                                                                         const newLinks = [...navLinks]
                                                                         if (val !== 'custom') {
                                                                             newLinks[index].href = val
+                                                                            
+                                                                            // Auto-fill label if it's currently a placeholder or empty
+                                                                            const options: Record<string, string> = {
+                                                                                '/': 'Home',
+                                                                                '/services': 'Services',
+                                                                                '/insights': 'Insights',
+                                                                                '/events': 'Events',
+                                                                                '/knowledge-base': 'Knowledge Hub',
+                                                                                '/case-studies': 'Case Studies',
+                                                                                '/about': 'About Us',
+                                                                                '/contact': 'Contact',
+                                                                                '/client-impact': 'Client Impact',
+                                                                                '/consultation': 'Consultation',
+                                                                                '/pillars/energy-advisory': 'Energy Advisory',
+                                                                                '/pillars/fintech': 'Fintech',
+                                                                                '/pillars/international-diplomacy': 'Diplomacy'
+                                                                            }
+                                                                            
+                                                                            if (!newLinks[index].name || newLinks[index].name === 'New Link') {
+                                                                                newLinks[index].name = options[val] || newLinks[index].name
+                                                                            }
                                                                         }
                                                                         setNavLinks(newLinks)
                                                                     }}
