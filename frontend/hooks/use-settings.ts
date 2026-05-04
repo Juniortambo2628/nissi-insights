@@ -15,8 +15,15 @@ export function useSettings() {
         return setting?.value ?? defaultValue
     }
 
+    const isEnabled = (key: string, defaultValue: boolean = false) => {
+        const val = getSetting(key)
+        if (val === '') return defaultValue
+        return val === '1' || val === 'true' || val === true
+    }
+
     return {
         getSetting,
+        isEnabled,
         settingsByGroup,
         isLoading,
         isError
