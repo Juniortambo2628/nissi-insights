@@ -7,7 +7,6 @@ import CTABanner from "@/components/sections/CTABanner";
 
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import EnergyStocks from "@/components/sections/EnergyStocks";
 
 
 export default function Home() {
@@ -20,9 +19,6 @@ export default function Home() {
       <ServicesSection />
       <InsightsSection />
       
-      {/* Energy Stocks ticker replaces CTABanner at the bottom */}
-      <EnergyStocks />
-
       <Footer />
     </main>
   );

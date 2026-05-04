@@ -23,8 +23,8 @@ class SiteSettingSeeder extends Seeder
                 ['name' => 'About', 'href' => '/about'],
                 ['name' => 'Contact', 'href' => '/contact'],
             ]), 'group' => 'general', 'type' => 'json'],
-            ['key' => 'logo_light', 'value' => '/assets/logos/logo-light.png', 'type' => 'image', 'group' => 'branding'],
-            ['key' => 'logo_dark', 'value' => '/assets/logos/logo-dark.png', 'type' => 'image', 'group' => 'branding'],
+            ['key' => 'logo_light', 'value' => '/logos/nissi-landscape-black.png', 'type' => 'image', 'group' => 'branding'],
+            ['key' => 'logo_dark', 'value' => '/logos/nissi-landscape-white.png', 'type' => 'image', 'group' => 'branding'],
             ['key' => 'favicon', 'value' => '/assets/favicons/favicon.png', 'type' => 'image', 'group' => 'branding'],
             ['key' => 'dashboard_favicon', 'value' => '/assets/favicons/dashboard-favicon.png', 'type' => 'image', 'group' => 'branding'],
             ['key' => 'hero_title', 'value' => 'Intelligence for the future of energy', 'type' => 'text', 'group' => 'homepage'],
@@ -72,6 +72,8 @@ class SiteSettingSeeder extends Seeder
             ['key' => 'hero_pillar_energy_advisory', 'value' => '/NI-Digital-Assets/energy-advisory.jpg', 'type' => 'image', 'group' => 'hero-media'],
             ['key' => 'hero_pillar_fintech', 'value' => '/NI-Digital-Assets/financial-technology.jpg', 'type' => 'image', 'group' => 'hero-media'],
             ['key' => 'hero_pillar_international_diplomacy', 'value' => '/NI-Digital-Assets/international-diplomacy.jpg', 'type' => 'image', 'group' => 'hero-media'],
+            ['key' => 'hero_events_media', 'value' => '/NI-Digital-Assets/corporate-event.jpg', 'type' => 'image', 'group' => 'hero-media'],
+            ['key' => 'hero_knowledge_base_media', 'value' => '/NI-Digital-Assets/financial-technology.jpg', 'type' => 'image', 'group' => 'hero-media'],
         ];
 
         foreach ($settings as $setting) {

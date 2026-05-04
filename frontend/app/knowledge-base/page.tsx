@@ -9,11 +9,23 @@ import { Input } from '@/components/ui/input'
 import { getMediaUrl } from '@/lib/utils'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import VideoHero from '@/components/VideoHero'
 
 const KnowledgeBasePage = () => {
     const { data: resources, isLoading, isError } = useApi('/resources')
+    const { data: settingsByGroup } = useApi('/settings')
     const [searchQuery, setSearchQuery] = useState('')
     const [activeType, setActiveType] = useState('All')
+
+    // Helper to get setting value
+    const getSetting = (key: string, defaultValue: string) => {
+        if (!settingsByGroup) return defaultValue
+        const allSettings = Object.values(settingsByGroup).flat() as any[]
+        const setting = allSettings.find(s => s.key === key)
+        return setting?.value || defaultValue
+    }
+
+    const heroImage = getSetting('hero_knowledge_base_media', '/NI-Digital-Assets/financial-technology.jpg')
 
     if (isLoading) {
         return (
@@ -49,24 +61,18 @@ const KnowledgeBasePage = () => {
     return (
         <div className="flex min-h-screen flex-col bg-background relative">
             <Navbar />
-            <main className="flex-1 bg-background pt-32 pb-24">
+            
+            <VideoHero 
+                title="Intelligence <span class='text-primary'>Hub</span>"
+                tagline="Engagement"
+                subtitle="Access our comprehensive library of white papers, industry reports, and strategic insights."
+                bgImage={getMediaUrl(heroImage)}
+            />
+
+            <main className="flex-1 bg-background pb-24">
                 <div className="max-w-[1400px] mx-auto px-6">
-                    {/* Header */}
-                <motion.div 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mb-16"
-                >
-                    <span className="text-primary font-bold text-sm uppercase tracking-[0.2em] mb-4 block">
-                        Intelligence Hub
-                    </span>
-                    <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
-                        Knowledge Base
-                    </h1>
-                    <p className="text-xl text-muted-foreground max-w-3xl">
-                        Access our comprehensive library of white papers, industry reports, and strategic insights.
-                    </p>
-                </motion.div>
+                    {/* Spacer replaced by VideoHero */}
+                    <div className="pt-24" />
 
                 {/* Filters & Search */}
                 <div className="flex flex-col md:flex-row gap-6 items-center justify-between mb-12">

@@ -154,7 +154,7 @@ const Hero = () => {
                                 <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                             </Link>
                         </Button>
-                        <Button variant="outline" size="lg" className="border-white/20 text-white hover:bg-white/10 rounded-none px-8 h-14 font-bold uppercase tracking-widest text-xs" asChild>
+                        <Button variant="outline" size="lg" className="border-white/20 text-black dark:text-white hover:bg-white/10 rounded-none px-8 h-14 font-bold uppercase tracking-widest text-xs" asChild>
                             <Link href="/events">Our Events</Link>
                         </Button>
                     </motion.div>

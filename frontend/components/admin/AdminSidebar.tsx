@@ -30,7 +30,7 @@ import {
     Activity
 } from 'lucide-react'
 
-import { cn } from '@/lib/utils'
+import { cn, getMediaUrl } from '@/lib/utils'
 import { useAuth } from '@/components/AuthProvider'
 import { useApi } from '@/hooks/use-api'
 import { useTheme } from 'next-themes'
@@ -56,10 +56,12 @@ const AdminSidebar = () => {
         setMounted(true)
     }, [])
 
-    const logoWhiteBg = getSetting('logo_light', '/logos/nissi-landscape-white.png')
-    const logoBlackBg = getSetting('logo_dark', '/logos/nissi-landscape-black.png')
+    const logoWhiteBg = getSetting('logo_light', '/logos/nissi-landscape-black.png') // Dark logo for white bg
+    const logoBlackBg = getSetting('logo_dark', '/logos/nissi-landscape-white.png') // Light logo for black bg
     
-    const logo = theme === 'light' ? logoWhiteBg : logoBlackBg
+    // In light theme, we use the logo designed for light backgrounds (the dark logo)
+    // In dark theme, we use the logo designed for dark backgrounds (the light logo)
+    const logo = theme === 'dark' ? logoBlackBg : logoWhiteBg
 
     const menuItems = [
         { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
@@ -91,7 +93,7 @@ const AdminSidebar = () => {
                 <div className="flex items-center justify-between">
                     <Link href="/" className="flex items-center gap-2 group">
                         <Image 
-                            src={mounted ? logo : logoBlackBg} 
+                            src={getMediaUrl(mounted ? logo : logoWhiteBg)} 
                             alt="Nissi Insights Logo" 
                             width={140} 
                             height={35} 

@@ -8,6 +8,7 @@ import NewsletterSignup from './NewsletterSignup'
 import { useApi } from '@/hooks/use-api'
 import { useTheme } from 'next-themes'
 import { getMediaUrl } from '@/lib/utils'
+import EnergyStocks from './sections/EnergyStocks'
 
 const Footer = () => {
     const { theme } = useTheme()
@@ -69,6 +70,9 @@ const Footer = () => {
 
     return (
         <footer className="w-full bg-background border-t border-border/50">
+            {/* Global Stock Ticker */}
+            <EnergyStocks />
+            
             {/* Main Footer */}
             <div className="max-w-[1400px] mx-auto px-6 py-20">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-16">

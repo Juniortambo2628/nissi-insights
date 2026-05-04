@@ -26,6 +26,18 @@ const EventsPage = () => {
     const [events, setEvents] = useState<Event[]>([])
     const [isLoading, setIsLoading] = useState(true)
 
+    const { data: settingsByGroup } = useApi('/settings')
+    
+    // Helper to get setting value
+    const getSetting = (key: string, defaultValue: string) => {
+        if (!settingsByGroup) return defaultValue
+        const allSettings = Object.values(settingsByGroup).flat() as any[]
+        const setting = allSettings.find(s => s.key === key)
+        return setting?.value || defaultValue
+    }
+
+    const heroImage = getSetting('hero_events_media', '/NI-Digital-Assets/corporate-event.jpg')
+
     useEffect(() => {
         const fetchEvents = async () => {
             try {
@@ -51,7 +63,7 @@ const EventsPage = () => {
                 title="Global Events & <span class='text-primary'>Intelligence</span>"
                 tagline="Engagement"
                 subtitle="Join our exclusive sessions where we discuss market trends, energy transition, and sovereign intelligence with industry leaders."
-                bgImage="/NI-Digital-Assets/corporate-event.jpg"
+                bgImage={getMediaUrl(heroImage)}
             />
 
             <section className="py-24 px-6 max-w-[1400px] mx-auto w-full">

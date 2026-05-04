@@ -78,6 +78,8 @@ const AdminSettingsPage = () => {
         { key: 'hero_pillar_energy_advisory', label: 'Pillar: Energy Advisory Hero', type: 'media' },
         { key: 'hero_pillar_fintech', label: 'Pillar: Fintech Hero', type: 'media' },
         { key: 'hero_pillar_international_diplomacy', label: 'Pillar: Diplomacy Hero', type: 'media' },
+        { key: 'hero_events_media', label: 'Events Page Hero', type: 'media' },
+        { key: 'hero_knowledge_base_media', label: 'Knowledge Hub Hero', type: 'media' },
     ]
 
     const handleSaveAll = async () => {
