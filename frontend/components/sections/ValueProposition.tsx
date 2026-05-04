@@ -11,6 +11,10 @@ import { useSettings } from '@/hooks/use-settings'
 
 const ValueProposition = () => {
     const { getSetting, isLoading } = useSettings()
+    const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
+    const { scrollY } = useScroll()
+    const sectionScale = useTransform(scrollY, [0, 2000], [0.98, 1])
+    const sectionOpacity = useTransform(scrollY, [0, 800], [0.9, 1])
 
     const tagline = getSetting('vp_section_tagline', 'What We Do')
     const title = getSetting('vp_section_title', 'Three Pillars of Trusted Intelligence')
