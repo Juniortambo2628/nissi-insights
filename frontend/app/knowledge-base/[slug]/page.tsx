@@ -1,9 +1,9 @@
 "use client"
 
-import React from 'react'
+import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useParams } from 'next/navigation'
-import { FileText, Download, Calendar, ArrowLeft, Tag, ExternalLink } from 'lucide-react'
+import { FileText, Download, Calendar, ArrowLeft, Tag, ExternalLink, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
@@ -12,13 +12,74 @@ import { useApi } from '@/hooks/use-api'
 import { useSettings } from '@/hooks/use-settings'
 import { getMediaUrl } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { 
+    Dialog, 
+    DialogContent, 
+    DialogHeader, 
+    DialogTitle, 
+    DialogDescription 
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import api from '@/lib/api'
+import { useToast } from '@/hooks/use-toast'
 
 const ResourceDetailsPage = () => {
     const { slug } = useParams()
     const { data: resource, isLoading, isError } = useApi<any>(`/resources/${slug}`)
     const { getSetting } = useSettings()
+    const { toast } = useToast()
+
+    const [isSubscribeDialogOpen, setIsSubscribeDialogOpen] = useState(false)
+    const [subscribeEmail, setSubscribeEmail] = useState('')
+    const [isSubmitting, setIsSubmitting] = useState(false)
 
     const heroImage = getSetting('hero_knowledge_base_media', '/NI-Digital-Assets/financial-technology.jpg')
+
+    const triggerDownload = (filePath: string) => {
+        const link = document.createElement('a')
+        link.href = getMediaUrl(filePath)
+        link.setAttribute('download', '')
+        link.setAttribute('target', '_blank')
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+    }
+
+    const handleSubscribeSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!subscribeEmail.trim() || isSubmitting) return
+
+        setIsSubmitting(true)
+        try {
+            await api.post('/subscribe', { email: subscribeEmail, source: 'knowledge_base_download' })
+            toast({
+                title: "Successfully Subscribed!",
+                description: "Thank you for subscribing. Your download will begin shortly.",
+            })
+            setIsSubscribeDialogOpen(false)
+            triggerDownload(resource.file_path)
+            setSubscribeEmail('')
+        } catch (err: any) {
+            if (err.response?.status === 422) {
+                toast({
+                    title: "Welcome back!",
+                    description: "You are already subscribed. Your download will begin shortly.",
+                })
+                setIsSubscribeDialogOpen(false)
+                triggerDownload(resource.file_path)
+                setSubscribeEmail('')
+            } else {
+                toast({
+                    variant: "destructive",
+                    title: "Subscription Failed",
+                    description: err.response?.data?.message || 'Something went wrong. Please try again.',
+                })
+            }
+        } finally {
+            setIsSubmitting(false)
+        }
+    }
 
     if (isLoading) {
         return (
@@ -60,7 +121,7 @@ const ResourceDetailsPage = () => {
                 title={resource.title}
                 tagline={resource.type}
                 subtitle={resource.description || 'Access our strategic insights and industry reports.'}
-                bgImage={getMediaUrl(heroImage)}
+                bgImage={resource.thumbnail ? getMediaUrl(resource.thumbnail) : getMediaUrl(heroImage)}
             />
 
             <main className="flex-1 bg-background pb-24">
@@ -88,6 +149,16 @@ const ResourceDetailsPage = () => {
                                     </div>
                                 </div>
 
+                                {resource.thumbnail && (
+                                    <div className="mb-12 rounded-2xl overflow-hidden border border-border/50 max-h-[450px] bg-secondary/10">
+                                        <img 
+                                            src={getMediaUrl(resource.thumbnail)} 
+                                            alt={resource.title} 
+                                            className="w-full h-full object-cover"
+                                        />
+                                    </div>
+                                )}
+
                                 <div className="text-muted-foreground leading-relaxed whitespace-pre-line text-lg">
                                     {resource.content || resource.description || 'No detailed content available for this resource.'}
                                 </div>
@@ -104,10 +175,11 @@ const ResourceDetailsPage = () => {
                                         <p className="text-sm text-muted-foreground">
                                             This document is available for download as a PDF/Resource file.
                                         </p>
-                                        <Button className="w-full h-14 bg-primary hover:bg-primary/90 text-white font-bold gap-3 text-sm uppercase tracking-widest shadow-xl shadow-primary/20" asChild>
-                                            <a href={getMediaUrl(resource.file_path)} target="_blank" rel="noopener noreferrer">
-                                                Download Resource <Download size={18} />
-                                            </a>
+                                        <Button 
+                                            onClick={() => setIsSubscribeDialogOpen(true)}
+                                            className="w-full h-14 bg-primary hover:bg-primary/90 text-white font-bold gap-3 text-sm uppercase tracking-widest shadow-xl shadow-primary/20"
+                                        >
+                                            Download Resource <Download size={18} />
                                         </Button>
                                     </div>
                                 ) : resource.external_link ? (
@@ -142,6 +214,50 @@ const ResourceDetailsPage = () => {
                     </div>
                 </div>
             </main>
+
+            <Dialog open={isSubscribeDialogOpen} onOpenChange={setIsSubscribeDialogOpen}>
+                <DialogContent className="sm:max-w-[450px] bg-background border-border p-6 rounded-2xl relative overflow-hidden">
+                    <div className="absolute -top-24 -right-24 w-48 h-48 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
+                    
+                    <DialogHeader className="relative z-10">
+                        <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+                            <span className="text-primary">Subscribe</span> to Download
+                        </DialogTitle>
+                        <DialogDescription className="text-muted-foreground mt-2 text-sm leading-relaxed">
+                            Join our newsletter list to download this resource and get the latest strategic insights and industry reports directly in your inbox.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <form onSubmit={handleSubscribeSubmit} className="space-y-4 mt-4 relative z-10">
+                        <div className="space-y-2">
+                            <Label htmlFor="email" className="text-xs uppercase tracking-widest font-bold text-muted-foreground">Email Address</Label>
+                            <Input
+                                id="email"
+                                type="email"
+                                placeholder="your.name@company.com"
+                                value={subscribeEmail}
+                                onChange={(e) => setSubscribeEmail(e.target.value)}
+                                className="h-12 bg-secondary/15 border-border/50 focus-visible:ring-primary focus-visible:ring-offset-0"
+                                required
+                            />
+                        </div>
+                        <Button 
+                            type="submit" 
+                            disabled={isSubmitting} 
+                            className="w-full h-12 bg-primary hover:bg-primary/95 text-white font-bold uppercase tracking-widest shadow-lg shadow-primary/20"
+                        >
+                            {isSubmitting ? (
+                                <span className="flex items-center gap-2">
+                                    <Loader2 className="animate-spin" size={16} /> Subscribing...
+                                </span>
+                            ) : (
+                                "Subscribe & Download"
+                            )}
+                        </Button>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
             <Footer />
         </div>
     )

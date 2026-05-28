@@ -11,6 +11,7 @@ import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import VideoHero from '@/components/VideoHero'
 import { useSettings } from '@/hooks/use-settings'
+import Link from 'next/link'
 
 const KnowledgeBasePage = () => {
     const { data: resources, isLoading, isError } = useApi('/resources')
@@ -105,8 +106,17 @@ const KnowledgeBasePage = () => {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: index * 0.05 }}
-                                className="bg-card border border-border/50 hover:border-primary/30 transition-all group flex flex-col h-full"
+                                className="bg-card border border-border/50 hover:border-primary/30 transition-all group flex flex-col h-full overflow-hidden rounded-xl"
                             >
+                                {resource.thumbnail && (
+                                    <div className="relative h-48 w-full overflow-hidden border-b border-border/50 bg-secondary/10">
+                                        <img 
+                                            src={getMediaUrl(resource.thumbnail)} 
+                                            alt={resource.title} 
+                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                        />
+                                    </div>
+                                )}
                                 <div className="p-6 flex-1 flex flex-col">
                                     <div className="flex items-center justify-between mb-4">
                                         <span className="text-primary font-bold text-[10px] uppercase tracking-widest bg-primary/10 px-3 py-1 rounded-sm">
@@ -132,19 +142,11 @@ const KnowledgeBasePage = () => {
                                         <span className="text-xs text-muted-foreground">
                                             {new Date(resource.created_at).toLocaleDateString()}
                                         </span>
-                                        {resource.file_path ? (
-                                            <Button variant="ghost" size="sm" className="text-primary hover:bg-primary/10 hover:text-primary font-bold text-xs uppercase tracking-wider gap-2" asChild>
-                                                <a href={getMediaUrl(resource.file_path)} target="_blank" rel="noopener noreferrer">
-                                                    Download <Download size={14} />
-                                                </a>
-                                            </Button>
-                                        ) : (
-                                            <Button variant="ghost" size="sm" className="text-primary hover:bg-primary/10 hover:text-primary font-bold text-xs uppercase tracking-wider gap-2" asChild>
-                                                <a href={`/knowledge-base/${resource.slug}`}>
-                                                    Read More <ExternalLink size={14} />
-                                                </a>
-                                            </Button>
-                                        )}
+                                        <Button variant="ghost" size="sm" className="text-primary hover:bg-primary/10 hover:text-primary font-bold text-xs uppercase tracking-wider gap-2" asChild>
+                                            <Link href={`/knowledge-base/${resource.slug}`}>
+                                                View <ExternalLink size={14} />
+                                            </Link>
+                                        </Button>
                                     </div>
                                 </div>
                             </motion.div>
