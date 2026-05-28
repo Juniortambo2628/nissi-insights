@@ -216,7 +216,7 @@ const ResourceDetailsPage = () => {
             </main>
 
             <Dialog open={isSubscribeDialogOpen} onOpenChange={setIsSubscribeDialogOpen}>
-                <DialogContent className="sm:max-w-[450px] bg-background border-border p-6 rounded-2xl relative overflow-hidden">
+                <DialogContent className="sm:max-w-[450px] bg-background border-border p-6 rounded-2xl overflow-hidden">
                     <div className="absolute -top-24 -right-24 w-48 h-48 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
                     
                     <DialogHeader className="relative z-10">
