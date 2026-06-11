@@ -1,0 +1,234 @@
+"use client"
+
+import React, { useState } from 'react'
+import { motion } from 'framer-motion'
+import { Calendar, MapPin, Clock, ArrowLeft, Mail, User, Building, Phone, Send, CheckCircle2 } from 'lucide-react'
+import Link from 'next/link'
+import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
+import api from '@/lib/api'
+import { useApi } from '@/hooks/use-api'
+import { format } from 'date-fns'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { useToast } from '@/hooks/use-toast'
+
+interface Event {
+    id: number
+    title: string
+    slug: string
+    description: string
+    overview: string
+    date: string
+    location: string
+    image: string
+    link: string
+    status: 'upcoming' | 'past'
+}
+
+interface EventDetailsClientProps {
+    initialData: Event | null
+    slug: string
+}
+
+export default function EventDetailsClient({ initialData, slug }: EventDetailsClientProps) {
+    const { toast } = useToast()
+    const { data: event, isLoading, isError } = useApi<Event>(slug ? `/events/${slug}` : null, {
+        fallbackData: initialData
+    })
+    
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [isRegistered, setIsRegistered] = useState(false)
+    const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        phone: '',
+        organization: ''
+    })
+
+    const handleRegister = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!event) return
+
+        setIsSubmitting(true)
+        try {
+            await api.post('/events/register', {
+                ...formData,
+                event_id: event.id
+            })
+            setIsRegistered(true)
+            toast({
+                title: "Registration Successful",
+                description: "You've been registered for the event. Check your email for details.",
+            })
+        } catch (error) {
+            toast({
+                title: "Registration Failed",
+                description: "There was an error submitting your registration. Please try again.",
+                variant: "destructive"
+            })
+        } finally {
+            setIsSubmitting(false)
+        }
+    }
+
+    if (isLoading && !event) return <div className="h-screen bg-background animate-pulse" />
+    if (isError || !event) return <div className="h-screen bg-background flex items-center justify-center">Event not found</div>
+
+    return (
+        <main className="flex min-h-screen flex-col bg-background font-inter">
+            <Navbar />
+            
+            {/* Hero Section */}
+            <section className="relative h-[60vh] min-h-[500px] flex items-center overflow-hidden">
+                <div className="absolute inset-0">
+                    <img src={event.image || '/placeholder-event.jpg'} className="w-full h-full object-cover" alt="" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
+                </div>
+
+                <div className="max-w-[1400px] mx-auto px-6 w-full relative z-10 pt-20">
+                    <Link href="/events" className="inline-flex items-center gap-2 text-primary text-sm font-bold uppercase tracking-widest mb-8 hover:gap-4 transition-all">
+                        <ArrowLeft size={16} /> Back to Events
+                    </Link>
+                    <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-8 max-w-4xl leading-tight">
+                        {event.title}
+                    </h1>
+                    
+                    <div className="flex flex-wrap gap-8 text-sm font-bold uppercase tracking-widest text-muted-foreground/60">
+                        <div className="flex items-center gap-3"><Calendar className="text-primary" size={20} /> {format(new Date(event.date), 'MMMM d, yyyy')}</div>
+                        <div className="flex items-center gap-3"><Clock className="text-primary" size={20} /> {format(new Date(event.date), 'h:mm a')}</div>
+                        <div className="flex items-center gap-3"><MapPin className="text-primary" size={20} /> {event.location}</div>
+                    </div>
+                </div>
+            </section>
+
+            <section className="py-24 px-6 max-w-[1400px] mx-auto w-full">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-20">
+                    {/* Content */}
+                    <div className="lg:col-span-2 space-y-12">
+                        <div className="prose prose-invert prose-lg max-w-none">
+                            <h2 className="text-3xl font-bold text-foreground mb-8">Event Overview</h2>
+                            <div className="text-muted-foreground leading-relaxed whitespace-pre-wrap opacity-90">
+                                {event.overview || event.description}
+                            </div>
+                        </div>
+
+                        {event.link && (
+                            <div className="p-8 bg-primary/5 border border-primary/20 rounded-2xl flex items-center justify-between gap-6">
+                                <div>
+                                    <h4 className="font-bold text-foreground mb-1">External Resources</h4>
+                                    <p className="text-sm text-muted-foreground">Additional documents or links related to this session.</p>
+                                </div>
+                                <Button asChild variant="outline" className="border-primary/50 text-primary hover:bg-primary hover:text-white">
+                                    <a href={event.link} target="_blank" rel="noopener noreferrer">Access Resources</a>
+                                </Button>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Registration Form */}
+                    <div className="lg:col-span-1">
+                        <div className="sticky top-32 p-8 bg-secondary/10 border border-border/50 rounded-3xl overflow-hidden relative group">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 -skew-x-12 translate-x-1/2 -translate-y-1/2 group-hover:scale-110 transition-transform duration-700" />
+                            
+                            {isRegistered ? (
+                                <div className="text-center py-12 relative z-10">
+                                    <div className="w-16 h-16 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                                        <CheckCircle2 size={32} />
+                                    </div>
+                                    <h3 className="text-2xl font-bold text-foreground mb-4">Registration Confirmed</h3>
+                                    <p className="text-muted-foreground text-sm leading-relaxed mb-8">
+                                        We've sent a confirmation email to <strong>{formData.email}</strong>. See you at the event!
+                                    </p>
+                                    <Button onClick={() => setIsRegistered(false)} variant="outline" className="w-full">Register Another Person</Button>
+                                </div>
+                            ) : event.status === 'past' ? (
+                                <div className="text-center py-12 relative z-10">
+                                    <h3 className="text-2xl font-bold text-foreground mb-4">Event Ended</h3>
+                                    <p className="text-muted-foreground text-sm leading-relaxed">
+                                        This event has already taken place. Please check our upcoming events for future opportunities.
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="relative z-10">
+                                    <h3 className="text-2xl font-bold text-foreground mb-2">Reserve Your Seat</h3>
+                                    <p className="text-muted-foreground text-sm mb-8">Fill in your details to register for this session.</p>
+
+                                    <form onSubmit={handleRegister} className="space-y-6">
+                                        <div className="space-y-2">
+                                            <Label className="text-xs uppercase tracking-widest font-bold opacity-60">Full Name</Label>
+                                            <div className="relative">
+                                                <User className="absolute left-3 top-3 text-primary/40" size={18} />
+                                                <Input 
+                                                    required
+                                                    placeholder="John Doe" 
+                                                    className="pl-10 bg-background border-border"
+                                                    value={formData.name}
+                                                    onChange={e => setFormData({...formData, name: e.target.value})}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label className="text-xs uppercase tracking-widest font-bold opacity-60">Email Address</Label>
+                                            <div className="relative">
+                                                <Mail className="absolute left-3 top-3 text-primary/40" size={18} />
+                                                <Input 
+                                                    required
+                                                    type="email"
+                                                    placeholder="john@organization.com" 
+                                                    className="pl-10 bg-background border-border"
+                                                    value={formData.email}
+                                                    onChange={e => setFormData({...formData, email: e.target.value})}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label className="text-xs uppercase tracking-widest font-bold opacity-60">Organization</Label>
+                                            <div className="relative">
+                                                <Building className="absolute left-3 top-3 text-primary/40" size={18} />
+                                                <Input 
+                                                    placeholder="Company Name" 
+                                                    className="pl-10 bg-background border-border"
+                                                    value={formData.organization}
+                                                    onChange={e => setFormData({...formData, organization: e.target.value})}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label className="text-xs uppercase tracking-widest font-bold opacity-60">Phone (Optional)</Label>
+                                            <div className="relative">
+                                                <Phone className="absolute left-3 top-3 text-primary/40" size={18} />
+                                                <Input 
+                                                    placeholder="+1 (555) 000-0000" 
+                                                    className="pl-10 bg-background border-border"
+                                                    value={formData.phone}
+                                                    onChange={e => setFormData({...formData, phone: e.target.value})}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <Button 
+                                            disabled={isSubmitting}
+                                            className="w-full h-12 bg-primary hover:bg-primary/90 text-white font-bold gap-2 shadow-lg shadow-primary/20"
+                                        >
+                                            {isSubmitting ? "Processing..." : <><Send size={18} /> Register Now</>}
+                                        </Button>
+                                    </form>
+                                    <p className="text-[10px] text-center text-muted-foreground mt-6 opacity-40">
+                                        By registering, you agree to our Terms & Privacy Policy.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <Footer />
+        </main>
+    )
+}

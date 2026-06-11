@@ -1,147 +1,48 @@
-"use client"
-
 import React from 'react'
-import { useParams } from 'next/navigation'
-import { useApi } from '@/hooks/use-api'
-import Navbar from '@/components/Navbar'
-import Footer from '@/components/Footer'
-import VideoHero from '@/components/VideoHero'
-import { motion } from 'framer-motion'
-import { ArrowLeft, ArrowRight } from 'lucide-react'
-import Link from 'next/link'
-import { Pillar } from '@/types/api'
-import { cn, getMediaUrl } from '@/lib/utils'
+import PillarDetailClient from '@/components/PillarDetailClient'
 
-export default function PillarPage() {
-    const { slug } = useParams()
-    const { data: pillar, isLoading } = useApi<Pillar>(`/pillars/${slug}`)
-    const { data: settingsByGroup } = useApi('/settings')
+interface PageProps {
+    params: Promise<{ slug: string }>
+}
 
-    // Helper to get hero media from settings
-    const getHeroMedia = () => {
-        if (!settingsByGroup || !pillar) return null
-        const allSettings = Object.values(settingsByGroup).flat() as any[]
-        const key = `hero_pillar_${pillar.slug?.replace(/-/g, '_')}`
-        const setting = allSettings.find(s => s.key === key)
-        return setting?.value
+async function fetchPillar(slug: string) {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
+    try {
+        const res = await fetch(`${apiUrl}/pillars/${slug}`, { next: { revalidate: 60 } })
+        if (res.ok) {
+            return await res.json()
+        }
+    } catch (error) {
+        console.error("Error fetching pillar on server:", error)
     }
+    return null
+}
 
-    const heroMedia = getHeroMedia() || pillar?.image || '/NI-Digital-Assets/financial-technology.jpg'
-
-    if (isLoading) {
-        return (
-            <main className="flex min-h-screen flex-col bg-background">
-                <Navbar />
-                <div className="h-[60vh] bg-secondary/10 animate-pulse" />
-                <div className="max-w-[1200px] mx-auto px-6 py-24 w-full">
-                    <div className="h-4 w-32 bg-primary/20 animate-pulse mb-12" />
-                    <div className="h-40 w-full bg-foreground/5 animate-pulse mb-24" />
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {[1, 2, 3].map(i => (
-                            <div key={i} className="h-64 bg-secondary/10 rounded-xl animate-pulse" />
-                        ))}
-                    </div>
-                </div>
-                <Footer />
-            </main>
-        )
+export async function generateMetadata({ params }: PageProps) {
+    const { slug } = await params
+    const pillar = await fetchPillar(slug)
+    
+    if (!pillar) {
+        return {
+            title: 'Pillar Not Found | Nissi Insights',
+            description: 'The requested strategic pillar could not be found.'
+        }
     }
-    if (!pillar) return <div className="min-h-screen bg-background flex items-center justify-center">Pillar not found</div>
+    
+    return {
+        title: `${pillar.title} | Nissi Insights`,
+        description: pillar.overview?.substring(0, 160) || `${pillar.title} - Nissi Insights strategic pillar.`,
+        openGraph: {
+            title: `${pillar.title} | Nissi Insights`,
+            description: pillar.overview?.substring(0, 160) || `${pillar.title} - Nissi Insights strategic pillar.`,
+            images: pillar.image ? [{ url: pillar.image }] : [],
+        }
+    }
+}
 
-    return (
-        <main className="flex min-h-screen flex-col bg-background">
-            <Navbar />
-
-            <VideoHero 
-                tagline="Our Strategic Pillar"
-                title={pillar.title}
-                subtitle={pillar.overview || ''}
-                bgImage={getMediaUrl(heroMedia)}
-            />
-
-            {/* Pillar Content */}
-            <section className="py-24 bg-background relative overflow-hidden">
-                {/* Decorative Elements */}
-                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-                <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
-
-                <div className="max-w-[1200px] mx-auto px-6 relative z-10">
-                    <Link 
-                        href="/services" 
-                        className="inline-flex items-center gap-2 text-primary text-sm font-bold uppercase tracking-widest mb-12 hover:gap-3 transition-all"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                        Back to All Advisory Services
-                    </Link>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-1 gap-16 mb-32">
-                        <div className="lg:col-span-1">
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                className="prose prose-invert lg:prose-xl max-w-none"
-                            >
-                                <div 
-                                    className="text-muted-foreground leading-relaxed text-lg prose-p:leading-relaxed prose-p:text-muted-foreground prose-headings:text-foreground prose-strong:text-foreground prose-ul:text-muted-foreground"
-                                    dangerouslySetInnerHTML={{ __html: pillar.content || pillar.overview || '' }} 
-                                />
-                            </motion.div>
-                        </div>
-                    </div>
-
-                    {/* Associated Services (Integrated Flow) */}
-                    <div className="space-y-16">
-                        <div className="text-center max-w-3xl mx-auto space-y-4">
-                            <h2 className="text-4xl font-bold text-foreground tracking-tight">Dedicated Service Areas</h2>
-                            <p className="text-muted-foreground text-lg">
-                                Explore the specific focus areas where we deliver rigorous intelligence and actionable insights.
-                            </p>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            {pillar.services?.map((service, index) => (
-                                <motion.div
-                                    key={service.id}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    whileInView={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: index * 0.1 }}
-                                >
-                                    <Link
-                                        href={`/services/${service.slug}`}
-                                        className="group relative h-full bg-secondary/5 p-8 border border-border/50 hover:border-primary/40 transition-all flex flex-col justify-between overflow-hidden"
-                                    >
-                                        <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 group-hover:bg-primary/10 transition-colors" />
-                                        
-                                        <div className="relative z-10">
-                                            <h3 className="text-xl font-bold text-foreground mb-4 group-hover:text-primary transition-colors">
-                                                {service.title}
-                                            </h3>
-                                            <p className="text-muted-foreground text-sm leading-relaxed line-clamp-3 mb-8">
-                                                {service.description}
-                                            </p>
-                                        </div>
-                                        
-                                        <div className="relative z-10 pt-4 border-t border-border/30 flex items-center justify-between group-hover:border-primary/20 transition-colors">
-                                            <span className="text-primary font-bold text-[10px] uppercase tracking-[0.2em]">
-                                                View Details
-                                            </span>
-                                            <ArrowRight className="h-4 w-4 text-primary transition-transform group-hover:translate-x-2" />
-                                        </div>
-                                    </Link>
-                                </motion.div>
-                            ))}
-                        </div>
-
-                        {(!pillar.services || pillar.services.length === 0) && (
-                            <div className="text-center py-24 border-2 border-dashed border-border/50 rounded-xl bg-secondary/5">
-                                <p className="text-muted-foreground italic font-medium">Focused services for this pillar are currently being finalised.</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </section>
-
-            <Footer />
-        </main>
-    )
+export default async function Page({ params }: PageProps) {
+    const { slug } = await params
+    const initialData = await fetchPillar(slug)
+    
+    return <PillarDetailClient initialData={initialData} slug={slug} />
 }
