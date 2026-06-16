@@ -25,6 +25,11 @@ class CaseStudyController extends Controller
             'outcome' => 'nullable|string',
             'image' => 'nullable|string',
             'is_featured' => 'boolean',
+            'category' => 'nullable|string',
+            'tags' => 'nullable|array',
+            'tags.*' => 'string',
+            'meta_title' => 'nullable|string|max:255',
+            'meta_description' => 'nullable|string|max:500',
         ]);
 
         $validated['slug'] = Str::slug($validated['title']);
@@ -47,6 +52,11 @@ class CaseStudyController extends Controller
             'outcome' => 'nullable|string',
             'image' => 'nullable|string',
             'is_featured' => 'boolean',
+            'category' => 'nullable|string',
+            'tags' => 'nullable|array',
+            'tags.*' => 'string',
+            'meta_title' => 'nullable|string|max:255',
+            'meta_description' => 'nullable|string|max:500',
         ]);
 
         if (isset($validated['title'])) {

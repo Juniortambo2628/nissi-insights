@@ -14,12 +14,20 @@ export const metadata = {
         'Energy Transition',
         'Go-to-market strategy'
     ],
+    alternates: {
+        canonical: 'https://nissi-insights.com/about',
+    },
     openGraph: {
         title: 'About Us | Nissi Insights | Energy Advisory & Market Intelligence',
         description: 'Learn about Nissi Insights, our mission, vision, core values, and team of experts providing trusted advisory across energy, fintech, and diplomacy.',
         type: 'website',
         url: 'https://nissi-insights.com/about',
-    }
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'About Us | Nissi Insights',
+        description: 'Learn about Nissi Insights, our mission, vision, core values, and team of experts.',
+    },
 }
 
 export default function AboutPage() {

@@ -12,12 +12,20 @@ export const metadata = {
         'Nissi Insights email',
         'Request advisory consultation'
     ],
+    alternates: {
+        canonical: 'https://nissi-insights.com/contact',
+    },
     openGraph: {
         title: 'Contact Us | Nissi Insights | Get in Touch for Advisory Services',
         description: 'Get in touch with Nissi Insights. Contact our energy transition, fintech, and sovereign intelligence experts to request a consultation.',
         type: 'website',
         url: 'https://nissi-insights.com/contact',
-    }
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'Contact Us | Nissi Insights',
+        description: 'Contact our advisory team for energy, fintech, and sovereign intelligence consultations.',
+    },
 }
 
 export default function ContactPage() {

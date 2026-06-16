@@ -31,40 +31,45 @@ export async function generateMetadata({ params }: PageProps) {
         }
     }
 
+    const title = resource.meta_title || `${resource.title} | Nissi Insights Knowledge Hub`
     const descriptionText = (
+        resource.meta_description ||
         resource.description ||
         resource.content?.substring(0, 160)?.replace(/<[^>]*>?/gm, '') ||
         `${resource.title} — Strategic intelligence resource from Nissi Insights.`
     ).substring(0, 160)
 
+    const keywordsList = [
+        ...(resource.tags || []),
+        resource.title,
+        'Nissi Insights',
+        resource.type || 'Report',
+        'energy advisory',
+        'market intelligence',
+        'Kenya',
+    ].filter(Boolean)
+
     return {
-        title: `${resource.title} | Nissi Insights Knowledge Hub`,
+        title,
         description: descriptionText,
-        keywords: [
-            resource.title,
-            'Nissi Insights',
-            resource.type || 'Report',
-            ...(resource.tags || []),
-            'energy advisory',
-            'market intelligence',
-            'Kenya',
-        ].filter(Boolean).join(', '),
+        keywords: keywordsList.join(', '),
         alternates: {
             canonical: `${appUrl}/knowledge-base/${slug}`,
         },
         openGraph: {
             type: 'article',
-            title: `${resource.title} | Nissi Insights`,
+            title,
             description: descriptionText,
             url: `${appUrl}/knowledge-base/${slug}`,
             siteName: 'Nissi Insights',
             images: resource.thumbnail ? [{ url: resource.thumbnail }] : [],
             publishedTime: resource.created_at,
             modifiedTime: resource.updated_at || resource.created_at,
+            tags: resource.tags || [],
         },
         twitter: {
             card: 'summary_large_image',
-            title: `${resource.title} | Nissi Insights`,
+            title,
             description: descriptionText,
         },
     }
@@ -78,8 +83,8 @@ export default async function Page({ params }: PageProps) {
     const jsonLd = initialData ? {
         '@context': 'https://schema.org',
         '@type': 'Article',
-        headline: initialData.title,
-        description: initialData.description || initialData.content?.substring(0, 300)?.replace(/<[^>]*>?/gm, '') || '',
+        headline: initialData.meta_title || initialData.title,
+        description: initialData.meta_description || initialData.description || initialData.content?.substring(0, 300)?.replace(/<[^>]*>?/gm, '') || '',
         datePublished: initialData.created_at,
         dateModified: initialData.updated_at || initialData.created_at,
         author: {
@@ -101,7 +106,7 @@ export default async function Page({ params }: PageProps) {
             '@id': `${appUrl}/knowledge-base/${slug}`,
         },
         ...(initialData.thumbnail && { image: initialData.thumbnail }),
-        ...(initialData.tags && { keywords: initialData.tags.join(', ') }),
+        ...(initialData.tags && initialData.tags.length > 0 && { keywords: initialData.tags.join(', ') }),
     } : null
     
     return (

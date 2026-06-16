@@ -29,6 +29,10 @@ class InsightController extends Controller
             'content' => 'required|string',
             'image' => 'nullable|string',
             'is_published' => 'boolean',
+            'tags' => 'nullable|array',
+            'tags.*' => 'string',
+            'meta_title' => 'nullable|string|max:255',
+            'meta_description' => 'nullable|string|max:500',
         ]);
 
         $validated['slug'] = Str::slug($validated['title']);
@@ -56,6 +60,10 @@ class InsightController extends Controller
             'content' => 'string',
             'image' => 'nullable|string',
             'is_published' => 'boolean',
+            'tags' => 'nullable|array',
+            'tags.*' => 'string',
+            'meta_title' => 'nullable|string|max:255',
+            'meta_description' => 'nullable|string|max:500',
         ]);
 
         if (isset($validated['title'])) {

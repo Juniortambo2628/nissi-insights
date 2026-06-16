@@ -36,6 +36,10 @@ class EventController extends Controller
             'link' => 'nullable|string',
             'status' => 'nullable|string|in:upcoming,past',
             'is_published' => 'boolean',
+            'tags' => 'nullable|array',
+            'tags.*' => 'string',
+            'meta_title' => 'nullable|string|max:255',
+            'meta_description' => 'nullable|string|max:500',
         ]);
 
         $slug = Str::slug($validated['title']);
@@ -70,6 +74,10 @@ class EventController extends Controller
             'link' => 'nullable|string',
             'status' => 'nullable|string|in:upcoming,past',
             'is_published' => 'boolean',
+            'tags' => 'nullable|array',
+            'tags.*' => 'string',
+            'meta_title' => 'nullable|string|max:255',
+            'meta_description' => 'nullable|string|max:500',
         ]);
 
         if ($validated['title'] !== $event->title) {

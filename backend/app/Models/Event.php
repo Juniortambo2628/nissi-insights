@@ -17,11 +17,15 @@ class Event extends Model
         'link',
         'status',
         'is_published',
+        'tags',
+        'meta_title',
+        'meta_description',
     ];
 
     protected $casts = [
         'date' => 'datetime',
         'is_published' => 'boolean',
+        'tags' => 'array',
     ];
 
     public function registrations()

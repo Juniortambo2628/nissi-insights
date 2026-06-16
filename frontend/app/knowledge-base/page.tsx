@@ -11,12 +11,20 @@ export const metadata = {
         'Nissi Insights publications',
         'Nissi Insights research hub'
     ],
+    alternates: {
+        canonical: 'https://nissi-insights.com/knowledge-base',
+    },
     openGraph: {
         title: 'Knowledge Hub & Resources | Nissi Insights',
         description: 'Access the Nissi Insights library of energy reports, white papers, market publications, and financial technology case studies.',
         type: 'website',
         url: 'https://nissi-insights.com/knowledge-base',
-    }
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'Knowledge Hub & Resources | Nissi Insights',
+        description: 'Access energy reports, white papers, and market publications from Nissi Insights.',
+    },
 }
 
 export default function KnowledgeBasePage() {

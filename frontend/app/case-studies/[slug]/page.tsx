@@ -31,40 +31,47 @@ export async function generateMetadata({ params }: PageProps) {
         }
     }
     
+    const title = caseStudy.meta_title || `${caseStudy.title} | Nissi Insights Case Studies`
     const descriptionText = (
-        caseStudy.client_name ? 
+        caseStudy.meta_description ||
+        (caseStudy.client_name ? 
             `Case study for ${caseStudy.client_name}: ${caseStudy.title}` : 
-            `${caseStudy.title} — Advisory case study from Nissi Insights.`
+            `${caseStudy.title} — Advisory case study from Nissi Insights.`)
     ).substring(0, 160)
 
+    const keywordsList = [
+        ...(caseStudy.tags || []),
+        caseStudy.title,
+        'Nissi Insights',
+        caseStudy.client_name,
+        caseStudy.category,
+        'case study',
+        'energy advisory',
+        'market intelligence',
+        'Kenya',
+    ].filter(Boolean)
+
     return {
-        title: `${caseStudy.title} | Nissi Insights Case Studies`,
+        title,
         description: descriptionText,
-        keywords: [
-            caseStudy.title,
-            'Nissi Insights',
-            caseStudy.client_name,
-            'case study',
-            'energy advisory',
-            'market intelligence',
-            'Kenya',
-        ].filter(Boolean).join(', '),
+        keywords: keywordsList.join(', '),
         alternates: {
             canonical: `${appUrl}/case-studies/${slug}`,
         },
         openGraph: {
             type: 'article',
-            title: `${caseStudy.title} | Nissi Insights`,
+            title,
             description: descriptionText,
             url: `${appUrl}/case-studies/${slug}`,
             siteName: 'Nissi Insights',
             images: caseStudy.image ? [{ url: caseStudy.image }] : [],
             publishedTime: caseStudy.created_at,
             modifiedTime: caseStudy.updated_at || caseStudy.created_at,
+            tags: caseStudy.tags || [],
         },
         twitter: {
             card: 'summary_large_image',
-            title: `${caseStudy.title} | Nissi Insights`,
+            title,
             description: descriptionText,
         },
     }
@@ -77,10 +84,11 @@ export default async function Page({ params }: PageProps) {
     const jsonLd = initialData ? {
         '@context': 'https://schema.org',
         '@type': 'Article',
-        headline: initialData.title,
-        description: initialData.client_name ? 
-            `Case study for ${initialData.client_name}: ${initialData.title}` :
-            `${initialData.title} — Advisory case study.`,
+        headline: initialData.meta_title || initialData.title,
+        description: initialData.meta_description || 
+            (initialData.client_name ? 
+                `Case study for ${initialData.client_name}: ${initialData.title}` :
+                `${initialData.title} — Advisory case study.`),
         datePublished: initialData.created_at,
         dateModified: initialData.updated_at || initialData.created_at,
         author: {
@@ -102,6 +110,8 @@ export default async function Page({ params }: PageProps) {
             '@id': `${appUrl}/case-studies/${slug}`,
         },
         ...(initialData.image && { image: initialData.image }),
+        ...(initialData.category && { articleSection: initialData.category }),
+        ...(initialData.tags && initialData.tags.length > 0 && { keywords: initialData.tags.join(', ') }),
     } : null
     
     return (

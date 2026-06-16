@@ -11,12 +11,20 @@ export const metadata = {
         'Executive roundtable discussions',
         'Nissi Insights events'
     ],
+    alternates: {
+        canonical: 'https://nissi-insights.com/events',
+    },
     openGraph: {
         title: 'Global Events & Intelligence Briefings | Nissi Insights',
         description: 'Join Nissi Insights executive events, webinars, and roundtable discussions on global energy transition, financial technology, and sovereign diplomacy.',
         type: 'website',
         url: 'https://nissi-insights.com/events',
-    }
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'Global Events & Intelligence Briefings | Nissi Insights',
+        description: 'Executive events, webinars, and roundtable discussions from Nissi Insights.',
+    },
 }
 
 export default function EventsPage() {

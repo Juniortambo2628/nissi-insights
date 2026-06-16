@@ -11,12 +11,20 @@ export const metadata = {
         'Fintech consulting case study',
         'Energy advisory testimonials'
     ],
+    alternates: {
+        canonical: 'https://nissi-insights.com/client-impact',
+    },
     openGraph: {
         title: 'Client Impact & Case Studies | Nissi Insights | Proven Results',
         description: 'Read Nissi Insights case studies and testimonials from clients across energy transition, fintech, and international trade sectors.',
         type: 'website',
         url: 'https://nissi-insights.com/client-impact',
-    }
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'Client Impact | Nissi Insights',
+        description: 'Case studies and testimonials from Nissi Insights advisory clients.',
+    },
 }
 
 export default function ClientImpactPage() {

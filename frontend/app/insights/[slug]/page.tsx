@@ -31,40 +31,47 @@ export async function generateMetadata({ params }: PageProps) {
         }
     }
     
-    // Clean description from HTML if present
+    // Use custom SEO fields if set, otherwise auto-generate
+    const title = insight.meta_title || `${insight.title} | Nissi Insights`
     const descriptionText = (
+        insight.meta_description ||
         insight.excerpt ||
         (insight.content ? insight.content.substring(0, 160).replace(/<[^>]*>?/gm, '') : '')
         || `${insight.title} — Strategic analysis and advisory from Nissi Insights.`
     ).substring(0, 160)
 
+    // Build keywords from tags + auto-generated terms
+    const keywordsList = [
+        ...(insight.tags || []),
+        insight.title,
+        'Nissi Insights',
+        insight.category,
+        'energy advisory',
+        'market intelligence',
+        'Kenya',
+    ].filter(Boolean)
+
     return {
-        title: `${insight.title} | Nissi Insights`,
+        title,
         description: descriptionText,
-        keywords: [
-            insight.title,
-            'Nissi Insights',
-            insight.category,
-            'energy advisory',
-            'market intelligence',
-            'Kenya',
-        ].filter(Boolean).join(', '),
+        keywords: keywordsList.join(', '),
         alternates: {
             canonical: `${appUrl}/insights/${slug}`,
         },
         openGraph: {
             type: 'article',
-            title: `${insight.title} | Nissi Insights`,
+            title,
             description: descriptionText,
             url: `${appUrl}/insights/${slug}`,
             siteName: 'Nissi Insights',
             images: insight.image ? [{ url: insight.image }] : [],
             publishedTime: insight.created_at,
             modifiedTime: insight.updated_at || insight.created_at,
+            tags: insight.tags || [],
         },
         twitter: {
             card: 'summary_large_image',
-            title: `${insight.title} | Nissi Insights`,
+            title,
             description: descriptionText,
         },
     }
@@ -77,8 +84,8 @@ export default async function Page({ params }: PageProps) {
     const jsonLd = initialData ? {
         '@context': 'https://schema.org',
         '@type': 'Article',
-        headline: initialData.title,
-        description: initialData.excerpt || initialData.content?.substring(0, 300)?.replace(/<[^>]*>?/gm, '') || '',
+        headline: initialData.meta_title || initialData.title,
+        description: initialData.meta_description || initialData.excerpt || initialData.content?.substring(0, 300)?.replace(/<[^>]*>?/gm, '') || '',
         datePublished: initialData.created_at,
         dateModified: initialData.updated_at || initialData.created_at,
         author: {
@@ -101,6 +108,7 @@ export default async function Page({ params }: PageProps) {
         },
         ...(initialData.image && { image: initialData.image }),
         ...(initialData.category && { articleSection: initialData.category }),
+        ...(initialData.tags && initialData.tags.length > 0 && { keywords: initialData.tags.join(', ') }),
     } : null
     
     return (

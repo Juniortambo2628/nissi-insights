@@ -16,5 +16,14 @@ class CaseStudy extends Model
         'outcome',
         'image',
         'is_featured',
+        'category',
+        'tags',
+        'meta_title',
+        'meta_description',
+    ];
+
+    protected $casts = [
+        'tags' => 'array',
+        'is_featured' => 'boolean',
     ];
 }

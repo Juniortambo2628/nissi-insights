@@ -80,6 +80,58 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@graph": [
+                {
+                  "@type": "Organization",
+                  "@id": "https://nissi-insights.com/#organization",
+                  "name": "Nissi Insights",
+                  "url": "https://nissi-insights.com",
+                  "logo": {
+                    "@type": "ImageObject",
+                    "url": "https://nissi-insights.com/favicon.png"
+                  },
+                  "description": "Innovative Energy Advisory, Due Diligence, and Route to Market Strategy for a changing world.",
+                  "sameAs": [
+                    "https://www.linkedin.com/company/nissi-insights"
+                  ]
+                },
+                {
+                  "@type": "WebSite",
+                  "@id": "https://nissi-insights.com/#website",
+                  "url": "https://nissi-insights.com",
+                  "name": "Nissi Insights",
+                  "publisher": {
+                    "@id": "https://nissi-insights.com/#organization"
+                  },
+                  "potentialAction": {
+                    "@type": "SearchAction",
+                    "target": "https://nissi-insights.com/knowledge-base?q={search_term_string}",
+                    "query-input": "required name=search_term_string"
+                  }
+                },
+                {
+                  "@type": "SiteNavigationElement",
+                  "name": "Main Navigation",
+                  "hasPart": [
+                    { "@type": "SiteNavigationElement", "name": "Services", "url": "https://nissi-insights.com/services" },
+                    { "@type": "SiteNavigationElement", "name": "Insights", "url": "https://nissi-insights.com/insights" },
+                    { "@type": "SiteNavigationElement", "name": "Case Studies", "url": "https://nissi-insights.com/case-studies" },
+                    { "@type": "SiteNavigationElement", "name": "Client Impact", "url": "https://nissi-insights.com/client-impact" },
+                    { "@type": "SiteNavigationElement", "name": "Knowledge Hub", "url": "https://nissi-insights.com/knowledge-base" },
+                    { "@type": "SiteNavigationElement", "name": "Events", "url": "https://nissi-insights.com/events" },
+                    { "@type": "SiteNavigationElement", "name": "About", "url": "https://nissi-insights.com/about" },
+                    { "@type": "SiteNavigationElement", "name": "Contact", "url": "https://nissi-insights.com/contact" }
+                  ]
+                }
+              ]
+            })
+          }}
+        />
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

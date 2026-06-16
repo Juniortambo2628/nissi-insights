@@ -20,6 +20,10 @@ class CaseStudyResource extends JsonResource
             'outcome' => $this->outcome,
             'image' => $this->image,
             'is_featured' => (bool) $this->is_featured,
+            'category' => $this->category,
+            'tags' => $this->tags,
+            'meta_title' => $this->meta_title,
+            'meta_description' => $this->meta_description,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

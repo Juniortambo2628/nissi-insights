@@ -12,12 +12,20 @@ export const metadata = {
         'Energy due diligence',
         'Market intelligence services'
     ],
+    alternates: {
+        canonical: 'https://nissi-insights.com/services',
+    },
     openGraph: {
         title: 'Our Advisory Services | Energy, Fintech & Diplomacy | Nissi Insights',
         description: 'Explore Nissi Insights advisory services. Specialized guidance across Energy Advisory, Fintech Go-To-Market strategy, and Geopolitical Diplomacy.',
         type: 'website',
         url: 'https://nissi-insights.com/services',
-    }
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'Our Advisory Services | Nissi Insights',
+        description: 'Specialized advisory across Energy, Fintech, and Geopolitical Diplomacy.',
+    },
 }
 
 export default function ServicesPage() {

@@ -31,35 +31,43 @@ export async function generateMetadata({ params }: PageProps) {
         }
     }
 
+    const title = event.meta_title || `${event.title} | Nissi Insights Events`
     const descriptionText = (
-        event.description?.substring(0, 160) || `${event.title} — Nissi Insights event.`
+        event.meta_description ||
+        event.description?.substring(0, 160) || 
+        `${event.title} — Nissi Insights event.`
     )
+
+    const keywordsList = [
+        ...(event.tags || []),
+        event.title,
+        'Nissi Insights',
+        'event',
+        event.location,
+        'energy advisory',
+        'market intelligence',
+        'Kenya',
+    ].filter(Boolean)
     
     return {
-        title: `${event.title} | Nissi Insights Events`,
+        title,
         description: descriptionText,
-        keywords: [
-            event.title,
-            'Nissi Insights',
-            'event',
-            'energy advisory',
-            'market intelligence',
-            'Kenya',
-        ].filter(Boolean).join(', '),
+        keywords: keywordsList.join(', '),
         alternates: {
             canonical: `${appUrl}/events/${slug}`,
         },
         openGraph: {
             type: 'article',
-            title: `${event.title} | Nissi Insights`,
+            title,
             description: descriptionText,
             url: `${appUrl}/events/${slug}`,
             siteName: 'Nissi Insights',
             images: event.image ? [{ url: event.image }] : [],
+            tags: event.tags || [],
         },
         twitter: {
             card: 'summary_large_image',
-            title: `${event.title} | Nissi Insights`,
+            title,
             description: descriptionText,
         },
     }
@@ -72,9 +80,9 @@ export default async function Page({ params }: PageProps) {
     const jsonLd = initialData ? {
         '@context': 'https://schema.org',
         '@type': 'Event',
-        name: initialData.title,
-        description: initialData.description || '',
-        ...(initialData.event_date && { startDate: initialData.event_date }),
+        name: initialData.meta_title || initialData.title,
+        description: initialData.meta_description || initialData.description || '',
+        ...(initialData.date && { startDate: initialData.date }),
         ...(initialData.location && {
             location: {
                 '@type': 'Place',
@@ -87,6 +95,7 @@ export default async function Page({ params }: PageProps) {
             url: appUrl,
         },
         ...(initialData.image && { image: initialData.image }),
+        ...(initialData.tags && initialData.tags.length > 0 && { keywords: initialData.tags.join(', ') }),
     } : null
     
     return (

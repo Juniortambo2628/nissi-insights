@@ -17,6 +17,8 @@ class Resource extends Model
         'external_link',
         'tags',
         'is_published',
+        'meta_title',
+        'meta_description',
     ];
 
     protected $casts = [

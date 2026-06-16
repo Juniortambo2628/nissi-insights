@@ -16,6 +16,14 @@ class Insight extends Model
         'user_id',
         'is_published',
         'published_at',
+        'tags',
+        'meta_title',
+        'meta_description',
+    ];
+
+    protected $casts = [
+        'tags' => 'array',
+        'is_published' => 'boolean',
     ];
 
     public function user()
