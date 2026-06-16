@@ -25,7 +25,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import RichTextEditor from '@/components/admin/RichTextEditor'
-import { cn } from '@/lib/utils'
+import { cn, getMediaUrl } from '@/lib/utils'
 import { useAutosave } from '@/hooks/use-autosave'
 import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
 
@@ -289,7 +289,7 @@ const AdminInsightsPage = () => {
 
                                         <div className="aspect-video relative overflow-hidden bg-secondary/30">
                                             {insight.image ? (
-                                                <img src={insight.image} alt={insight.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                                <img src={getMediaUrl(insight.image)} alt={insight.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                                             ) : (
                                                 <div className="w-full h-full flex items-center justify-center text-primary/20">
                                                     <ImageIcon size={48} />
@@ -356,7 +356,7 @@ const AdminInsightsPage = () => {
                                                 <td className="p-4">
                                                     <div className="flex items-center gap-4">
                                                         <div className="w-10 h-10 rounded bg-secondary overflow-hidden shrink-0">
-                                                            {insight.image ? <img src={insight.image} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-primary/40"><ImageIcon size={16} /></div>}
+                                                            {insight.image ? <img src={getMediaUrl(insight.image)} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-primary/40"><ImageIcon size={16} /></div>}
                                                         </div>
                                                         <div className="font-bold line-clamp-1">{insight.title}</div>
                                                     </div>
