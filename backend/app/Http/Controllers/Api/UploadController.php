@@ -10,20 +10,35 @@ class UploadController extends Controller
 {
     public function store(Request $request)
     {
+        $file = $request->file('file');
+        if (!$file) {
+            return response()->json(['message' => 'No file uploaded'], 400);
+        }
+
+        $mime = $file->getClientMimeType();
+        $isVid = str_starts_with($mime, 'video/') || $file->getClientOriginalExtension() === 'mp4';
+        
+        // Allow up to 20MB for videos, 10MB for other formats (images, PDFs)
+        $maxSize = $isVid ? '20480' : '10240';
+
         $request->validate([
-            'file' => 'required|file|mimes:jpg,jpeg,png,webp,svg,mp4,gif,pdf|max:10240',
+            'file' => 'required|file|mimes:jpg,jpeg,png,webp,svg,mp4,gif,pdf|max:' . $maxSize,
         ]);
 
-        $file = $request->file('file');
         $path = $file->store('uploads', 'public');
+
+        // Optimize image in-place if it is an image format we can parse
+        $this->optimizeImage($path);
 
         /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
         $disk = Storage::disk('public');
+        $actualSize = $disk->size($path);
+
         return response()->json([
             'url' => $disk->url($path),
             'path' => $path,
             'filename' => $file->getClientOriginalName(),
-            'size' => $file->getSize(),
+            'size' => $actualSize,
             'mime' => $file->getClientMimeType(),
         ], 201);
     }
@@ -57,5 +72,94 @@ class UploadController extends Controller
             ->header('Content-Type', $mime)
             ->header('Access-Control-Allow-Origin', '*')
             ->header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    }
+
+    private function optimizeImage(string $path)
+    {
+        $fullPath = storage_path('app/public/' . $path);
+        if (!file_exists($fullPath)) {
+            return;
+        }
+
+        $info = @getimagesize($fullPath);
+        if (!$info) {
+            return;
+        }
+
+        $mime = $info['mime'];
+
+        // Only optimize JPEG, PNG, and WebP using GD library
+        if (!in_array($mime, ['image/jpeg', 'image/png', 'image/webp'])) {
+            return;
+        }
+
+        if (!extension_loaded('gd')) {
+            return;
+        }
+
+        // Create image resource from file
+        switch ($mime) {
+            case 'image/jpeg':
+                $image = @imagecreatefromjpeg($fullPath);
+                break;
+            case 'image/png':
+                $image = @imagecreatefrompng($fullPath);
+                if ($image) {
+                    imagealphablending($image, false);
+                    imagesavealpha($image, true);
+                }
+                break;
+            case 'image/webp':
+                $image = @imagecreatefromwebp($fullPath);
+                break;
+            default:
+                return;
+        }
+
+        if (!$image) {
+            return;
+        }
+
+        // Check dimensions and resize if width or height exceeds 1920px
+        $width = imagesx($image);
+        $height = imagesy($image);
+        $maxDimension = 1920;
+
+        if ($width > $maxDimension || $height > $maxDimension) {
+            if ($width > $height) {
+                $newWidth = $maxDimension;
+                $newHeight = (int)($height * ($maxDimension / $width));
+            } else {
+                $newHeight = $maxDimension;
+                $newWidth = (int)($width * ($maxDimension / $height));
+            }
+
+            $resizedImage = imagecreatetruecolor($newWidth, $newHeight);
+            if ($mime === 'image/png') {
+                imagealphablending($resizedImage, false);
+                imagesavealpha($resizedImage, true);
+            }
+            imagecopyresampled($resizedImage, $image, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+            imagedestroy($image);
+            $image = $resizedImage;
+        }
+
+        // Save image back in-place with optimal compression
+        switch ($mime) {
+            case 'image/jpeg':
+                imagejpeg($image, $fullPath, 75); // 75% quality
+                break;
+            case 'image/png':
+                imagepng($image, $fullPath, 7); // compression level 7
+                break;
+            case 'image/webp':
+                imagewebp($image, $fullPath, 80); // 80% quality
+                break;
+        }
+
+        imagedestroy($image);
+
+        // Clear PHP stat cache so Laravel returns the correct updated file size
+        clearstatcache(true, $fullPath);
     }
 }

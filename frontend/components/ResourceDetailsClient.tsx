@@ -60,19 +60,17 @@ export default function ResourceDetailsClient({ initialData, slug }: ResourceDet
             await api.post('/subscribe', { email: subscribeEmail, source: 'knowledge_base_download' })
             toast({
                 title: "Successfully Subscribed!",
-                description: "Thank you for subscribing. Your download will begin shortly.",
+                description: "Thank you for subscribing to our newsletter.",
             })
             setIsSubscribeDialogOpen(false)
-            triggerDownload(resource.file_path)
             setSubscribeEmail('')
         } catch (err: any) {
             if (err.response?.status === 422) {
                 toast({
                     title: "Welcome back!",
-                    description: "You are already subscribed. Your download will begin shortly.",
+                    description: "You are already subscribed to our newsletter.",
                 })
                 setIsSubscribeDialogOpen(false)
-                triggerDownload(resource.file_path)
                 setSubscribeEmail('')
             } else {
                 toast({
@@ -85,6 +83,7 @@ export default function ResourceDetailsClient({ initialData, slug }: ResourceDet
             setIsSubmitting(false)
         }
     }
+
 
     if (isLoading && !resource) {
         return (
@@ -181,7 +180,10 @@ export default function ResourceDetailsClient({ initialData, slug }: ResourceDet
                                             This document is available for download as a PDF/Resource file.
                                         </p>
                                         <Button 
-                                            onClick={() => setIsSubscribeDialogOpen(true)}
+                                            onClick={() => {
+                                                triggerDownload(resource.file_path)
+                                                setIsSubscribeDialogOpen(true)
+                                            }}
                                             className="w-full h-14 bg-primary hover:bg-primary/90 text-white font-bold gap-3 text-sm uppercase tracking-widest shadow-xl shadow-primary/20"
                                         >
                                             Download Resource <Download size={18} />
@@ -226,10 +228,10 @@ export default function ResourceDetailsClient({ initialData, slug }: ResourceDet
                     
                     <DialogHeader className="relative z-10">
                         <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-                            <span className="text-primary">Subscribe</span> to Download
+                            <span className="text-primary">Subscribe</span> to our Newsletter
                         </DialogTitle>
                         <DialogDescription className="text-muted-foreground mt-2 text-sm leading-relaxed">
-                            Join our newsletter list to download this resource and get the latest strategic insights and industry reports directly in your inbox.
+                            Join our newsletter list to get the latest strategic insights, market intelligence, and industry reports directly in your inbox.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -256,7 +258,7 @@ export default function ResourceDetailsClient({ initialData, slug }: ResourceDet
                                     <Loader2 className="animate-spin" size={16} /> Subscribing...
                                 </span>
                             ) : (
-                                "Subscribe & Download"
+                                "Subscribe"
                             )}
                         </Button>
                     </form>
