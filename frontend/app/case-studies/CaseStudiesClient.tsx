@@ -19,7 +19,7 @@ export default function CaseStudiesClient() {
     const { data: caseStudies, isLoading } = useApi('/case-studies')
     const [viewMode, setViewMode] = React.useState<ViewMode>('grid')
 
-    const heroMedia = getMediaUrl(getSetting('hero_case_studies_media', 'https://cdn.pixabay.com/video/2020/06/05/40063-428753399_large.mp4'))
+    const heroMedia = getMediaUrl(getSetting('hero_case_studies_media', '/assets/videos/services/all-services-video.mp4'))
 
     const categories = ['All', 'Energy Advisory', 'Fintech', 'International Diplomacy']
     const [activeCategory, setActiveCategory] = React.useState('All')

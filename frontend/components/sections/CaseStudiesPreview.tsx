@@ -9,6 +9,7 @@ import { ArrowRight, ArrowUpRight } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+import { getMediaUrl } from '@/lib/utils'
 
 const CaseStudiesPreview = () => {
     const { data: caseStudies, isLoading, isError } = useApi('/case-studies')
@@ -89,7 +90,7 @@ const CaseStudiesPreview = () => {
                                     {/* Image */}
                                     {activeCS.image ? (
                                         <Image
-                                            src={activeCS.image}
+                                            src={getMediaUrl(activeCS.image)}
                                             alt={activeCS.title}
                                             fill
                                             sizes="(max-width: 1024px) 100vw, 66vw"

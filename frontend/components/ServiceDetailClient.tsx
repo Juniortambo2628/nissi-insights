@@ -11,9 +11,9 @@ import Link from 'next/link'
 import VideoHero from '@/components/VideoHero'
 
 const categoryVideos: Record<string, string> = {
-    'Energy Advisory': 'https://cdn.pixabay.com/video/2020/06/01/40662-426613619_large.mp4',
-    'Fintech': 'https://cdn.pixabay.com/video/2016/09/13/5225-183424629_large.mp4',
-    'International Diplomacy': 'https://cdn.pixabay.com/video/2019/04/23/23011-332308064_large.mp4',
+    'Energy Advisory': '/assets/videos/services/energy-advisory.mp4',
+    'Fintech': '/assets/videos/services/fintech-video.mp4',
+    'International Diplomacy': '/assets/videos/services/international-diplomacy-video.mp4',
 }
 
 const benefits = [
@@ -65,7 +65,7 @@ export default function ServiceDetailClient({ initialData, slug }: ServiceDetail
         )
     }
 
-    const videoSrc = categoryVideos[service.category] || 'https://cdn.pixabay.com/video/2021/09/20/89324-609800721_large.mp4'
+    const videoSrc = categoryVideos[service.category] || '/assets/videos/services/all-services-video.mp4'
 
     return (
         <main className="flex min-h-screen flex-col bg-background">

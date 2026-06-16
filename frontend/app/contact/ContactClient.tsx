@@ -22,7 +22,7 @@ export default function ContactClient() {
     const contactEmail = getSetting('contact_email', 'advisory@nissi-insights.com')
     const contactPhone = getSetting('contact_phone', '+44 (0) 20 7123 4567')
     const contactAddress = getSetting('contact_address', 'Level 32, One Canada Square\nCanary Wharf, London, E14 5AB')
-    const heroMedia = getMediaUrl(getSetting('hero_contact_media', 'https://cdn.pixabay.com/video/2019/02/10/21262-316279619_large.mp4'))
+    const heroMedia = getMediaUrl(getSetting('hero_contact_media', '/assets/videos/services/all-services-video.mp4'))
 
     return (
         <main className="flex min-h-screen flex-col bg-background">

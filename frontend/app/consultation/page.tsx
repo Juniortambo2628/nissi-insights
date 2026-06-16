@@ -22,7 +22,7 @@ export default function ConsultationPage() {
     const { toast } = useToast()
     const [isSubmitting, setIsSubmitting] = React.useState(false)
 
-    const heroMedia = getMediaUrl(getSetting('hero_consultation_media', 'https://cdn.pixabay.com/video/2016/11/28/6355-193847498_large.mp4'))
+    const heroMedia = getMediaUrl(getSetting('hero_consultation_media', '/assets/videos/services/all-services-video.mp4'))
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
