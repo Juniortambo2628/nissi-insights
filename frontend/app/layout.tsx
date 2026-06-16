@@ -24,21 +24,33 @@ export async function generateMetadata() {
     const favicon = allSettings.find(s => s.key === 'favicon')?.value;
     
     return {
+      metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://nissi-insights.com'),
       title: "Nissi Insights | Energy Advisory & Market Intelligence",
       description: "Innovative Energy Advisory, Due Diligence, and Route to Market Strategy for a changing world.",
       icons: {
         icon: favicon || '/favicon.png',
         apple: favicon || '/favicon.png',
       },
+      openGraph: {
+        type: 'website',
+        title: "Nissi Insights | Energy Advisory & Market Intelligence",
+        description: "Innovative Energy Advisory, Due Diligence, and Route to Market Strategy for a changing world.",
+      }
     };
   } catch (error) {
     return {
+      metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://nissi-insights.com'),
       title: "Nissi Insights | Energy Advisory & Market Intelligence",
       description: "Innovative Energy Advisory, Due Diligence, and Route to Market Strategy for a changing world.",
       icons: {
         icon: '/favicons/favicon.png',
         apple: '/favicons/favicon.png',
       },
+      openGraph: {
+        type: 'website',
+        title: "Nissi Insights | Energy Advisory & Market Intelligence",
+        description: "Innovative Energy Advisory, Due Diligence, and Route to Market Strategy for a changing world.",
+      }
     };
   }
 }

@@ -5,6 +5,8 @@ interface PageProps {
     params: Promise<{ slug: string }>
 }
 
+const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://nissi-insights.com'
+
 async function fetchInsight(slug: string) {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
     try {
@@ -30,23 +32,86 @@ export async function generateMetadata({ params }: PageProps) {
     }
     
     // Clean description from HTML if present
-    const descriptionText = insight.excerpt || 
-        (insight.content ? insight.content.substring(0, 160).replace(/<[^>]*>?/gm, '') : 'Nissi Insights strategic analysis and advisory highlights.')
+    const descriptionText = (
+        insight.excerpt ||
+        (insight.content ? insight.content.substring(0, 160).replace(/<[^>]*>?/gm, '') : '')
+        || `${insight.title} — Strategic analysis and advisory from Nissi Insights.`
+    ).substring(0, 160)
 
     return {
         title: `${insight.title} | Nissi Insights`,
         description: descriptionText,
+        keywords: [
+            insight.title,
+            'Nissi Insights',
+            insight.category,
+            'energy advisory',
+            'market intelligence',
+            'Kenya',
+        ].filter(Boolean).join(', '),
+        alternates: {
+            canonical: `${appUrl}/insights/${slug}`,
+        },
         openGraph: {
+            type: 'article',
             title: `${insight.title} | Nissi Insights`,
             description: descriptionText,
+            url: `${appUrl}/insights/${slug}`,
+            siteName: 'Nissi Insights',
             images: insight.image ? [{ url: insight.image }] : [],
-        }
+            publishedTime: insight.created_at,
+            modifiedTime: insight.updated_at || insight.created_at,
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title: `${insight.title} | Nissi Insights`,
+            description: descriptionText,
+        },
     }
 }
 
 export default async function Page({ params }: PageProps) {
     const { slug } = await params
     const initialData = await fetchInsight(slug)
+
+    const jsonLd = initialData ? {
+        '@context': 'https://schema.org',
+        '@type': 'Article',
+        headline: initialData.title,
+        description: initialData.excerpt || initialData.content?.substring(0, 300)?.replace(/<[^>]*>?/gm, '') || '',
+        datePublished: initialData.created_at,
+        dateModified: initialData.updated_at || initialData.created_at,
+        author: {
+            '@type': 'Organization',
+            name: 'Nissi Insights',
+            url: appUrl,
+        },
+        publisher: {
+            '@type': 'Organization',
+            name: 'Nissi Insights',
+            url: appUrl,
+            logo: {
+                '@type': 'ImageObject',
+                url: `${appUrl}/favicon.png`,
+            },
+        },
+        mainEntityOfPage: {
+            '@type': 'WebPage',
+            '@id': `${appUrl}/insights/${slug}`,
+        },
+        ...(initialData.image && { image: initialData.image }),
+        ...(initialData.category && { articleSection: initialData.category }),
+    } : null
     
-    return <InsightDetailClient initialData={initialData} slug={slug} />
+    return (
+        <>
+            {jsonLd && (
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+                />
+            )}
+            <InsightDetailClient initialData={initialData} slug={slug} />
+        </>
+    )
 }
