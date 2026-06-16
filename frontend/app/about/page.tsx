@@ -1,248 +1,64 @@
-"use client"
-
 import React from 'react'
-import Navbar from '@/components/Navbar'
-import Footer from '@/components/Footer'
-import VideoHero from '@/components/VideoHero'
-import { motion } from 'framer-motion'
-import { Button } from '@/components/ui/button'
-import { useApi } from '@/hooks/use-api'
-import { ArrowRight, Linkedin, Zap, Landmark, Globe, Shield, Star, Award, Heart, Info, X } from 'lucide-react'
-import Link from 'next/link'
-import { getMediaUrl } from '@/lib/utils'
-import { useSettings } from '@/hooks/use-settings'
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog"
+import AboutClient from './AboutClient'
 
-const availableIcons: Record<string, any> = {
-    Shield, Globe, Zap, Landmark, Star, Award, Heart
+export const metadata = {
+    title: 'About Us | Nissi Insights | Energy Advisory & Market Intelligence',
+    description: 'Learn about Nissi Insights, our mission, vision, core values, and team of experts providing trusted advisory across energy, fintech, and diplomacy.',
+    keywords: [
+        'Nissi Insights team',
+        'About Nissi Insights',
+        'Energy Advisory',
+        'Fintech Strategy',
+        'Sovereign Engagement',
+        'Market Intelligence',
+        'Energy Transition',
+        'Go-to-market strategy'
+    ],
+    openGraph: {
+        title: 'About Us | Nissi Insights | Energy Advisory & Market Intelligence',
+        description: 'Learn about Nissi Insights, our mission, vision, core values, and team of experts providing trusted advisory across energy, fintech, and diplomacy.',
+        type: 'website',
+        url: 'https://nissi-insights.com/about',
+    }
 }
 
 export default function AboutPage() {
-    const { getSetting } = useSettings()
-    const { data: team } = useApi<any[]>('/team-members')
-    const { data: values } = useApi<any[]>('/values')
-
-    const title = getSetting('about_title', 'Trusted intelligence for a complex world.')
-    const tagline = getSetting('about_tagline', 'About Us')
-    const story = getSetting('about_story', 'Nissi Insights provides strategic advisory and market intelligence to help decision-makers navigate the energy transition, financial technology, and international markets.')
-    const heroImage = getMediaUrl(getSetting('hero_about_media', '/NI-Digital-Assets/international-diplomacy.jpg'))
-    const missionTitle = getSetting('about_mission_title', 'Our Mission')
-    const missionText = getSetting('about_mission_text', 'To provide actionable intelligence that drives confident decision-making.')
-    const visionTitle = getSetting('about_vision_title', 'Our Vision')
-    const visionText = getSetting('about_vision_text', 'To be the most trusted advisor for energy and fintech intelligence globally.')
-
-    const sortedTeam = React.useMemo(() => {
-        if (!team) return []
-        return [...team].sort((a, b) => (a.order || 0) - (b.order || 0))
-    }, [team])
+    const jsonLd = {
+        "@context": "https://schema.org",
+        "@graph": [
+            {
+                "@type": "AboutPage",
+                "@id": "https://nissi-insights.com/about/#webpage",
+                "url": "https://nissi-insights.com/about",
+                "name": "About Us | Nissi Insights",
+                "description": "Learn about Nissi Insights, our mission, vision, core values, and team of experts.",
+                "isPartOf": {
+                    "@type": "WebSite",
+                    "@id": "https://nissi-insights.com/#website",
+                    "url": "https://nissi-insights.com",
+                    "name": "Nissi Insights"
+                }
+            },
+            {
+                "@type": "Organization",
+                "@id": "https://nissi-insights.com/#organization",
+                "name": "Nissi Insights",
+                "url": "https://nissi-insights.com",
+                "logo": "https://nissi-insights.com/favicon.png",
+                "sameAs": [
+                    "https://www.linkedin.com/company/nissi-insights"
+                ]
+            }
+        ]
+    }
 
     return (
-        <main className="flex min-h-screen flex-col bg-background font-inter">
-            <Navbar />
-
-            <VideoHero
-                tagline={tagline}
-                title={title.replace(/\n/g, '<br />')}
-                subtitle={story}
-                videoSrc={heroImage.endsWith('.mp4') ? heroImage : undefined}
-                bgImage={!heroImage.endsWith('.mp4') ? heroImage : undefined}
+        <>
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
             />
-
-            {/* Mission & Vision */}
-            <section className="py-24 bg-card overflow-hidden relative">
-                {/* Decorative Elements */}
-                <div className="absolute top-0 right-0 w-1/3 h-full bg-primary/5 -skew-x-12 translate-x-1/2" />
-                
-                <div className="max-w-[1400px] mx-auto px-6 relative z-10">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-start">
-                        <motion.div 
-                            initial={{ opacity: 0, x: -30 }} 
-                            whileInView={{ opacity: 1, x: 0 }}
-                            className="space-y-16"
-                        >
-                            <div className="relative">
-                                <span className="text-primary font-bold text-xs uppercase tracking-[0.3em] mb-4 block">Purpose & Direction</span>
-                                <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-8 leading-tight">
-                                    Our commitment to <span className="text-primary">excellence</span> and strategic foresight.
-                                </h2>
-                                <p className="text-muted-foreground text-lg leading-relaxed max-w-xl">
-                                    {story}
-                                </p>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                                <div className="space-y-4">
-                                    <div className="h-1 w-12 bg-primary mb-6" />
-                                    <h3 className="text-2xl font-bold text-foreground">{missionTitle}</h3>
-                                    <p className="text-muted-foreground leading-relaxed">
-                                        {missionText}
-                                    </p>
-                                </div>
-                                <div className="space-y-4">
-                                    <div className="h-1 w-12 bg-primary/40 mb-6" />
-                                    <h3 className="text-2xl font-bold text-foreground">{visionTitle}</h3>
-                                    <p className="text-muted-foreground leading-relaxed">
-                                        {visionText}
-                                    </p>
-                                </div>
-                            </div>
-                        </motion.div>
-
-                        <motion.div
-                            initial={{ opacity: 0, x: 30 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                            className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6"
-                        >
-                            {values?.map((value, i) => {
-                                const Icon = availableIcons[value.icon] || Shield
-                                return (
-                                    <div key={i} className="group bg-secondary/20 hover:bg-primary/5 border border-border/50 hover:border-primary/30 p-8 transition-all duration-500 rounded-2xl">
-                                        <div className="bg-primary/10 w-12 h-12 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
-                                            <Icon className="h-6 w-6 text-primary" />
-                                        </div>
-                                        <h3 className="font-bold text-xl text-foreground mb-3">{value.title}</h3>
-                                        <p className="text-muted-foreground text-sm leading-relaxed opacity-80 group-hover:opacity-100 transition-opacity">
-                                            {value.description}
-                                        </p>
-                                    </div>
-                                )
-                            })}
-                        </motion.div>
-                    </div>
-                </div>
-            </section>
-
-            {/* Team */}
-            <section id="team" className="py-24 bg-background border-t border-border/50">
-                <div className="max-w-[1400px] mx-auto px-6">
-                    <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} className="text-center mb-16">
-                        <span className="text-primary font-bold text-sm uppercase tracking-[0.2em] mb-4 block">Our Team</span>
-                        <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-                            Led by experienced professionals.
-                        </h2>
-                        <p className="text-muted-foreground max-w-xl mx-auto">
-                            Our team combines deep sector knowledge with proven advisory track records.
-                        </p>
-                    </motion.div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                        {sortedTeam?.map((member, index) => (
-                            <motion.div
-                                key={index}
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.1 }}
-                                className="bg-card/40 backdrop-blur-md border border-border/50 p-8 text-center flex flex-col group relative hover:shadow-2xl hover:border-primary/30 transition-all duration-500 overflow-hidden"
-                            >
-                                {/* Decorative Corner Glow */}
-                                <div className="absolute -top-12 -right-12 w-24 h-24 bg-primary/10 blur-[40px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                                
-                                <div className="relative z-10 w-40 h-40 rounded-full bg-gradient-to-br from-primary/10 to-blue-900/10 mx-auto mb-8 flex items-center justify-center overflow-hidden border border-border/50 group-hover:border-primary/30 transition-all duration-700">
-                                    {member.image ? (
-                                        <img 
-                                            src={getMediaUrl(member.image)} 
-                                            alt={member.name} 
-                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 grayscale-[30%] group-hover:grayscale-0" 
-                                        />
-                                    ) : (
-                                        <span className="text-4xl font-bold text-primary/40">
-                                            {member.name.split(' ').map((n: string) => n[0]).join('')}
-                                        </span>
-                                    )}
-                                </div>
-
-                                <div className="relative z-10 space-y-2 mb-6">
-                                    <h3 className="text-2xl font-bold text-foreground group-hover:text-primary transition-colors duration-300">{member.name}</h3>
-                                    <span className="text-primary font-bold text-[10px] uppercase tracking-[0.2em] block">{member.role}</span>
-                                </div>
-                                
-                                <p className="relative z-10 text-muted-foreground text-sm leading-relaxed mb-8 line-clamp-3 flex-1 px-4 italic">
-                                    "{member.bio}"
-                                </p>
-
-                                <div className="flex flex-col gap-4 mt-auto">
-                                    <Dialog>
-                                        <DialogTrigger asChild>
-                                            <button className="text-primary font-bold text-xs uppercase tracking-widest hover:underline flex items-center justify-center gap-2">
-                                                <Info size={14} /> Read Full Bio
-                                            </button>
-                                        </DialogTrigger>
-                                        <DialogContent className="sm:max-w-[600px] bg-background p-0 overflow-hidden border-border/50 shadow-2xl">
-                                            <div className="bg-primary/5 p-8 border-b border-border/50">
-                                                <div className="flex items-center gap-6">
-                                                    <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-primary/20 shrink-0">
-                                                        {member.image ? (
-                                                            <img src={getMediaUrl(member.image)} alt={member.name} className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            <div className="w-full h-full bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary">
-                                                                {member.name.split(' ').map((n: string) => n[0]).join('')}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    <div>
-                                                        <h2 className="text-2xl font-bold text-foreground">{member.name}</h2>
-                                                        <p className="text-primary font-bold uppercase tracking-widest text-sm">{member.role}</p>
-                                                        {member.linkedin && (
-                                                            <a href={member.linkedin} target="_blank" className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-700 text-xs font-bold mt-2">
-                                                                <Linkedin size={14} /> View LinkedIn Profile
-                                                            </a>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="p-8 space-y-6">
-                                                <div>
-                                                    <h4 className="text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-3">About</h4>
-                                                    <p className="text-muted-foreground leading-relaxed text-sm whitespace-pre-line">
-                                                        {member.bio}
-                                                    </p>
-                                                </div>
-                                                
-                                                {member.qualifications && (
-                                                    <div>
-                                                        <h4 className="text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-3">Professional Credentials</h4>
-                                                        <p className="text-muted-foreground text-sm italic">{member.qualifications}</p>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="p-6 bg-secondary/20 border-t border-border/50 flex justify-end">
-                                               <DialogTrigger asChild>
-                                                    <Button variant="outline" size="sm" className="rounded-none font-bold uppercase tracking-wider text-[10px] border-border/50">
-                                                        Close Profile
-                                                    </Button>
-                                               </DialogTrigger>
-                                            </div>
-                                        </DialogContent>
-                                    </Dialog>
-                                </div>
-                            </motion.div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            {/* CTA */}
-            <section className="py-20 bg-[#050a1a]">
-                <div className="max-w-[1400px] mx-auto px-6 text-center">
-                    <h2 className="text-3xl font-bold text-white mb-4">Let&apos;s work together.</h2>
-                    <p className="text-white/60 mb-8 max-w-lg mx-auto">
-                        Whether you need strategic advisory, market intelligence, or sovereign engagement — we&apos;re ready to help.
-                    </p>
-                    <Button size="lg" className="h-14 px-10 text-lg font-bold rounded-none" asChild>
-                        <Link href="#contact">
-                            Request a Consultation <ArrowRight className="ml-2 h-5 w-5" />
-                        </Link>
-                    </Button>
-                </div>
-            </section>
-
-            <Footer />
-        </main>
+            <AboutClient />
+        </>
     )
 }
