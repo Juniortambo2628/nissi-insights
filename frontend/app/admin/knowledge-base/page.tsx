@@ -11,7 +11,8 @@ import {
     MoreVertical,
     FileText,
     CloudUpload,
-    Check
+    Check,
+    X
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -47,6 +48,7 @@ const AdminKnowledgeBasePage = () => {
     const [isDeleting, setIsDeleting] = useState(false)
     const [selectedResource, setSelectedResource] = useState<any>(null)
     const [isSaving, setIsSaving] = useState(false)
+    const [tagInput, setTagInput] = useState('')
 
     const [formData, setFormData] = useState({
         title: '',
@@ -98,6 +100,7 @@ const AdminKnowledgeBasePage = () => {
                 is_published: false
             })
         }
+        setTagInput('')
         setIsModalOpen(true)
     }
 
@@ -251,12 +254,56 @@ const AdminKnowledgeBasePage = () => {
                                 <Textarea value={formData.content} onChange={e => setFormData({...formData, content: e.target.value})} placeholder="Full content or executive summary..." className="min-h-[200px]" />
                             </div>
                             <div className="space-y-2">
-                                <Label>Tags (Comma separated)</Label>
-                                <Input 
-                                    value={Array.isArray(formData.tags) ? formData.tags.join(', ') : (typeof formData.tags === 'string' ? formData.tags : '')} 
-                                    onChange={e => setFormData({...formData, tags: e.target.value.split(',').map(t => t.trim()).filter(Boolean)})} 
-                                    placeholder="Energy, Policy, Africa" 
-                                />
+                                <Label>Tags</Label>
+                                <div className="flex gap-2">
+                                    <Input 
+                                        value={tagInput}
+                                        onChange={e => setTagInput(e.target.value)}
+                                        placeholder="Add tag (e.g. Energy)"
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                const tag = tagInput.trim();
+                                                if (tag && !formData.tags.includes(tag)) {
+                                                    setFormData({ ...formData, tags: [...formData.tags, tag] });
+                                                    setTagInput('');
+                                                }
+                                            }
+                                        }}
+                                    />
+                                    <Button 
+                                        type="button"
+                                        onClick={() => {
+                                            const tag = tagInput.trim();
+                                            if (tag && !formData.tags.includes(tag)) {
+                                                setFormData({ ...formData, tags: [...formData.tags, tag] });
+                                                setTagInput('');
+                                            }
+                                        }}
+                                        className="bg-primary hover:bg-primary/90 text-white shrink-0"
+                                    >
+                                        Add
+                                    </Button>
+                                </div>
+                                <div className="flex flex-wrap gap-1.5 mt-2">
+                                    {formData.tags.map((tag, idx) => (
+                                        <span key={idx} className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-full border border-primary/20">
+                                            {tag}
+                                            <button 
+                                                type="button"
+                                                onClick={() => {
+                                                    setFormData({
+                                                        ...formData,
+                                                        tags: formData.tags.filter(t => t !== tag)
+                                                    });
+                                                }}
+                                                className="hover:text-destructive text-primary/60 transition-colors"
+                                            >
+                                                <X size={12} />
+                                            </button>
+                                        </span>
+                                    ))}
+                                </div>
                             </div>
                         </div>
 

@@ -3,7 +3,7 @@
 import React, { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
 import imageCompression from 'browser-image-compression'
-import { Upload, X, Loader2, Image as ImageIcon, Film, File } from 'lucide-react'
+import { Upload, X, Loader2, Image as ImageIcon, Film, File, Download } from 'lucide-react'
 import api from '@/lib/api'
 import { getMediaUrl } from '@/lib/utils'
 
@@ -142,6 +142,19 @@ const ImageUploader = ({ value, onChange, accept, maxSizeMB = 2, label = 'Upload
                         )}
                         {/* Hover overlay */}
                         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center gap-3">
+                            {value && (
+                                <a
+                                    href={getMediaUrl(value)}
+                                    download
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="p-1.5 bg-primary rounded-full text-white hover:bg-primary/80"
+                                    title="Download File"
+                                >
+                                    <Download className="h-4 w-4" />
+                                </a>
+                            )}
                             <span className="text-white text-sm font-medium">Click or drop to replace</span>
                             <button
                                 onClick={handleClear}

@@ -38,7 +38,14 @@ class EventController extends Controller
             'is_published' => 'boolean',
         ]);
 
-        $validated['slug'] = Str::slug($validated['title']) . '-' . rand(1000, 9999);
+        $slug = Str::slug($validated['title']);
+        $originalSlug = $slug;
+        $count = 1;
+        while (Event::where('slug', $slug)->exists()) {
+            $slug = $originalSlug . '-' . $count;
+            $count++;
+        }
+        $validated['slug'] = $slug;
         
         $event = Event::create($validated);
 
@@ -66,7 +73,14 @@ class EventController extends Controller
         ]);
 
         if ($validated['title'] !== $event->title) {
-            $validated['slug'] = Str::slug($validated['title']) . '-' . rand(1000, 9999);
+            $slug = Str::slug($validated['title']);
+            $originalSlug = $slug;
+            $count = 1;
+            while (Event::where('slug', $slug)->where('id', '!=', $event->id)->exists()) {
+                $slug = $originalSlug . '-' . $count;
+                $count++;
+            }
+            $validated['slug'] = $slug;
         }
 
         $event->update($validated);

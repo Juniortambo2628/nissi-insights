@@ -34,7 +34,15 @@ class ResourceController extends Controller
         ]);
 
         $data = $request->all();
-        $data['slug'] = Str::slug($data['title']) . '-' . uniqid();
+        
+        $slug = Str::slug($data['title']);
+        $originalSlug = $slug;
+        $count = 1;
+        while (Resource::where('slug', $slug)->exists()) {
+            $slug = $originalSlug . '-' . $count;
+            $count++;
+        }
+        $data['slug'] = $slug;
         
         $resource = Resource::create($data);
 
@@ -57,10 +65,18 @@ class ResourceController extends Controller
 
         $data = $request->all();
         if (isset($data['title']) && $data['title'] !== $resource->title) {
-            $data['slug'] = Str::slug($data['title']) . '-' . uniqid();
+            $slug = Str::slug($data['title']);
+            $originalSlug = $slug;
+            $count = 1;
+            while (Resource::where('slug', $slug)->where('id', '!=', $resource->id)->exists()) {
+                $slug = $originalSlug . '-' . $count;
+                $count++;
+            }
+            $data['slug'] = $slug;
         }
 
         $resource->update($data);
+
 
         return response()->json($resource);
     }

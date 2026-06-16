@@ -25,7 +25,24 @@ class UploadController extends Controller
             'file' => 'required|file|mimes:jpg,jpeg,png,webp,svg,mp4,gif,pdf|max:' . $maxSize,
         ]);
 
-        $path = $file->store('uploads', 'public');
+        $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+        $extension = $file->getClientOriginalExtension();
+        
+        $slugifiedName = \Illuminate\Support\Str::slug($originalName);
+        if (empty($slugifiedName)) {
+            $slugifiedName = 'file-' . uniqid();
+        }
+        
+        $filename = $slugifiedName . '.' . $extension;
+        
+        // Ensure unique filename on disk
+        $count = 1;
+        while (Storage::disk('public')->exists('uploads/' . $filename)) {
+            $filename = $slugifiedName . '-' . $count . '.' . $extension;
+            $count++;
+        }
+
+        $path = $file->storeAs('uploads', $filename, 'public');
 
         // Optimize image in-place if it is an image format we can parse
         $this->optimizeImage($path);

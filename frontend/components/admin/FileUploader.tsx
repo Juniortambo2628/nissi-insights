@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { Upload, X, Loader2, FileText } from 'lucide-react'
+import { Upload, X, Loader2, FileText, Download } from 'lucide-react'
 import api from '@/lib/api'
 import { getMediaUrl } from '@/lib/utils'
 
@@ -118,6 +118,19 @@ const FileUploader = ({
                         
                         {/* Hover overlay */}
                         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center gap-3">
+                            {value && (
+                                <a
+                                    href={getMediaUrl(value)}
+                                    download
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="p-1.5 bg-primary rounded-full text-white hover:bg-primary/80"
+                                    title="Download File"
+                                >
+                                    <Download className="h-4 w-4" />
+                                </a>
+                            )}
                             <span className="text-white text-sm font-medium">Replace File</span>
                             <button
                                 onClick={handleClear}
