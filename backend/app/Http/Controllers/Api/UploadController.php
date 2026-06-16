@@ -157,7 +157,6 @@ class UploadController extends Controller
                 imagesavealpha($resizedImage, true);
             }
             imagecopyresampled($resizedImage, $image, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
-            imagedestroy($image);
             $image = $resizedImage;
         }
 
@@ -173,8 +172,6 @@ class UploadController extends Controller
                 imagewebp($image, $fullPath, 80); // 80% quality
                 break;
         }
-
-        imagedestroy($image);
 
         // Clear PHP stat cache so Laravel returns the correct updated file size
         clearstatcache(true, $fullPath);
