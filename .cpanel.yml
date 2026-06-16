@@ -1,16 +1,14 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/viafgsed/public_html/api
-    - export APPPATH=/home/viafgsed/nissi-insights-core
     # Deploy public assets to the API document root
-    - /bin/cp -R backend/public/* $DEPLOYPATH/
+    - /bin/cp -R backend/public/* /home/viafgsed/public_html/api/
     # Specifically ensure the production index.php is used
-    - /bin/cp backend/public/index.production.php $DEPLOYPATH/index.php
+    - /bin/cp backend/public/index.production.php /home/viafgsed/public_html/api/index.php
     # Deploy backend application code to nissi-insights-core
-    - /bin/cp -R backend/app $APPPATH/
-    - /bin/cp -R backend/routes $APPPATH/
-    - /bin/cp -R backend/database $APPPATH/
-    - /bin/cp -R backend/config $APPPATH/
-    - /bin/cp -R backend/resources $APPPATH/
-    - /bin/cp -R backend/bootstrap $APPPATH/
+    - /bin/cp -R backend/app /home/viafgsed/nissi-insights-core/
+    - /bin/cp -R backend/routes /home/viafgsed/nissi-insights-core/
+    - /bin/cp -R backend/database /home/viafgsed/nissi-insights-core/
+    - /bin/cp -R backend/config /home/viafgsed/nissi-insights-core/
+    - /bin/cp -R backend/resources /home/viafgsed/nissi-insights-core/
+    - /bin/cp -R backend/bootstrap /home/viafgsed/nissi-insights-core/
