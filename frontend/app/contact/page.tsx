@@ -70,7 +70,9 @@ export default function ContactPage() {
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
             />
-            <ContactClient />
+            <React.Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground/50">Loading contact system...</div>}>
+                <ContactClient />
+            </React.Suspense>
         </>
     )
 }

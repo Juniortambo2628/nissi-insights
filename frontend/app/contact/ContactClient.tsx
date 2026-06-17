@@ -13,6 +13,7 @@ import api from '@/lib/api'
 import { useToast } from '@/hooks/use-toast'
 import { getMediaUrl } from '@/lib/utils'
 import { useSettings } from '@/hooks/use-settings'
+import { useSearchParams } from 'next/navigation'
 
 export default function ContactClient() {
     const { getSetting } = useSettings()
@@ -23,7 +24,14 @@ export default function ContactClient() {
     const contactPhone = getSetting('contact_phone', '+44 (0) 20 7123 4567')
     const contactAddress = getSetting('contact_address', 'Level 32, One Canada Square\nCanary Wharf, London, E14 5AB')
     const heroMedia = getMediaUrl(getSetting('hero_contact_media', '/assets/videos/services/all-services-video.mp4'))
+    const searchParams = useSearchParams()
+    const paramSubject = searchParams.get('subject') || ''
+    const paramCaseStudy = searchParams.get('case_study') || ''
 
+    const defaultSubject = paramSubject || ''
+    const defaultMessage = paramCaseStudy 
+        ? `Hello, I would like to request similar advisory services to the case study: "${paramCaseStudy}".` 
+        : ''
     return (
         <main className="flex min-h-screen flex-col bg-background">
             <Navbar />
@@ -173,9 +181,11 @@ export default function ContactClient() {
                                         id="subject" 
                                         name="subject" 
                                         required
+                                        defaultValue={defaultSubject}
                                         className="w-full h-14 px-4 py-2 text-sm bg-slate-50/50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-slate-900"
                                     >
                                         <option value="">Select an inquiry type</option>
+                                        <option value="Request Similar Advisory">Request Similar Advisory</option>
                                         <option>Energy Advisory Inquiry</option>
                                         <option>Fintech Strategy</option>
                                         <option>International Diplomacy</option>
@@ -190,6 +200,7 @@ export default function ContactClient() {
                                         id="message" 
                                         name="message"
                                         required
+                                        defaultValue={defaultMessage}
                                         placeholder="How can we help you?" 
                                         className="w-full min-h-[160px] px-4 py-3 text-sm bg-slate-50/50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all resize-none text-slate-900 placeholder:text-slate-400"
                                     />

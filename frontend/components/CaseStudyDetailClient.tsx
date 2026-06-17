@@ -156,7 +156,7 @@ export default function CaseStudyDetailClient({ initialData, slug }: CaseStudyDe
                                     </li>
                                 </ul>
                                 <Button asChild className="w-full mt-10 rounded-none h-12 font-bold uppercase tracking-widest text-[10px]">
-                                    <Link href="/contact">Request Similar Advisory</Link>
+                                    <Link href={`/contact?subject=Request Similar Advisory&case_study=${encodeURIComponent(caseStudy.title)}`}>Request Similar Advisory</Link>
                                 </Button>
                             </div>
                         </div>
