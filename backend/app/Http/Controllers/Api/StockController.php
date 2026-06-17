@@ -12,7 +12,7 @@ class StockController extends Controller
     public function index()
     {
         $symbols = ['XLE', 'BP', 'SHEL', 'TTE', 'CVX', 'XOM'];
-        $apiKey = env('FINNHUB_API_KEY');
+        $apiKey = config('services.finnhub.api_key');
 
         return Cache::remember('energy_stocks', 300, function () use ($symbols, $apiKey) {
             $data = [];
