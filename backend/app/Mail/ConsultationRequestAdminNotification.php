@@ -8,6 +8,7 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use App\Models\EmailTemplate;
 
 class ConsultationRequestAdminNotification extends Mailable
 {
@@ -29,7 +30,11 @@ class ConsultationRequestAdminNotification extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'New Consultation Request: ' . ($this->requestData->subject ?? 'General Inquiry'),
+            subject: EmailTemplate::subjectIfExists(
+                'consultation_request_admin',
+                ['requestData' => $this->requestData],
+                'New Consultation Request: ' . ($this->requestData->subject ?? 'General Inquiry')
+            ),
         );
     }
 
@@ -38,8 +43,12 @@ class ConsultationRequestAdminNotification extends Mailable
      */
     public function content(): Content
     {
+        if ($content = EmailTemplate::renderIfExists('consultation_request_admin', ['requestData' => $this->requestData])) {
+            return $content;
+        }
+
         $customTemplate = \App\Models\SiteSetting::where('key', 'email_template_admin')->first();
-        
+
         if ($customTemplate && !empty($customTemplate->value)) {
             // Check if it already has layout stuff, if not we use dynamic view
             if (!str_contains($customTemplate->value, '@extends')) {

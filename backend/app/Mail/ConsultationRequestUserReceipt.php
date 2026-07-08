@@ -8,6 +8,7 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use App\Models\EmailTemplate;
 
 class ConsultationRequestUserReceipt extends Mailable
 {
@@ -29,7 +30,11 @@ class ConsultationRequestUserReceipt extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'We Received Your Request: ' . ($this->requestData->subject ?? 'Consultation Inquiry'),
+            subject: EmailTemplate::subjectIfExists(
+                'consultation_request_user',
+                ['requestData' => $this->requestData],
+                'We Received Your Request: ' . ($this->requestData->subject ?? 'Consultation Inquiry')
+            ),
         );
     }
 
@@ -38,8 +43,12 @@ class ConsultationRequestUserReceipt extends Mailable
      */
     public function content(): Content
     {
+        if ($content = EmailTemplate::renderIfExists('consultation_request_user', ['requestData' => $this->requestData])) {
+            return $content;
+        }
+
         $customTemplate = \App\Models\SiteSetting::where('key', 'email_template_user')->first();
-        
+
         if ($customTemplate && !empty($customTemplate->value)) {
             if (!str_contains($customTemplate->value, '@extends')) {
                 return new Content(

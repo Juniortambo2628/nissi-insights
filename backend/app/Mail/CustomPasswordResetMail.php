@@ -8,6 +8,7 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use App\Models\EmailTemplate;
 
 class CustomPasswordResetMail extends Mailable
 {
@@ -40,6 +41,13 @@ class CustomPasswordResetMail extends Mailable
      */
     public function content(): Content
     {
+        if ($content = EmailTemplate::renderIfExists('password_reset', [
+            'resetUrl' => $this->resetUrl,
+            'expireCount' => $this->expireCount,
+        ])) {
+            return $content;
+        }
+
         return new Content(
             view: 'emails.password-reset',
         );

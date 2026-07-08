@@ -8,6 +8,7 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use App\Models\EmailTemplate;
 
 class ContentUpdateNotification extends Mailable
 {
@@ -48,6 +49,17 @@ class ContentUpdateNotification extends Mailable
      */
     public function content(): Content
     {
+        if ($content = EmailTemplate::renderIfExists('content_update_notification', [
+            'typeLabel' => $this->typeLabel,
+            'categoryLabel' => $this->categoryLabel,
+            'title' => $this->title,
+            'excerpt' => $this->excerpt,
+            'url' => $this->url,
+            'imageUrl' => $this->imageUrl,
+        ])) {
+            return $content;
+        }
+
         return new Content(
             view: 'emails.content-update',
         );

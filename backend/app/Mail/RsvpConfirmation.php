@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\Models\Rsvp;
+use App\Models\EmailTemplate;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -51,6 +52,10 @@ class RsvpConfirmation extends Mailable
      */
     public function content(): Content
     {
+        if ($content = EmailTemplate::renderIfExists('rsvp_confirmation', ['rsvp' => $this->rsvp])) {
+            return $content;
+        }
+
         return new Content(
             markdown: 'emails.rsvp.confirmation',
             with: [
