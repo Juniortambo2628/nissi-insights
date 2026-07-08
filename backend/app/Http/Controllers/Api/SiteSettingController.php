@@ -39,8 +39,10 @@ class SiteSettingController extends Controller
     public function update(Request $request, SiteSetting $siteSetting)
     {
         $validated = $request->validate([
-            'value' => 'nullable|string',
+            'value' => ['nullable', 'string'],
         ]);
+
+        $validated['value'] = $this->cleanValue($siteSetting, $validated['value'] ?? '');
 
         $siteSetting->update($validated);
         return SiteSettingResource::make($siteSetting);
@@ -63,11 +65,14 @@ class SiteSettingController extends Controller
         ]);
 
         foreach ($request->settings as $item) {
+            $type = $item['type'] ?? 'text';
+            $value = $this->cleanValue(['type' => $type], $item['value'] ?? '');
+
             SiteSetting::updateOrCreate(
                 ['key' => $item['key']],
                 [
-                    'value' => $item['value'] ?? '',
-                    'type' => $item['type'] ?? 'text',
+                    'value' => $value,
+                    'type' => $type,
                     'group' => $item['group'] ?? 'general',
                 ]
             );
@@ -77,6 +82,23 @@ class SiteSettingController extends Controller
         return $settings->map(function ($group) {
             return SiteSettingResource::collection($group);
         });
+    }
+
+    /**
+     * Clean a setting value before saving.
+     * Image/file fields should only contain a single path or URL.
+     */
+    protected function cleanValue(SiteSetting|array $setting, ?string $value): string
+    {
+        $value = $value ?? '';
+        $type = $setting instanceof SiteSetting ? $setting->type : ($setting['type'] ?? 'text');
+
+        if (in_array($type, ['image', 'file', 'video']) && str_contains($value, ',')) {
+            $parts = array_filter(array_map('trim', explode(',', $value)));
+            $value = $parts[0] ?? '';
+        }
+
+        return $value;
     }
 
     public function getLaunchSettings()

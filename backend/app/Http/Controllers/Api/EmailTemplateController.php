@@ -114,13 +114,53 @@ class EmailTemplateController extends Controller
         $mailer = config('mail.default');
         $fromAddress = config('mail.from.address');
         $adminAddress = config('mail.admin_address');
+        $host = config('mail.mailers.smtp.host');
+        $port = config('mail.mailers.smtp.port');
+        $encryption = config('mail.mailers.smtp.encryption');
+        $username = config('mail.mailers.smtp.username');
+
+        $smtpReachable = null;
+        $smtpError = null;
+
+        if ($mailer === 'smtp' && $host && $port) {
+            try {
+                $timeout = 5;
+                $connection = @fsockopen($host, $port, $errno, $errstr, $timeout);
+                if ($connection) {
+                    $smtpReachable = true;
+                    fclose($connection);
+                } else {
+                    $smtpReachable = false;
+                    $smtpError = $errstr ?: 'Could not connect to SMTP host.';
+                }
+            } catch (\Exception $e) {
+                $smtpReachable = false;
+                $smtpError = $e->getMessage();
+            }
+        }
+
+        $domain = $fromAddress ? substr(strrchr($fromAddress, '@'), 1) : null;
 
         return response()->json([
             'mailer' => $mailer,
             'from_address' => $fromAddress,
             'admin_address' => $adminAddress,
+            'smtp_host' => $host,
+            'smtp_port' => $port,
+            'smtp_encryption' => $encryption,
+            'smtp_username' => $username,
+            'smtp_reachable' => $smtpReachable,
+            'smtp_error' => $smtpError,
             'is_log_driver' => $mailer === 'log',
             'warning' => $mailer === 'log' ? 'MAIL_MAILER is set to log; no real emails are being delivered.' : null,
+            'domain' => $domain,
+            'deliverability_guidance' => [
+                "Set MAIL_MAILER=smtp and provide valid SMTP credentials in .env for real delivery.",
+                "Ensure {$domain} has an SPF record allowing {$host} (e.g. \"v=spf1 include:{$host} ~all\").",
+                "Add a DKIM record for {$domain} if your mail provider supports it.",
+                "Verify the 'From' address ({$fromAddress}) exists and matches the SMTP account.",
+                "For cPanel hosting, create the email account in cPanel and use mail.yourdomain.com with SSL on port 465.",
+            ],
         ]);
     }
 

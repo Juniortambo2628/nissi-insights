@@ -167,4 +167,39 @@ class AnalyticsController extends Controller
             'upcoming_events' => $upcomingEvents
         ]);
     }
+
+    public function systemHealth()
+    {
+        $dbHealthy = true;
+        $dbMessage = 'OK';
+        $dbConnectionCount = null;
+        $dbMaxConnections = null;
+
+        try {
+            $variables = DB::select("SHOW VARIABLES LIKE 'max_connections'");
+            $processes = DB::select("SHOW PROCESSLIST");
+            $dbMaxConnections = $variables[0]->Value ?? null;
+            $dbConnectionCount = count($processes);
+        } catch (\Exception $e) {
+            $dbHealthy = false;
+            $dbMessage = $e->getMessage();
+        }
+
+        return response()->json([
+            'database' => [
+                'healthy' => $dbHealthy,
+                'message' => $dbMessage,
+                'max_connections' => $dbMaxConnections,
+                'current_connections' => $dbConnectionCount,
+            ],
+            'cache_store' => config('cache.default'),
+            'session_driver' => config('session.driver'),
+            'queue_connection' => config('queue.default'),
+            'recommendations' => [
+                "Set CACHE_STORE=file and SESSION_DRIVER=file in .env to reduce database load.",
+                "Run 'php artisan optimize' and 'php artisan config:cache' after changing .env.",
+                "If current_connections is near max_connections, ask your host to raise max_connections.",
+            ],
+        ]);
+    }
 }

@@ -129,6 +129,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/analytics/events', [AnalyticsController::class, 'eventAnalytics']);
     Route::get('/analytics/not-found-logs', [AnalyticsController::class, 'notFoundLogs']);
     Route::get('/analytics/not-found-summary', [AnalyticsController::class, 'notFoundSummary']);
+    Route::get('/analytics/system-health', [AnalyticsController::class, 'systemHealth']);
 
     // Redirects (admin)
     Route::apiResource('redirects', RedirectController::class);
