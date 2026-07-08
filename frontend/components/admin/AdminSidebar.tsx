@@ -29,7 +29,8 @@ import {
     UserCheck,
     Activity,
     Map,
-    FileX
+    FileX,
+    HeartPulse
 } from 'lucide-react'
 
 import { cn, getMediaUrl } from '@/lib/utils'
@@ -70,6 +71,7 @@ const AdminSidebar = () => {
         { name: 'Registrations', href: '/admin/registrations', icon: UserCheck },
         { name: 'Event Analytics', href: '/admin/analytics/events', icon: Activity },
         { name: '404 Logs', href: '/admin/analytics/not-found', icon: FileX },
+        { name: 'System Health', href: '/admin/analytics/system-health', icon: HeartPulse },
         { name: 'Redirects', href: '/admin/redirects', icon: Map },
         { name: 'Widgets', href: '/admin/widgets', icon: Zap },
         { name: 'RSVPs', href: '/admin/rsvps', icon: Rocket },

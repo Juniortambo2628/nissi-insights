@@ -17,6 +17,20 @@ import { EmailTemplate, EmailLog } from '@/types/api'
 import { useToast } from '@/hooks/use-toast'
 import RichTextEditor from '@/components/admin/RichTextEditor'
 
+interface MailHealth {
+    mailer: string
+    from_address: string
+    smtp_host: string
+    smtp_port: number
+    smtp_encryption: string
+    smtp_reachable: boolean | null
+    smtp_error: string | null
+    is_log_driver: boolean
+    warning: string | null
+    domain: string | null
+    deliverability_guidance: string[]
+}
+
 const SYSTEM_TEMPLATES = [
     'event_registered_client',
     'event_registered_admin',
@@ -91,6 +105,7 @@ const EmailSettingsPage = () => {
     const { data: templates, isLoading, mutate: mutateTemplates } = useApi<EmailTemplate[]>('/email-templates')
     const { data: logs, mutate: mutateLogs } = useApi<{ data: EmailLog[], meta: any }>('/email-logs')
     const { data: summary, mutate: mutateSummary } = useApi<{ sent: number, failed: number, total: number }>('/email-logs/summary')
+    const { data: mailHealth, mutate: mutateMailHealth } = useApi<MailHealth>('/email-templates/health')
 
     const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate | null>(null)
     const [form, setForm] = useState({ name: '', subject: '', body: '', variables: [] as string[], is_active: true })
@@ -264,6 +279,55 @@ const EmailSettingsPage = () => {
                         </Button>
                     </div>
                 </div>
+
+                {mailHealth && (
+                    <Card className={`border ${mailHealth.is_log_driver || mailHealth.smtp_reachable === false ? 'border-red-200 bg-red-500/5' : 'border-border bg-secondary/5'}`}>
+                        <CardHeader className="pb-3">
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="text-sm flex items-center gap-2">
+                                    {mailHealth.is_log_driver || mailHealth.smtp_reachable === false ? (
+                                        <AlertCircle size={16} className="text-red-500" />
+                                    ) : (
+                                        <CheckCircle2 size={16} className="text-emerald-500" />
+                                    )}
+                                    Mail Delivery Status
+                                </CardTitle>
+                                <Button variant="ghost" size="sm" className="gap-1" onClick={() => mutateMailHealth()}>
+                                    <RefreshCw size={12} />
+                                    Check
+                                </Button>
+                            </div>
+                            <CardDescription className="text-xs">
+                                {mailHealth.is_log_driver
+                                    ? 'MAIL_MAILER is set to log. Emails are NOT being delivered.'
+                                    : mailHealth.smtp_reachable === false
+                                        ? `Cannot reach SMTP server: ${mailHealth.smtp_error || 'Unknown error'}`
+                                        : `Using ${mailHealth.mailer} via ${mailHealth.smtp_host}:${mailHealth.smtp_port}.`}
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            <div className="flex flex-wrap gap-2 text-xs">
+                                <Badge variant="outline">From: {mailHealth.from_address}</Badge>
+                                <Badge variant="outline">Host: {mailHealth.smtp_host}</Badge>
+                                <Badge variant="outline">Port: {mailHealth.smtp_port}</Badge>
+                                <Badge variant="outline">Encryption: {mailHealth.smtp_encryption || 'none'}</Badge>
+                            </div>
+                            {mailHealth.deliverability_guidance.length > 0 && (
+                                <div className="bg-background/50 rounded-lg p-3 space-y-1">
+                                    <p className="text-xs font-semibold text-muted-foreground">Deliverability Guidance</p>
+                                    <ul className="space-y-1">
+                                        {mailHealth.deliverability_guidance.map((tip, i) => (
+                                            <li key={i} className="text-xs text-foreground flex items-start gap-1.5">
+                                                <span className="text-primary mt-0.5">•</span>
+                                                {tip}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                )}
 
                 <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
                     {/* Left Panel: Template List */}
