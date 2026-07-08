@@ -5,7 +5,7 @@ deployment:
     - /usr/bin/rsync -a backend/public/ /home/viafgsed/public_html/api/
     # Specifically ensure the production index.php is used
     - /bin/cp backend/public/index.production.php /home/viafgsed/public_html/api/index.php
-    # Deploy backend application code to nissi-insights-core (excluding storage, vendor, public, tests, and git metadata)
-    - /usr/bin/rsync -a --exclude="vendor" --exclude="storage" --exclude="public" --exclude="tests" --exclude=".git" backend/ /home/viafgsed/nissi-insights-core/
+    # Deploy backend application code to nissi-insights-core (excluding storage, vendor, public, tests, git metadata, and env files)
+    - /usr/bin/rsync -a --exclude="vendor" --exclude="storage" --exclude="public" --exclude="tests" --exclude=".git" --exclude=".env" --exclude=".env.*" backend/ /home/viafgsed/nissi-insights-core/
 
 
