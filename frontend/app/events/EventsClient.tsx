@@ -9,8 +9,9 @@ import Footer from '@/components/Footer'
 import VideoHero from '@/components/VideoHero'
 import api from '@/lib/api'
 import { format } from 'date-fns'
-import { getMediaUrl } from '@/lib/utils'
 import { useSettings } from '@/hooks/use-settings'
+import { getMediaUrl } from '@/lib/utils'
+import { FallbackImage } from '@/components/ui/FallbackImage'
 
 interface Event {
     id: number
@@ -125,11 +126,12 @@ const EventCard = ({ event, isPast = false }: { event: Event, isPast?: boolean }
             whileInView={{ opacity: 1, y: 0 }}
             className={`group relative flex flex-col h-full bg-secondary/10 border ${isPast ? 'border-border/20 grayscale opacity-60' : 'border-border/50 hover:border-primary/30'} overflow-hidden rounded-2xl transition-all duration-500`}
         >
-            <div className="relative h-64 overflow-hidden">
-                <img 
-                    src={getMediaUrl(event.image) || '/placeholder-event.jpg'} 
+                <div className="relative h-64 overflow-hidden">
+                <FallbackImage
+                    src={event.image}
                     alt={event.title}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    className="transition-transform duration-700 group-hover:scale-110"
+                    fallbackText="Event"
                 />
                 {!isPast && (
                     <div className="absolute top-4 right-4 px-3 py-1 bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-widest rounded-full">

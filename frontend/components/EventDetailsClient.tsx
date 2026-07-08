@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
+import { FallbackImage } from '@/components/ui/FallbackImage'
 
 interface Event {
     id: number
@@ -83,7 +84,7 @@ export default function EventDetailsClient({ initialData, slug }: EventDetailsCl
             {/* Hero Section */}
             <section className="relative h-[60vh] min-h-[500px] flex items-center overflow-hidden">
                 <div className="absolute inset-0">
-                    <img src={event.image || '/placeholder-event.jpg'} className="w-full h-full object-cover" alt="" />
+                    <FallbackImage src={event.image} alt={event.title} fallbackText="Event" />
                     <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
                 </div>
 

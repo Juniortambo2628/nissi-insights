@@ -14,8 +14,10 @@ class SiteSettingSeeder extends Seeder
     {
         $settings = [
             ['key' => 'site_name', 'value' => 'Nissi Insights', 'type' => 'text', 'group' => 'general'],
+            ['key' => 'site_title', 'value' => 'Nissi Insights | Energy Advisory & Market Intelligence', 'type' => 'text', 'group' => 'general'],
+            ['key' => 'site_description', 'value' => 'Innovative Energy Advisory, Due Diligence, and Route to Market Strategy for a changing world.', 'type' => 'textarea', 'group' => 'general'],
             ['key' => 'main_nav_links', 'value' => json_encode([
-                ['name' => 'Advisory', 'href' => '#'],
+                ['name' => 'Advisory', 'href' => '/services'],
                 ['name' => 'Insights', 'href' => '/insights'],
                 ['name' => 'Events', 'href' => '/events'],
                 ['name' => 'Knowledge Hub', 'href' => '/knowledge-base'],

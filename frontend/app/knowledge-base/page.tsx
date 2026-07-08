@@ -1,9 +1,14 @@
 import React from 'react'
 import KnowledgeBaseClient from './KnowledgeBaseClient'
+import { appUrl } from '@/lib/seo'
+
+const pageUrl = `${appUrl}/knowledge-base`
+const title = 'Knowledge Hub & Resources | Nissi Insights'
+const description = 'Access the Nissi Insights library of energy reports, white papers, market publications, and financial technology case studies.'
 
 export const metadata = {
-    title: 'Knowledge Hub & Resources | Nissi Insights',
-    description: 'Access the Nissi Insights library of energy reports, white papers, market publications, and financial technology case studies.',
+    title,
+    description,
     keywords: [
         'Energy transition white papers',
         'Fintech industry reports',
@@ -12,13 +17,13 @@ export const metadata = {
         'Nissi Insights research hub'
     ],
     alternates: {
-        canonical: 'https://nissi-insights.com/knowledge-base',
+        canonical: pageUrl,
     },
     openGraph: {
-        title: 'Knowledge Hub & Resources | Nissi Insights',
-        description: 'Access the Nissi Insights library of energy reports, white papers, market publications, and financial technology case studies.',
+        title,
+        description,
         type: 'website',
-        url: 'https://nissi-insights.com/knowledge-base',
+        url: pageUrl,
     },
     twitter: {
         card: 'summary_large_image',
@@ -33,14 +38,14 @@ export default function KnowledgeBasePage() {
         "@graph": [
             {
                 "@type": "WebPage",
-                "@id": "https://nissi-insights.com/knowledge-base/#webpage",
-                "url": "https://nissi-insights.com/knowledge-base",
+                "@id": `${pageUrl}/#webpage`,
+                "url": pageUrl,
                 "name": "Knowledge Hub & Resources | Nissi Insights",
                 "description": "Comprehensive library of industry publications, energy briefs, and financial technology reports.",
                 "isPartOf": {
                     "@type": "WebSite",
-                    "@id": "https://nissi-insights.com/#website",
-                    "url": "https://nissi-insights.com",
+                    "@id": `${appUrl}/#website`,
+                    "url": appUrl,
                     "name": "Nissi Insights"
                 }
             }

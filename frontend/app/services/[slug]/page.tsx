@@ -1,11 +1,10 @@
 import React from 'react'
 import ServiceDetailClient from '@/components/ServiceDetailClient'
+import { buildDynamicMetadata } from '@/lib/seo'
 
 interface PageProps {
     params: Promise<{ slug: string }>
 }
-
-const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://nissi-insights.com'
 
 async function fetchService(slug: string) {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
@@ -23,49 +22,13 @@ async function fetchService(slug: string) {
 export async function generateMetadata({ params }: PageProps) {
     const { slug } = await params
     const service = await fetchService(slug)
-    
-    if (!service) {
-        return {
-            title: 'Service Not Found | Nissi Insights',
-            description: 'The requested advisory service could not be found.'
-        }
-    }
-    
-    const title = `${service.title} | Nissi Insights Advisory Services`
-    const descriptionText = (
-        service.description?.substring(0, 160) || 
-        `${service.title} - Expert advisory service from Nissi Insights.`
-    )
 
-    return {
-        title,
-        description: descriptionText,
-        keywords: [
-            service.title,
-            'Nissi Insights',
-            service.category,
-            'advisory service',
-            'energy advisory',
-            'consulting',
-            'Kenya',
-        ].filter(Boolean).join(', '),
-        alternates: {
-            canonical: `${appUrl}/services/${slug}`,
-        },
-        openGraph: {
-            title,
-            description: descriptionText,
-            url: `${appUrl}/services/${slug}`,
-            siteName: 'Nissi Insights',
-            type: 'website',
-            images: service.image ? [{ url: service.image }] : [],
-        },
-        twitter: {
-            card: 'summary_large_image',
-            title,
-            description: descriptionText,
-        },
-    }
+    return buildDynamicMetadata(service, {
+        path: `/services/${slug}`,
+        fallbackTitle: 'Service Not Found | Nissi Insights',
+        fallbackDescription: 'The requested advisory service could not be found.',
+        type: 'website',
+    })
 }
 
 export default async function Page({ params }: PageProps) {
@@ -80,16 +43,16 @@ export default async function Page({ params }: PageProps) {
         provider: {
             '@type': 'Organization',
             name: 'Nissi Insights',
-            url: appUrl,
+            url: process.env.NEXT_PUBLIC_APP_URL || 'https://nissi-insights.com',
             logo: {
                 '@type': 'ImageObject',
-                url: `${appUrl}/favicon.png`,
+                url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://nissi-insights.com'}/favicon.png`,
             },
         },
         ...(initialData.category && { serviceType: initialData.category }),
         ...(initialData.image && { image: initialData.image }),
     } : null
-    
+
     return (
         <>
             {jsonLd && (

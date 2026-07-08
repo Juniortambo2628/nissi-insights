@@ -233,7 +233,7 @@ export default function AboutClient() {
                         Whether you need strategic advisory, market intelligence, or sovereign engagement — we&apos;re ready to help.
                     </p>
                     <Button size="lg" className="h-14 px-10 text-lg font-bold rounded-none" asChild>
-                        <Link href="#contact">
+                        <Link href="/consultation">
                             Request a Consultation <ArrowRight className="ml-2 h-5 w-5" />
                         </Link>
                     </Button>

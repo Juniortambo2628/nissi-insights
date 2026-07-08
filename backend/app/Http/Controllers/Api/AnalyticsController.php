@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\NotFoundLog;
 use App\Models\PageView;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -21,6 +22,25 @@ class AnalyticsController extends Controller
 
         PageView::create([
             'path' => $request->path,
+            'referrer' => $request->header('referer'),
+            'user_agent' => substr($request->userAgent() ?? '', 0, 500),
+            'ip' => $request->ip(),
+        ]);
+
+        return response()->json(['ok' => true], 201);
+    }
+
+    // Public — log a 404 Not Found
+    public function track404(Request $request)
+    {
+        $request->validate([
+            'path' => 'required|string|max:500',
+            'source' => 'nullable|string|max:100',
+        ]);
+
+        NotFoundLog::create([
+            'path' => $request->path,
+            'source' => $request->input('source', 'unknown'),
             'referrer' => $request->header('referer'),
             'user_agent' => substr($request->userAgent() ?? '', 0, 500),
             'ip' => $request->ip(),
@@ -78,6 +98,32 @@ class AnalyticsController extends Controller
             'top_pages' => $topPages,
             'views_over_time' => $viewsOverTime,
             'top_referrers' => $topReferrers,
+        ]);
+    }
+
+    public function notFoundLogs(Request $request)
+    {
+        $query = NotFoundLog::latest();
+
+        if ($request->has('path')) {
+            $query->where('path', 'like', '%' . $request->path . '%');
+        }
+
+        $perPage = $request->input('per_page', 50);
+
+        return response()->json($query->paginate($perPage));
+    }
+
+    public function notFoundSummary()
+    {
+        return response()->json([
+            'total' => NotFoundLog::count(),
+            'today' => NotFoundLog::whereDate('created_at', Carbon::today())->count(),
+            'top_paths' => NotFoundLog::select('path', DB::raw('COUNT(*) as count'))
+                ->groupBy('path')
+                ->orderByDesc('count')
+                ->limit(20)
+                ->get(),
         ]);
     }
 

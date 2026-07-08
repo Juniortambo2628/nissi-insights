@@ -46,7 +46,7 @@ import { useToast } from '@/hooks/use-toast'
 import api from '@/lib/api'
 import { format } from 'date-fns'
 import ImageUploader from '@/components/admin/ImageUploader'
-import { getMediaUrl } from '@/lib/utils'
+import { FallbackImage } from '@/components/ui/FallbackImage'
 
 const AdminEventsPage = () => {
     const { data: events, isLoading, mutate } = useApi('/events?all=true')
@@ -65,6 +65,8 @@ const AdminEventsPage = () => {
         description: '',
         overview: '',
         date: '',
+        duration_minutes: 60,
+        timezone: 'UTC',
         location: '',
         image: '',
         link: '',
@@ -118,6 +120,8 @@ const AdminEventsPage = () => {
                 description: event.description || '',
                 overview: event.overview || '',
                 date: event.date ? new Date(event.date).toISOString().slice(0, 16) : '',
+                duration_minutes: event.duration_minutes || 60,
+                timezone: event.timezone || 'UTC',
                 location: event.location || '',
                 image: event.image || '',
                 link: event.link || '',
@@ -131,6 +135,8 @@ const AdminEventsPage = () => {
                 description: '',
                 overview: '',
                 date: '',
+                duration_minutes: 60,
+                timezone: 'UTC',
                 location: '',
                 image: '',
                 link: '',
@@ -240,7 +246,7 @@ const AdminEventsPage = () => {
                         {sortedEvents?.map((event: any) => (
                             <Card key={event.id} className="bg-secondary/10 border-border/50 overflow-hidden group hover:border-primary/30 transition-all">
                                 <div className="relative h-40 overflow-hidden">
-                                    <img src={getMediaUrl(event.image) || '/placeholder-event.jpg'} className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" alt="" />
+                                    <FallbackImage src={event.image} alt={event.title} fallbackText="Event" className="opacity-80 group-hover:scale-105 transition-transform duration-500" />
                                     <div className="absolute top-2 right-2 flex gap-2">
                                         <div className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${event.is_published ? 'bg-emerald-500/20 text-emerald-400' : 'bg-orange-500/20 text-orange-400'}`}>
                                             {event.is_published ? 'Published' : 'Draft'}
@@ -299,7 +305,7 @@ const AdminEventsPage = () => {
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 rounded overflow-hidden shrink-0">
-                                                    <img src={getMediaUrl(event.image) || '/placeholder-event.jpg'} className="w-full h-full object-cover" />
+                                                    <FallbackImage src={event.image} alt={event.title} fallbackText="Event" />
                                                 </div>
                                                 <span className="font-bold text-foreground">{event.title}</span>
                                             </div>
@@ -366,6 +372,16 @@ const AdminEventsPage = () => {
                             <div className="space-y-2">
                                 <Label>Date & Time</Label>
                                 <Input type="datetime-local" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>Duration (min)</Label>
+                                    <Input type="number" min={1} value={formData.duration_minutes} onChange={e => setFormData({...formData, duration_minutes: parseInt(e.target.value) || 60})} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Timezone</Label>
+                                    <Input value={formData.timezone} onChange={e => setFormData({...formData, timezone: e.target.value})} placeholder="UTC" />
+                                </div>
                             </div>
                             <div className="space-y-2">
                                 <Label>Location</Label>

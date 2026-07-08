@@ -1,5 +1,25 @@
 import type { NextConfig } from "next";
 
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+
+async function fetchRedirects(): Promise<Array<{ source: string; destination: string; permanent: boolean }>> {
+  try {
+    const res = await fetch(`${apiUrl}/redirects-public`, { next: { revalidate: 60 } });
+    if (!res.ok) return [];
+
+    const redirects = await res.json();
+
+    return redirects.map((r: { from_path: string; to: string; status_code: number }) => ({
+      source: r.from_path,
+      destination: r.to,
+      permanent: r.status_code === 301,
+    }));
+  } catch (error) {
+    console.warn('Could not fetch redirects from backend, using none:', error);
+    return [];
+  }
+}
+
 const nextConfig: NextConfig = {
   output: "standalone",
   images: {
@@ -23,6 +43,9 @@ const nextConfig: NextConfig = {
         hostname: 'api.nissi-insights.com',
       },
     ],
+  },
+  async redirects() {
+    return fetchRedirects();
   },
   async headers() {
     return [

@@ -1,11 +1,10 @@
 import React from 'react'
 import CaseStudyDetailClient from '@/components/CaseStudyDetailClient'
+import { buildDynamicMetadata, buildArticleJsonLd } from '@/lib/seo'
 
 interface PageProps {
     params: Promise<{ slug: string }>
 }
-
-const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://nissi-insights.com'
 
 async function fetchCaseStudy(slug: string) {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
@@ -23,97 +22,20 @@ async function fetchCaseStudy(slug: string) {
 export async function generateMetadata({ params }: PageProps) {
     const { slug } = await params
     const caseStudy = await fetchCaseStudy(slug)
-    
-    if (!caseStudy) {
-        return {
-            title: 'Case Study Not Found | Nissi Insights',
-            description: 'The requested case study could not be found.'
-        }
-    }
-    
-    const title = caseStudy.meta_title || `${caseStudy.title} | Nissi Insights Case Studies`
-    const descriptionText = (
-        caseStudy.meta_description ||
-        (caseStudy.client_name ? 
-            `Case study for ${caseStudy.client_name}: ${caseStudy.title}` : 
-            `${caseStudy.title} — Advisory case study from Nissi Insights.`)
-    ).substring(0, 160)
 
-    const keywordsList = [
-        ...(caseStudy.tags || []),
-        caseStudy.title,
-        'Nissi Insights',
-        caseStudy.client_name,
-        caseStudy.category,
-        'case study',
-        'energy advisory',
-        'market intelligence',
-        'Kenya',
-    ].filter(Boolean)
-
-    return {
-        title,
-        description: descriptionText,
-        keywords: keywordsList.join(', '),
-        alternates: {
-            canonical: `${appUrl}/case-studies/${slug}`,
-        },
-        openGraph: {
-            type: 'article',
-            title,
-            description: descriptionText,
-            url: `${appUrl}/case-studies/${slug}`,
-            siteName: 'Nissi Insights',
-            images: caseStudy.image ? [{ url: caseStudy.image }] : [],
-            publishedTime: caseStudy.created_at,
-            modifiedTime: caseStudy.updated_at || caseStudy.created_at,
-            tags: caseStudy.tags || [],
-        },
-        twitter: {
-            card: 'summary_large_image',
-            title,
-            description: descriptionText,
-        },
-    }
+    return buildDynamicMetadata(caseStudy, {
+        path: `/case-studies/${slug}`,
+        fallbackTitle: 'Case Study Not Found | Nissi Insights',
+        fallbackDescription: 'The requested case study could not be found.',
+        type: 'article',
+    })
 }
 
 export default async function Page({ params }: PageProps) {
     const { slug } = await params
     const initialData = await fetchCaseStudy(slug)
+    const jsonLd = buildArticleJsonLd(initialData, `/case-studies/${slug}`)
 
-    const jsonLd = initialData ? {
-        '@context': 'https://schema.org',
-        '@type': 'Article',
-        headline: initialData.meta_title || initialData.title,
-        description: initialData.meta_description || 
-            (initialData.client_name ? 
-                `Case study for ${initialData.client_name}: ${initialData.title}` :
-                `${initialData.title} — Advisory case study.`),
-        datePublished: initialData.created_at,
-        dateModified: initialData.updated_at || initialData.created_at,
-        author: {
-            '@type': 'Organization',
-            name: 'Nissi Insights',
-            url: appUrl,
-        },
-        publisher: {
-            '@type': 'Organization',
-            name: 'Nissi Insights',
-            url: appUrl,
-            logo: {
-                '@type': 'ImageObject',
-                url: `${appUrl}/favicon.png`,
-            },
-        },
-        mainEntityOfPage: {
-            '@type': 'WebPage',
-            '@id': `${appUrl}/case-studies/${slug}`,
-        },
-        ...(initialData.image && { image: initialData.image }),
-        ...(initialData.category && { articleSection: initialData.category }),
-        ...(initialData.tags && initialData.tags.length > 0 && { keywords: initialData.tags.join(', ') }),
-    } : null
-    
     return (
         <>
             {jsonLd && (

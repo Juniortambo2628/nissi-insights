@@ -46,4 +46,37 @@ class RsvpController extends Controller
             'data' => $rsvp
         ], 201);
     }
+
+    /**
+     * Update the specified RSVP.
+     */
+    public function update(Request $request, Rsvp $rsvp)
+    {
+        $validated = $request->validate([
+            'name' => 'nullable|string|max:255',
+            'email' => 'nullable|email|max:255|unique:rsvps,email,' . $rsvp->id,
+            'company' => 'nullable|string|max:255',
+            'job_title' => 'nullable|string|max:255',
+            'sector' => 'nullable|string|max:255',
+            'interest' => 'nullable|string|max:255',
+            'consent' => 'boolean',
+            'newsletter' => 'boolean',
+            'attendance' => 'nullable|string|in:accept,decline',
+            'type' => 'nullable|string|in:rsvp,early_access',
+        ]);
+
+        $rsvp->update($validated);
+
+        return response()->json($rsvp);
+    }
+
+    /**
+     * Remove the specified RSVP.
+     */
+    public function destroy(Rsvp $rsvp)
+    {
+        $rsvp->delete();
+
+        return response()->json(null, 204);
+    }
 }

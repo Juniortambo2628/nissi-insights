@@ -77,7 +77,11 @@
             <img src="{{ config('app.url') }}/storage/uploads/6dziGBZaJ8qXkTGW5dXGu5gtb6NVmyQQbXtbpryA.png" alt="Nissi Insights Logo" class="logo">
         </div>
         <div class="content">
-            @yield('content')
+            @if(isset($content))
+                {!! $content !!}
+            @else
+                @yield('content')
+            @endif
         </div>
         <div class="footer">
             <p>&copy; {{ date('Y') }} Nissi Insights. All rights reserved.</p>

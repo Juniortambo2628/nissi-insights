@@ -1,11 +1,10 @@
 import React from 'react'
 import EventDetailsClient from '@/components/EventDetailsClient'
+import { buildDynamicMetadata, buildEventJsonLd } from '@/lib/seo'
 
 interface PageProps {
     params: Promise<{ slug: string }>
 }
-
-const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://nissi-insights.com'
 
 async function fetchEvent(slug: string) {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
@@ -23,81 +22,20 @@ async function fetchEvent(slug: string) {
 export async function generateMetadata({ params }: PageProps) {
     const { slug } = await params
     const event = await fetchEvent(slug)
-    
-    if (!event) {
-        return {
-            title: 'Event Not Found | Nissi Insights',
-            description: 'The requested event could not be found.'
-        }
-    }
 
-    const title = event.meta_title || `${event.title} | Nissi Insights Events`
-    const descriptionText = (
-        event.meta_description ||
-        event.description?.substring(0, 160) || 
-        `${event.title} — Nissi Insights event.`
-    )
-
-    const keywordsList = [
-        ...(event.tags || []),
-        event.title,
-        'Nissi Insights',
-        'event',
-        event.location,
-        'energy advisory',
-        'market intelligence',
-        'Kenya',
-    ].filter(Boolean)
-    
-    return {
-        title,
-        description: descriptionText,
-        keywords: keywordsList.join(', '),
-        alternates: {
-            canonical: `${appUrl}/events/${slug}`,
-        },
-        openGraph: {
-            type: 'article',
-            title,
-            description: descriptionText,
-            url: `${appUrl}/events/${slug}`,
-            siteName: 'Nissi Insights',
-            images: event.image ? [{ url: event.image }] : [],
-            tags: event.tags || [],
-        },
-        twitter: {
-            card: 'summary_large_image',
-            title,
-            description: descriptionText,
-        },
-    }
+    return buildDynamicMetadata(event, {
+        path: `/events/${slug}`,
+        fallbackTitle: 'Event Not Found | Nissi Insights',
+        fallbackDescription: 'The requested event could not be found.',
+        type: 'event',
+    })
 }
 
 export default async function Page({ params }: PageProps) {
     const { slug } = await params
     const initialData = await fetchEvent(slug)
+    const jsonLd = buildEventJsonLd(initialData, `/events/${slug}`)
 
-    const jsonLd = initialData ? {
-        '@context': 'https://schema.org',
-        '@type': 'Event',
-        name: initialData.meta_title || initialData.title,
-        description: initialData.meta_description || initialData.description || '',
-        ...(initialData.date && { startDate: initialData.date }),
-        ...(initialData.location && {
-            location: {
-                '@type': 'Place',
-                name: initialData.location,
-            },
-        }),
-        organizer: {
-            '@type': 'Organization',
-            name: 'Nissi Insights',
-            url: appUrl,
-        },
-        ...(initialData.image && { image: initialData.image }),
-        ...(initialData.tags && initialData.tags.length > 0 && { keywords: initialData.tags.join(', ') }),
-    } : null
-    
     return (
         <>
             {jsonLd && (

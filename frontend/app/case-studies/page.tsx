@@ -1,9 +1,14 @@
 import React from 'react'
 import CaseStudiesClient from './CaseStudiesClient'
+import { appUrl } from '@/lib/seo'
+
+const pageUrl = `${appUrl}/case-studies`
+const title = 'Case Studies | Advisory Portfolio & Client Success Stories | Nissi Insights'
+const description = 'Explore Nissi Insights case studies showcasing real-world advisory impact across energy transition, fintech, and international diplomacy. Measurable outcomes delivered.'
 
 export const metadata = {
-    title: 'Case Studies | Advisory Portfolio & Client Success Stories | Nissi Insights',
-    description: 'Explore Nissi Insights case studies showcasing real-world advisory impact across energy transition, fintech, and international diplomacy. Measurable outcomes delivered.',
+    title,
+    description,
     keywords: [
         'Nissi Insights case studies',
         'Energy advisory case study',
@@ -15,10 +20,10 @@ export const metadata = {
         'Kenya energy advisory',
     ],
     openGraph: {
-        title: 'Case Studies | Advisory Portfolio & Client Success Stories | Nissi Insights',
-        description: 'Explore Nissi Insights case studies showcasing real-world advisory impact across energy transition, fintech, and international diplomacy.',
+        title,
+        description,
         type: 'website',
-        url: 'https://nissi-insights.com/case-studies',
+        url: pageUrl,
     },
     twitter: {
         card: 'summary_large_image',
@@ -26,7 +31,7 @@ export const metadata = {
         description: 'Explore advisory case studies with measurable impact across energy, fintech, and diplomacy.',
     },
     alternates: {
-        canonical: 'https://nissi-insights.com/case-studies',
+        canonical: pageUrl,
     },
 }
 
@@ -36,14 +41,14 @@ export default function CaseStudiesPage() {
         "@graph": [
             {
                 "@type": "CollectionPage",
-                "@id": "https://nissi-insights.com/case-studies/#webpage",
-                "url": "https://nissi-insights.com/case-studies",
+                "@id": `${pageUrl}/#webpage`,
+                "url": pageUrl,
                 "name": "Case Studies | Nissi Insights",
                 "description": "Advisory case studies showcasing measurable impact across energy transition, fintech, and international diplomacy.",
                 "isPartOf": {
                     "@type": "WebSite",
-                    "@id": "https://nissi-insights.com/#website",
-                    "url": "https://nissi-insights.com",
+                    "@id": `${appUrl}/#website`,
+                    "url": appUrl,
                     "name": "Nissi Insights"
                 }
             }

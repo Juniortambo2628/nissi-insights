@@ -2,14 +2,19 @@
 
 import React, { useState } from 'react'
 import AdminLayout from '@/components/admin/AdminLayout'
-import { cn } from '@/lib/utils'
 import { useApi } from '@/hooks/use-api'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Search, Download, RefreshCw, Rocket } from 'lucide-react'
+import { Search, Download, RefreshCw, Rocket, CheckCircle, XCircle, Trash2 } from 'lucide-react'
 import { format } from 'date-fns'
+import api from '@/lib/api'
+import { useToast } from '@/hooks/use-toast'
+import { PageShell } from '@/components/admin/PageShell'
+import { DataTable } from '@/components/admin/DataTable'
+import { StatusBadge } from '@/components/admin/StatusBadge'
+import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
+import { cn } from '@/lib/utils'
 
 interface Rsvp {
     id: number
@@ -28,22 +33,50 @@ interface Rsvp {
 
 export default function AdminRsvpsPage() {
     const { data: rsvps, isLoading, mutate } = useApi<Rsvp[]>('/rsvps')
+    const { toast } = useToast()
     const [searchQuery, setSearchQuery] = useState('')
+    const [deletingRsvp, setDeletingRsvp] = useState<Rsvp | null>(null)
+    const [isDeleting, setIsDeleting] = useState(false)
 
-    const filteredRsvps = rsvps?.filter(rsvp => {
+    const filteredRsvps = rsvps?.filter((rsvp) => {
         const query = searchQuery.toLowerCase()
-        return rsvp.name.toLowerCase().includes(query) || 
-               rsvp.email.toLowerCase().includes(query) ||
-               (rsvp.company && rsvp.company.toLowerCase().includes(query))
-    })
+        return rsvp.name.toLowerCase().includes(query) ||
+            rsvp.email.toLowerCase().includes(query) ||
+            (rsvp.company && rsvp.company.toLowerCase().includes(query))
+    }) ?? []
+
+    const updateAttendance = async (rsvp: Rsvp, attendance: 'accept' | 'decline' | null) => {
+        try {
+            await api.put(`/rsvps/${rsvp.id}`, { attendance })
+            toast({ title: "Updated", description: `${rsvp.name} marked as ${attendance || 'pending'}.` })
+            mutate()
+        } catch (error) {
+            toast({ title: "Error", description: "Failed to update RSVP.", variant: "destructive" })
+        }
+    }
+
+    const handleDelete = async () => {
+        if (!deletingRsvp) return
+        setIsDeleting(true)
+        try {
+            await api.delete(`/rsvps/${deletingRsvp.id}`)
+            toast({ title: "Deleted", description: `${deletingRsvp.name} has been removed.` })
+            mutate()
+        } catch (error) {
+            toast({ title: "Error", description: "Failed to delete RSVP.", variant: "destructive" })
+        } finally {
+            setIsDeleting(false)
+            setDeletingRsvp(null)
+        }
+    }
 
     const handleExport = () => {
         if (!rsvps) return
-        
+
         const headers = ['Type', 'Attendance', 'Name', 'Email', 'Organization', 'Role', 'Sector', 'Interest', 'Newsletter', 'Date Registered']
         const csvContent = [
             headers.join(','),
-            ...rsvps.map(r => [
+            ...rsvps.map((r) => [
                 `"${r.type === 'rsvp' ? 'Dinner RSVP' : 'Early Access'}"`,
                 `"${r.type === 'rsvp' ? (r.attendance || 'Pending') : 'N/A'}"`,
                 `"${r.name}"`,
@@ -68,18 +101,136 @@ export default function AdminRsvpsPage() {
         document.body.removeChild(link)
     }
 
+    const columns = [
+        {
+            key: 'type',
+            header: 'Type',
+            cell: (rsvp: Rsvp) => (
+                <span className={cn(
+                    "px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider",
+                    rsvp.type === 'rsvp'
+                        ? "bg-blue-500/10 text-blue-500 border border-blue-500/20"
+                        : "bg-primary/10 text-primary border border-primary/20"
+                )}>
+                    {rsvp.type === 'rsvp' ? 'Dinner' : 'Access'}
+                </span>
+            ),
+        },
+        {
+            key: 'name',
+            header: 'Status/Name',
+            cell: (rsvp: Rsvp) => (
+                <div className="flex flex-col">
+                    <span className="font-medium text-foreground/90">{rsvp.name}</span>
+                    {rsvp.type === 'rsvp' && (
+                        <StatusBadge
+                            variant={rsvp.attendance === 'accept' ? 'success' : rsvp.attendance === 'decline' ? 'danger' : 'muted'}
+                            className="w-fit mt-1"
+                        >
+                            {rsvp.attendance === 'accept' ? 'Accepted' : rsvp.attendance === 'decline' ? 'Declined' : 'Pending'}
+                        </StatusBadge>
+                    )}
+                </div>
+            ),
+        },
+        {
+            key: 'email',
+            header: 'Email',
+            cell: (rsvp: Rsvp) => (
+                <a href={`mailto:${rsvp.email}`} className="text-sm text-primary hover:underline underline-offset-4">
+                    {rsvp.email}
+                </a>
+            ),
+        },
+        {
+            key: 'company',
+            header: 'Organization',
+            hide: 'md' as const,
+            cell: (rsvp: Rsvp) => <span className="text-muted-foreground text-sm">{rsvp.company || '-'}</span>,
+        },
+        {
+            key: 'role',
+            header: 'Role',
+            hide: 'lg' as const,
+            cell: (rsvp: Rsvp) => <span className="text-muted-foreground text-sm">{rsvp.job_title || '-'}</span>,
+        },
+        {
+            key: 'sector',
+            header: 'Sector/Interest',
+            hide: 'xl' as const,
+            cell: (rsvp: Rsvp) => (
+                <div className="flex flex-col text-sm">
+                    <span className="capitalize text-muted-foreground">{rsvp.sector || '-'}</span>
+                    <span className="text-[10px] text-muted-foreground/70 capitalize">
+                        {rsvp.interest ? rsvp.interest.replace(/_/g, ' ') : '-'}
+                    </span>
+                </div>
+            ),
+        },
+        {
+            key: 'registered',
+            header: <span className="text-right block">Registered</span>,
+            cell: (rsvp: Rsvp) => (
+                <span className="text-right block text-muted-foreground whitespace-nowrap text-xs">
+                    {format(new Date(rsvp.created_at), 'MMM d, yyyy')}
+                </span>
+            ),
+        },
+        {
+            key: 'actions',
+            header: <span className="text-right block">Actions</span>,
+            cell: (rsvp: Rsvp) => (
+                <div className="flex items-center justify-end gap-1">
+                    {rsvp.type === 'rsvp' && (
+                        <>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10"
+                                onClick={() => updateAttendance(rsvp, 'accept')}
+                                title="Accept"
+                                disabled={rsvp.attendance === 'accept'}
+                            >
+                                <CheckCircle size={16} />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-red-500 hover:text-red-400 hover:bg-red-500/10"
+                                onClick={() => updateAttendance(rsvp, 'decline')}
+                                title="Decline"
+                                disabled={rsvp.attendance === 'decline'}
+                            >
+                                <XCircle size={16} />
+                            </Button>
+                        </>
+                    )}
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => setDeletingRsvp(rsvp)}
+                        title="Delete"
+                    >
+                        <Trash2 size={16} />
+                    </Button>
+                </div>
+            ),
+        },
+    ]
+
     return (
         <AdminLayout>
-            <div className="space-y-8">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent flex items-center gap-2">
-                            <Rocket className="text-primary h-8 w-8" />
-                            Launch RSVPs
-                        </h1>
-                        <p className="text-muted-foreground mt-1">Manage early access registrations for the platform launch.</p>
-                    </div>
-                    <div className="flex items-center gap-3">
+            <PageShell
+                title={
+                    <span className="flex items-center gap-2">
+                        <Rocket className="text-primary h-8 w-8" />
+                        Launch RSVPs
+                    </span>
+                }
+                subtitle="Manage early access registrations for the platform launch."
+                action={
+                    <>
                         <Button variant="outline" onClick={() => mutate()} disabled={isLoading} className="gap-2">
                             <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
                             Refresh
@@ -88,9 +239,9 @@ export default function AdminRsvpsPage() {
                             <Download size={16} />
                             Export CSV
                         </Button>
-                    </div>
-                </div>
-
+                    </>
+                }
+            >
                 <Card className="bg-secondary/10 border-border/50">
                     <CardHeader className="border-b border-border/50 bg-secondary/5 pb-4">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -100,7 +251,7 @@ export default function AdminRsvpsPage() {
                             </div>
                             <div className="relative max-w-sm w-full">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                <Input 
+                                <Input
                                     placeholder="Search by name, email, or company..."
                                     className="pl-9 bg-background/50 border-border/50 h-9"
                                     value={searchQuery}
@@ -110,79 +261,27 @@ export default function AdminRsvpsPage() {
                         </div>
                     </CardHeader>
                     <CardContent className="p-0">
-                        {isLoading ? (
-                            <div className="p-8 flex justify-center items-center">
-                                <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
-                            </div>
-                        ) : filteredRsvps?.length === 0 ? (
-                            <div className="p-12 text-center text-muted-foreground">
-                                {searchQuery ? "No RSVPs match your search." : "No RSVPs received yet."}
-                            </div>
-                        ) : (
-                            <Table>
-                                <TableHeader className="bg-secondary/20">
-                                    <TableRow className="border-border/50 hover:bg-transparent">
-                                        <TableHead className="font-semibold">Type</TableHead>
-                                        <TableHead className="font-semibold">Status/Name</TableHead>
-                                        <TableHead className="font-semibold">Email</TableHead>
-                                        <TableHead className="font-semibold hidden md:table-cell">Organization</TableHead>
-                                        <TableHead className="font-semibold hidden lg:table-cell">Role</TableHead>
-                                        <TableHead className="font-semibold hidden xl:table-cell">Sector/Interest</TableHead>
-                                        <TableHead className="font-semibold text-right">Registered</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {filteredRsvps?.map((rsvp) => (
-                                        <TableRow key={rsvp.id} className="border-border/50 group hover:bg-secondary/10">
-                                            <TableCell>
-                                                <span className={cn(
-                                                    "px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider",
-                                                    rsvp.type === 'rsvp' 
-                                                        ? "bg-blue-500/10 text-blue-500 border border-blue-500/20" 
-                                                        : "bg-primary/10 text-primary border border-primary/20"
-                                                )}>
-                                                    {rsvp.type === 'rsvp' ? 'Dinner' : 'Access'}
-                                                </span>
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="flex flex-col">
-                                                    <span className="font-medium text-foreground/90">{rsvp.name}</span>
-                                                    {rsvp.type === 'rsvp' && (
-                                                        <span className={cn(
-                                                            "text-[10px] font-bold uppercase",
-                                                            rsvp.attendance === 'accept' ? "text-green-500" : "text-red-500"
-                                                        )}>
-                                                            {rsvp.attendance === 'accept' ? '• Accepted' : '• Declined'}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <a href={`mailto:${rsvp.email}`} className="text-sm text-primary hover:underline underline-offset-4">
-                                                    {rsvp.email}
-                                                </a>
-                                            </TableCell>
-                                            <TableCell className="text-muted-foreground hidden md:table-cell text-sm">{rsvp.company || '-'}</TableCell>
-                                            <TableCell className="text-muted-foreground hidden lg:table-cell text-sm">{rsvp.job_title || '-'}</TableCell>
-                                            <TableCell className="text-muted-foreground hidden xl:table-cell text-sm">
-                                                <div className="flex flex-col">
-                                                    <span className="capitalize">{rsvp.sector || '-'}</span>
-                                                    <span className="text-[10px] text-muted-foreground capitalize">
-                                                        {rsvp.interest ? rsvp.interest.replace(/_/g, ' ') : '-'}
-                                                    </span>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell className="text-right text-muted-foreground whitespace-nowrap text-xs">
-                                                {format(new Date(rsvp.created_at), 'MMM d, yyyy')}
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        )}
+                        <DataTable
+                            columns={columns}
+                            data={filteredRsvps}
+                            isLoading={isLoading}
+                            keyExtractor={(rsvp) => rsvp.id}
+                            emptyMessage={searchQuery ? "No RSVPs match your search." : "No RSVPs received yet."}
+                        />
                     </CardContent>
                 </Card>
-            </div>
+            </PageShell>
+
+            <ConfirmDialog
+                open={!!deletingRsvp}
+                onOpenChange={(open) => !open && setDeletingRsvp(null)}
+                title="Delete RSVP"
+                description={<>Are you sure you want to delete the RSVP for <strong>{deletingRsvp?.name}</strong>? This cannot be undone.</>}
+                confirmLabel="Delete"
+                onConfirm={handleDelete}
+                isLoading={isDeleting}
+                variant="destructive"
+            />
         </AdminLayout>
     )
 }

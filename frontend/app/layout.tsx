@@ -3,6 +3,7 @@ import "./globals.css";
 import { AuthProvider } from "@/components/AuthProvider";
 import ClientLayout from "@/components/ClientLayout";
 import { Toaster } from "@/components/ui/toaster";
+import type { SiteSetting } from "@/types/api";
 
 const geistSans = Geist({
 
@@ -15,44 +16,44 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export async function generateMetadata() {
+const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://nissi-insights.com';
+const defaultTitle = 'Nissi Insights | Energy Advisory & Market Intelligence';
+const defaultDescription = 'Innovative Energy Advisory, Due Diligence, and Route to Market Strategy for a changing world.';
+
+async function fetchSettings(): Promise<SiteSetting[]> {
   try {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
     const response = await fetch(`${apiUrl}/settings`, { next: { revalidate: 60 } });
-    const settingsByGroup = await response.json();
-    const allSettings = Object.values(settingsByGroup).flat() as any[];
-    const favicon = allSettings.find(s => s.key === 'favicon')?.value;
-    
-    return {
-      metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://nissi-insights.com'),
-      title: "Nissi Insights | Energy Advisory & Market Intelligence",
-      description: "Innovative Energy Advisory, Due Diligence, and Route to Market Strategy for a changing world.",
-      icons: {
-        icon: favicon || '/favicon.png',
-        apple: favicon || '/favicon.png',
-      },
-      openGraph: {
-        type: 'website',
-        title: "Nissi Insights | Energy Advisory & Market Intelligence",
-        description: "Innovative Energy Advisory, Due Diligence, and Route to Market Strategy for a changing world.",
-      }
-    };
-  } catch (error) {
-    return {
-      metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://nissi-insights.com'),
-      title: "Nissi Insights | Energy Advisory & Market Intelligence",
-      description: "Innovative Energy Advisory, Due Diligence, and Route to Market Strategy for a changing world.",
-      icons: {
-        icon: '/favicons/favicon.png',
-        apple: '/favicons/favicon.png',
-      },
-      openGraph: {
-        type: 'website',
-        title: "Nissi Insights | Energy Advisory & Market Intelligence",
-        description: "Innovative Energy Advisory, Due Diligence, and Route to Market Strategy for a changing world.",
-      }
-    };
+    if (!response.ok) return [];
+    const settingsByGroup: Record<string, SiteSetting[]> = await response.json();
+    return Object.values(settingsByGroup).flat();
+  } catch {
+    return [];
   }
+}
+
+export async function generateMetadata() {
+  const settings = await fetchSettings();
+  const get = (key: string) => settings.find(s => s.key === key)?.value;
+
+  const title = get('site_title') || defaultTitle;
+  const description = get('site_description') || defaultDescription;
+  const favicon = get('favicon') || '/favicon.png';
+
+  return {
+    metadataBase: new URL(appUrl),
+    title,
+    description,
+    icons: {
+      icon: favicon,
+      apple: favicon,
+    },
+    openGraph: {
+      type: 'website',
+      title,
+      description,
+    }
+  };
 }
 
 import PrelaunchWrapper from "@/components/PrelaunchWrapper";
@@ -62,11 +63,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   let launchSettings = null;
   try {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
-    const response = await fetch(`${apiUrl}/settings/launch`, { 
+    const response = await fetch(`${apiUrl}/settings/launch`, {
       next: { revalidate: 60 },
       headers: { 'Accept': 'application/json' }
     });
-    
+
     if (response.ok) {
         launchSettings = await response.json();
     } else {
@@ -76,7 +77,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   } catch (error) {
     console.error('Network error fetching launch settings in RootLayout:', error);
   }
-  
+
+  const settings = await fetchSettings();
+  const get = (key: string) => settings.find(s => s.key === key)?.value;
+  const siteName = get('site_name') || 'Nissi Insights';
+  const siteDescription = get('site_description') || defaultDescription;
+  const logoUrl = get('logo_dark') || `${appUrl}/favicon.png`;
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}>
@@ -88,29 +95,29 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               "@graph": [
                 {
                   "@type": "Organization",
-                  "@id": "https://nissi-insights.com/#organization",
-                  "name": "Nissi Insights",
-                  "url": "https://nissi-insights.com",
+                  "@id": `${appUrl}/#organization`,
+                  "name": siteName,
+                  "url": appUrl,
                   "logo": {
                     "@type": "ImageObject",
-                    "url": "https://nissi-insights.com/favicon.png"
+                    "url": logoUrl.startsWith('http') ? logoUrl : `${appUrl}${logoUrl}`
                   },
-                  "description": "Innovative Energy Advisory, Due Diligence, and Route to Market Strategy for a changing world.",
+                  "description": siteDescription,
                   "sameAs": [
                     "https://www.linkedin.com/company/nissi-insights"
                   ]
                 },
                 {
                   "@type": "WebSite",
-                  "@id": "https://nissi-insights.com/#website",
-                  "url": "https://nissi-insights.com",
-                  "name": "Nissi Insights",
+                  "@id": `${appUrl}/#website`,
+                  "url": appUrl,
+                  "name": siteName,
                   "publisher": {
-                    "@id": "https://nissi-insights.com/#organization"
+                    "@id": `${appUrl}/#organization`
                   },
                   "potentialAction": {
                     "@type": "SearchAction",
-                    "target": "https://nissi-insights.com/knowledge-base?q={search_term_string}",
+                    "target": `${appUrl}/knowledge-base?q={search_term_string}`,
                     "query-input": "required name=search_term_string"
                   }
                 },
@@ -118,14 +125,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   "@type": "SiteNavigationElement",
                   "name": "Main Navigation",
                   "hasPart": [
-                    { "@type": "SiteNavigationElement", "name": "Services", "url": "https://nissi-insights.com/services" },
-                    { "@type": "SiteNavigationElement", "name": "Insights", "url": "https://nissi-insights.com/insights" },
-                    { "@type": "SiteNavigationElement", "name": "Case Studies", "url": "https://nissi-insights.com/case-studies" },
-                    { "@type": "SiteNavigationElement", "name": "Client Impact", "url": "https://nissi-insights.com/client-impact" },
-                    { "@type": "SiteNavigationElement", "name": "Knowledge Hub", "url": "https://nissi-insights.com/knowledge-base" },
-                    { "@type": "SiteNavigationElement", "name": "Events", "url": "https://nissi-insights.com/events" },
-                    { "@type": "SiteNavigationElement", "name": "About", "url": "https://nissi-insights.com/about" },
-                    { "@type": "SiteNavigationElement", "name": "Contact", "url": "https://nissi-insights.com/contact" }
+                    { "@type": "SiteNavigationElement", "name": "Services", "url": `${appUrl}/services` },
+                    { "@type": "SiteNavigationElement", "name": "Insights", "url": `${appUrl}/insights` },
+                    { "@type": "SiteNavigationElement", "name": "Case Studies", "url": `${appUrl}/case-studies` },
+                    { "@type": "SiteNavigationElement", "name": "Client Impact", "url": `${appUrl}/client-impact` },
+                    { "@type": "SiteNavigationElement", "name": "Knowledge Hub", "url": `${appUrl}/knowledge-base` },
+                    { "@type": "SiteNavigationElement", "name": "Events", "url": `${appUrl}/events` },
+                    { "@type": "SiteNavigationElement", "name": "About", "url": `${appUrl}/about` },
+                    { "@type": "SiteNavigationElement", "name": "Contact", "url": `${appUrl}/contact` }
                   ]
                 }
               ]

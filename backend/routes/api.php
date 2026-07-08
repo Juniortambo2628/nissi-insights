@@ -1,35 +1,36 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\ServiceController;
-use App\Http\Controllers\Api\InsightController;
-use App\Http\Controllers\Api\CaseStudyController;
-use App\Http\Controllers\Api\StatController;
-use App\Http\Controllers\Api\SiteSettingController;
-use App\Http\Controllers\Api\TestimonialController;
-use App\Http\Controllers\Api\ClientController;
-use App\Http\Controllers\Api\UploadController;
-use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\AnalyticsController;
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\CaseStudyController;
+use App\Http\Controllers\Api\ClientController;
+use App\Http\Controllers\Api\ConsultationRequestController;
+use App\Http\Controllers\Api\EmailLogController;
+use App\Http\Controllers\Api\EmailTemplateController;
+use App\Http\Controllers\Api\EventController;
+use App\Http\Controllers\Api\EventRegistrationController;
+use App\Http\Controllers\Api\InsightController;
+use App\Http\Controllers\Api\PillarController;
+use App\Http\Controllers\Api\RedirectController;
+use App\Http\Controllers\Api\ResourceController;
+use App\Http\Controllers\Api\SearchController;
+use App\Http\Controllers\Api\ServiceController;
+use App\Http\Controllers\Api\SiteSettingController;
+use App\Http\Controllers\Api\StatController;
+use App\Http\Controllers\Api\StockController;
 use App\Http\Controllers\Api\SubscriberController;
 use App\Http\Controllers\Api\TeamMemberController;
+use App\Http\Controllers\Api\TestimonialController;
+use App\Http\Controllers\Api\UploadController;
 use App\Http\Controllers\Api\ValueController;
-use App\Http\Controllers\Api\ConsultationRequestController;
-use App\Http\Controllers\Api\PillarController;
-use App\Http\Controllers\Api\ResourceController;
+use App\Http\Controllers\RsvpController;
 
 /*
 |--------------------------------------------------------------------------
 | API Routes
 |--------------------------------------------------------------------------
 */
-
-use App\Http\Controllers\RsvpController;
-
-use App\Http\Controllers\Api\EventController;
-use App\Http\Controllers\Api\EventRegistrationController;
-use App\Http\Controllers\Api\StockController;
 
 // Public routes
 Route::post('/rsvps', [RsvpController::class, 'store']);
@@ -66,12 +67,14 @@ Route::get('/pillars/{slug}', [PillarController::class, 'show']);
 Route::get('/resources', [ResourceController::class, 'index']);
 Route::get('/resources/{slug}', [ResourceController::class, 'show']);
 
-// Public — search, tracking, newsletter
+// Public — search, tracking, newsletter, redirects
 Route::get('/search', [SearchController::class, 'index']);
 Route::post('/track', [AnalyticsController::class, 'track']);
+Route::post('/track-404', [AnalyticsController::class, 'track404']);
 Route::post('/subscribe', [SubscriberController::class, 'store']);
 Route::post('/consultation-requests', [ConsultationRequestController::class, 'store']);
 Route::get('/storage/{path}', [UploadController::class, 'serve'])->where('path', '.*');
+Route::get('/redirects-public', [RedirectController::class, 'publicList']);
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
@@ -80,6 +83,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Rsvps
     Route::get('/rsvps', [RsvpController::class, 'index']);
+    Route::put('/rsvps/{rsvp}', [RsvpController::class, 'update']);
+    Route::delete('/rsvps/{rsvp}', [RsvpController::class, 'destroy']);
 
     // Services CRUD
     Route::post('/services', [ServiceController::class, 'store']);
@@ -119,10 +124,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/upload', [UploadController::class, 'store']);
     Route::delete('/upload', [UploadController::class, 'destroy']);
 
-
     // Analytics (admin)
     Route::get('/analytics/summary', [AnalyticsController::class, 'summary']);
     Route::get('/analytics/events', [AnalyticsController::class, 'eventAnalytics']);
+    Route::get('/analytics/not-found-logs', [AnalyticsController::class, 'notFoundLogs']);
+    Route::get('/analytics/not-found-summary', [AnalyticsController::class, 'notFoundSummary']);
+
+    // Redirects (admin)
+    Route::apiResource('redirects', RedirectController::class);
 
     // Subscribers (admin)
     Route::get('/subscribers', [SubscriberController::class, 'index']);
@@ -164,5 +173,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/event-registrations/{eventRegistration}', [EventRegistrationController::class, 'destroy']);
 
     // Email Templates
-    Route::post('/email-templates/preview', [\App\Http\Controllers\Api\EmailTemplateController::class, 'preview']);
+    Route::get('/email-templates/health', [EmailTemplateController::class, 'health']);
+    Route::get('/email-templates', [EmailTemplateController::class, 'index']);
+    Route::post('/email-templates', [EmailTemplateController::class, 'store']);
+    Route::get('/email-templates/{emailTemplate}', [EmailTemplateController::class, 'show']);
+    Route::put('/email-templates/{emailTemplate}', [EmailTemplateController::class, 'update']);
+    Route::delete('/email-templates/{emailTemplate}', [EmailTemplateController::class, 'destroy']);
+    Route::post('/email-templates/preview', [EmailTemplateController::class, 'preview']);
+    Route::post('/email-templates/send-test', [EmailTemplateController::class, 'sendTest']);
+
+    // Email Logs
+    Route::get('/email-logs', [EmailLogController::class, 'index']);
+    Route::get('/email-logs/summary', [EmailLogController::class, 'summary']);
 });

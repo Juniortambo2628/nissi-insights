@@ -1,5 +1,6 @@
 import React from 'react'
 import PillarDetailClient from '@/components/PillarDetailClient'
+import { buildDynamicMetadata, buildArticleJsonLd, buildCanonical } from '@/lib/seo'
 
 interface PageProps {
     params: Promise<{ slug: string }>
@@ -21,28 +22,29 @@ async function fetchPillar(slug: string) {
 export async function generateMetadata({ params }: PageProps) {
     const { slug } = await params
     const pillar = await fetchPillar(slug)
-    
-    if (!pillar) {
-        return {
-            title: 'Pillar Not Found | Nissi Insights',
-            description: 'The requested strategic pillar could not be found.'
-        }
-    }
-    
-    return {
-        title: `${pillar.title} | Nissi Insights`,
-        description: pillar.overview?.substring(0, 160) || `${pillar.title} - Nissi Insights strategic pillar.`,
-        openGraph: {
-            title: `${pillar.title} | Nissi Insights`,
-            description: pillar.overview?.substring(0, 160) || `${pillar.title} - Nissi Insights strategic pillar.`,
-            images: pillar.image ? [{ url: pillar.image }] : [],
-        }
-    }
+
+    return buildDynamicMetadata(pillar, {
+        path: `/pillars/${slug}`,
+        fallbackTitle: 'Pillar Not Found | Nissi Insights',
+        fallbackDescription: 'The requested strategic pillar could not be found.',
+        type: 'website',
+    })
 }
 
 export default async function Page({ params }: PageProps) {
     const { slug } = await params
     const initialData = await fetchPillar(slug)
-    
-    return <PillarDetailClient initialData={initialData} slug={slug} />
+    const jsonLd = buildArticleJsonLd(initialData, `/pillars/${slug}`)
+
+    return (
+        <>
+            {jsonLd && (
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+                />
+            )}
+            <PillarDetailClient initialData={initialData} slug={slug} />
+        </>
+    )
 }

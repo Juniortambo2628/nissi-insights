@@ -14,7 +14,7 @@ export function getMediaUrl(path: string | undefined | null) {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
   
   // Normalize path by removing leading slash for checking prefixes
-  let cleanPath = path.startsWith('/') ? path.substring(1) : path
+    const cleanPath = path.startsWith('/') ? path.substring(1) : path
   
   // If it's a local public asset (starts with assets/, logos/, or NI-Digital-Assets/)
   if (cleanPath.startsWith('assets/') || cleanPath.startsWith('logos/') || cleanPath.startsWith('NI-Digital-Assets/')) {

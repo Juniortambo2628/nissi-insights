@@ -91,6 +91,31 @@ export interface SiteSetting {
   group: string;
 }
 
+export interface EmailTemplate {
+  id: number;
+  key: string;
+  name: string;
+  subject: string;
+  body: string;
+  variables: string[] | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EmailLog {
+  id: number;
+  sendable_type: string;
+  sendable_id: number;
+  template_key: string;
+  recipient: string;
+  status: 'queued' | 'sent' | 'failed';
+  error: string | null;
+  sent_at: string | null;
+  created_at: string;
+  sendable?: unknown;
+}
+
 export interface ApiResponse<T> {
   data: T;
   message?: string;

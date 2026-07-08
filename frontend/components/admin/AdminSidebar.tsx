@@ -27,7 +27,9 @@ import {
     Globe,
     Calendar,
     UserCheck,
-    Activity
+    Activity,
+    Map,
+    FileX
 } from 'lucide-react'
 
 import { cn, getMediaUrl } from '@/lib/utils'
@@ -67,6 +69,8 @@ const AdminSidebar = () => {
         { name: 'Events', href: '/admin/events', icon: Calendar },
         { name: 'Registrations', href: '/admin/registrations', icon: UserCheck },
         { name: 'Event Analytics', href: '/admin/analytics/events', icon: Activity },
+        { name: '404 Logs', href: '/admin/analytics/not-found', icon: FileX },
+        { name: 'Redirects', href: '/admin/redirects', icon: Map },
         { name: 'Widgets', href: '/admin/widgets', icon: Zap },
         { name: 'RSVPs', href: '/admin/rsvps', icon: Rocket },
         { name: 'Requests', href: '/admin/requests', icon: MessageSquare },

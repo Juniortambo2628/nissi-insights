@@ -1,9 +1,14 @@
 import React from 'react'
 import ServicesClient from './ServicesClient'
+import { appUrl } from '@/lib/seo'
+
+const pageUrl = `${appUrl}/services`
+const title = 'Our Advisory Services | Energy, Fintech & Diplomacy | Nissi Insights'
+const description = 'Explore Nissi Insights advisory services. Specialized guidance across Energy Advisory, Fintech Go-To-Market strategy, and Geopolitical Diplomacy.'
 
 export const metadata = {
-    title: 'Our Advisory Services | Energy, Fintech & Diplomacy | Nissi Insights',
-    description: 'Explore Nissi Insights advisory services. Specialized guidance across Energy Advisory, Fintech Go-To-Market strategy, and Geopolitical Diplomacy.',
+    title,
+    description,
     keywords: [
         'Energy transition advisory',
         'Fintech commercial models',
@@ -13,18 +18,18 @@ export const metadata = {
         'Market intelligence services'
     ],
     alternates: {
-        canonical: 'https://nissi-insights.com/services',
+        canonical: pageUrl,
     },
     openGraph: {
-        title: 'Our Advisory Services | Energy, Fintech & Diplomacy | Nissi Insights',
-        description: 'Explore Nissi Insights advisory services. Specialized guidance across Energy Advisory, Fintech Go-To-Market strategy, and Geopolitical Diplomacy.',
+        title,
+        description,
         type: 'website',
-        url: 'https://nissi-insights.com/services',
+        url: pageUrl,
     },
     twitter: {
         card: 'summary_large_image',
         title: 'Our Advisory Services | Nissi Insights',
-        description: 'Specialized advisory across Energy, Fintech, and Geopolitical Diplomacy.',
+        description,
     },
 }
 
@@ -34,14 +39,14 @@ export default function ServicesPage() {
         "@graph": [
             {
                 "@type": "WebPage",
-                "@id": "https://nissi-insights.com/services/#webpage",
-                "url": "https://nissi-insights.com/services",
+                "@id": `${pageUrl}/#webpage`,
+                "url": pageUrl,
                 "name": "Our Advisory Services | Nissi Insights",
                 "description": "Professional advisory services covering Energy Advisory, Fintech, and International Diplomacy.",
                 "isPartOf": {
                     "@type": "WebSite",
-                    "@id": "https://nissi-insights.com/#website",
-                    "url": "https://nissi-insights.com",
+                    "@id": `${appUrl}/#website`,
+                    "url": appUrl,
                     "name": "Nissi Insights"
                 }
             },
