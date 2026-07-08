@@ -55,7 +55,7 @@ BLADE,
     </div>
 
     <p>
-        <a href="{{ config('app.frontend_url') }}/admin/registrations?event_id={{ $eventId }}" style="display: inline-block; padding: 12px 24px; background: #3b82f6; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: bold;">View Registrations</a>
+                    <a href="{{ frontend_url('/admin/registrations?event_id=' . $eventId) }}" style="display: inline-block; padding: 12px 24px; background: #3b82f6; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: bold;">View Registrations</a>
     </p>
 </div>
 BLADE,
@@ -195,7 +195,7 @@ BLADE,
     </div>
 
     <p>
-        <a href="{{ config('app.frontend_url') }}/admin/requests" style="display: inline-block; padding: 12px 24px; background: #3b82f6; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: bold;">View Requests</a>
+                    <a href="{{ frontend_url('/admin/requests') }}" style="display: inline-block; padding: 12px 24px; background: #3b82f6; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: bold;">View Requests</a>
     </p>
 </div>
 BLADE,
@@ -239,7 +239,7 @@ BLADE,
     <p>Thank you for subscribing to Nissi Insights. You will now receive our latest insights, event invitations, and market briefings.</p>
 
     <p>
-        <a href="{{ config('app.frontend_url') }}/insights" style="display: inline-block; padding: 12px 24px; background: #3b82f6; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: bold;">Explore Insights</a>
+        <a href="{{ frontend_url('/insights') }}" style="display: inline-block; padding: 12px 24px; background: #3b82f6; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: bold;">Explore Insights</a>
     </p>
 
     <p>Best regards,<br>{{ config('app.name') }}</p>

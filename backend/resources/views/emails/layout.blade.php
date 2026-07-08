@@ -80,7 +80,7 @@
 <body>
     @php
         $siteName = \App\Models\SiteSetting::getValue('site_name', config('app.name', 'Nissi Insights'));
-        $frontendUrl = rtrim(config('app.frontend_url', config('app.url', 'https://nissi-insights.com')), '/');
+        $frontendUrl = frontend_url();
 
         // Some legacy settings contain comma-separated URLs or malformed values.
         $rawLogo = \App\Models\SiteSetting::getValue('logo_light', '/assets/logos/nissi-landscape-black.png');
@@ -107,7 +107,7 @@
             @if($logoUrl)
                 <img src="{{ $logoUrl }}" alt="{{ $siteName }} Logo" class="logo">
             @else
-                <a href="{{ config('app.frontend_url') }}" class="logo-fallback">{{ $siteName }}</a>
+                <a href="{{ frontend_url() }}" class="logo-fallback">{{ $siteName }}</a>
             @endif
         </div>
         <div class="content">
@@ -126,8 +126,8 @@
                 <p>{{ $primaryPhone }}</p>
             @endif
             <div style="margin-top: 15px;">
-                <a href="{{ config('app.frontend_url') }}" style="color: #64748b; margin: 0 10px; text-decoration: none;">Website</a> |
-                <a href="{{ config('app.frontend_url') }}/privacy" style="color: #64748b; margin: 0 10px; text-decoration: none;">Privacy Policy</a>
+                <a href="{{ frontend_url() }}" style="color: #64748b; margin: 0 10px; text-decoration: none;">Website</a> |
+                <a href="{{ frontend_url('/privacy') }}" style="color: #64748b; margin: 0 10px; text-decoration: none;">Privacy Policy</a>
             </div>
         </div>
     </div>

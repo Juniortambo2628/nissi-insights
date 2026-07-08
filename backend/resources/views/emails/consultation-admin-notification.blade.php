@@ -27,7 +27,7 @@
         </table>
     </div>
 
-    <a href="{{ config('app.frontend_url') }}/admin/requests" class="button">View in Dashboard</a>
+    <a href="{{ frontend_url('/admin/requests') }}" class="button">View in Dashboard</a>
 
     <p style="margin-top: 30px; font-size: 12px; color: #64748b;">This is an automated notification from the Nissi Insights CMS.</p>
 @endsection

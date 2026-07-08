@@ -317,7 +317,7 @@ HTML;
     </table>
 </div>
 
-<a href="{{ config('app.frontend_url') }}/admin/requests" class="button">View in Dashboard</a>
+<a href="{{ frontend_url('/admin/requests') }}" class="button">View in Dashboard</a>
 
 <p style="margin-top: 30px; font-size: 12px; color: #64748b;">This is an automated notification from the Nissi Insights CMS.</p>
 HTML;
@@ -336,7 +336,7 @@ HTML;
 
 <p>In the meantime, feel free to explore our latest market intelligence and insights:</p>
 
-<a href="{{ config('app.frontend_url') }}/insights" class="button">View Latest Insights</a>
+<a href="{{ frontend_url('/insights') }}" class="button">View Latest Insights</a>
 
 <p style="margin-top: 30px; font-size: 14px;">Best regards,<br>The Nissi Insights Team</p>
 HTML;

@@ -186,7 +186,7 @@ class EmailTemplateController extends Controller
             'eventDate' => now()->addWeek()->format('F j, Y'),
             'eventTime' => now()->addWeek()->format('g:i a T'),
             'eventLocation' => 'One Canada Square, London',
-            'eventLink' => config('app.frontend_url') . '/events/sample-event',
+            'eventLink' => frontend_url('/events/sample-event'),
             'eventId' => 1,
             'requestData' => $requestData,
             'rsvp' => $rsvp,
@@ -195,9 +195,9 @@ class EmailTemplateController extends Controller
             'categoryLabel' => 'Energy Transition',
             'title' => 'The Future of European Energy Markets',
             'excerpt' => 'A deep dive into the shifting dynamics of European energy markets and what it means for investors.',
-            'url' => config('app.frontend_url') . '/insights/sample-insight',
-            'imageUrl' => config('app.frontend_url') . '/assets/logos/logo-landscape.png',
-            'resetUrl' => config('app.frontend_url') . '/admin/reset-password?token=sample-token',
+            'url' => frontend_url('/insights/sample-insight'),
+            'imageUrl' => frontend_url('/assets/logos/logo-landscape.png'),
+            'resetUrl' => frontend_url('/admin/reset-password?token=sample-token'),
             'expireCount' => 60,
         ];
     }
