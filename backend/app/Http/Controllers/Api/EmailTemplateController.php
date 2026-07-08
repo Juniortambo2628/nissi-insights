@@ -149,6 +149,29 @@ class EmailTemplateController extends Controller
 
     protected function dummyData(): array
     {
+        $requestData = (object) [
+            'first_name' => 'Alexander',
+            'last_name' => 'Hamilton',
+            'email' => 'a.hamilton@treasury.gov',
+            'phone' => '+1 (555) 123-4567',
+            'subject' => 'Strategic Advisory Inquiry',
+            'message' => 'This is a sample message to demonstrate how your email template will look with actual data.',
+        ];
+
+        $rsvp = (object) [
+            'name' => 'Alexander Hamilton',
+            'email' => 'a.hamilton@treasury.gov',
+            'company' => 'The Treasury',
+            'job_title' => 'Secretary',
+            'sector' => 'Public Sector',
+            'interest' => 'Energy Transition',
+        ];
+
+        $subscriber = (object) [
+            'name' => 'Alexander Hamilton',
+            'email' => 'a.hamilton@treasury.gov',
+        ];
+
         return [
             'name' => 'Alexander Hamilton',
             'first_name' => 'Alexander',
@@ -165,6 +188,17 @@ class EmailTemplateController extends Controller
             'eventLocation' => 'One Canada Square, London',
             'eventLink' => config('app.frontend_url') . '/events/sample-event',
             'eventId' => 1,
+            'requestData' => $requestData,
+            'rsvp' => $rsvp,
+            'subscriber' => $subscriber,
+            'typeLabel' => 'Insight',
+            'categoryLabel' => 'Energy Transition',
+            'title' => 'The Future of European Energy Markets',
+            'excerpt' => 'A deep dive into the shifting dynamics of European energy markets and what it means for investors.',
+            'url' => config('app.frontend_url') . '/insights/sample-insight',
+            'imageUrl' => config('app.frontend_url') . '/assets/logos/logo-landscape.png',
+            'resetUrl' => config('app.frontend_url') . '/admin/reset-password?token=sample-token',
+            'expireCount' => 60,
         ];
     }
 

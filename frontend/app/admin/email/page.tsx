@@ -1,19 +1,21 @@
 "use client"
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import AdminLayout from '@/components/admin/AdminLayout'
 import { useApi } from '@/hooks/use-api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Save, Loader2, Mail, Eye, Code, CheckCircle2, AlertCircle, Sparkles, Layout, Send, Plus, Trash2, RefreshCw } from 'lucide-react'
+import { Save, Loader2, Mail, Eye, Code, CheckCircle2, AlertCircle, Sparkles, Layout, Send, RefreshCw } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from '@/components/ui/badge'
+import { Checkbox } from '@/components/ui/checkbox'
 import api from '@/lib/api'
 import { EmailTemplate, EmailLog } from '@/types/api'
 import { useToast } from '@/hooks/use-toast'
+import RichTextEditor from '@/components/admin/RichTextEditor'
 
 const SYSTEM_TEMPLATES = [
     'event_registered_client',
@@ -21,27 +23,68 @@ const SYSTEM_TEMPLATES = [
     'event_reminder_approaching',
     'event_reminder_started',
     'event_thank_you_ended',
+    'event_attended_thank_you',
+    'consultation_request_user',
+    'consultation_request_admin',
+    'rsvp_confirmation',
+    'subscriber_welcome',
+    'content_update_notification',
+    'password_reset',
 ]
 
 const VARIABLES = [
-    { label: 'Name', value: '{{ $name }}' },
-    { label: 'First Name', value: '{{ $first_name }}' },
-    { label: 'Last Name', value: '{{ $last_name }}' },
-    { label: 'Email', value: '{{ $email }}' },
-    { label: 'Phone', value: '{{ $phone }}' },
-    { label: 'Organization', value: '{{ $organization }}' },
-    { label: 'Event Title', value: '{{ $eventTitle }}' },
-    { label: 'Event Date', value: '{{ $eventDate }}' },
-    { label: 'Event Time', value: '{{ $eventTime }}' },
-    { label: 'Event Location', value: '{{ $eventLocation }}' },
-    { label: 'Event Link', value: '{{ $eventLink }}' },
-    { label: 'Event ID', value: '{{ $eventId }}' },
-    { label: 'Message', value: '{{ $message }}' },
-    { label: 'Subject', value: '{{ $subject }}' },
-    { label: 'Status', value: '{{ $status }}' },
-    { label: 'App Name', value: '{{ config(\'app.name\') }}' },
-    { label: 'Frontend URL', value: '{{ config(\'app.frontend_url\') }}' },
+    // Person
+    { label: 'Name', value: '{{ $name }}', group: 'Person' },
+    { label: 'First Name', value: '{{ $first_name }}', group: 'Person' },
+    { label: 'Last Name', value: '{{ $last_name }}', group: 'Person' },
+    { label: 'Email', value: '{{ $email }}', group: 'Person' },
+    { label: 'Phone', value: '{{ $phone }}', group: 'Person' },
+    { label: 'Organization', value: '{{ $organization }}', group: 'Person' },
+
+    // Consultation
+    { label: 'Subject', value: '{{ $requestData->subject ?? \'General Inquiry\' }}', group: 'Consultation' },
+    { label: 'Message', value: '{{ $requestData->message }}', group: 'Consultation' },
+    { label: 'First Name (req)', value: '{{ $requestData->first_name }}', group: 'Consultation' },
+    { label: 'Last Name (req)', value: '{{ $requestData->last_name }}', group: 'Consultation' },
+
+    // RSVP
+    { label: 'RSVP Name', value: '{{ $rsvp->name }}', group: 'RSVP' },
+    { label: 'RSVP Email', value: '{{ $rsvp->email }}', group: 'RSVP' },
+    { label: 'RSVP Company', value: '{{ $rsvp->company ?? \'—\' }}', group: 'RSVP' },
+    { label: 'RSVP Job Title', value: '{{ $rsvp->job_title ?? \'—\' }}', group: 'RSVP' },
+    { label: 'RSVP Sector', value: '{{ $rsvp->sector ?? \'—\' }}', group: 'RSVP' },
+    { label: 'RSVP Interest', value: '{{ $rsvp->interest ?? \'—\' }}', group: 'RSVP' },
+
+    // Subscriber
+    { label: 'Subscriber Name', value: '{{ $subscriber->name ?? \'there\' }}', group: 'Subscriber' },
+    { label: 'Subscriber Email', value: '{{ $subscriber->email }}', group: 'Subscriber' },
+
+    // Events
+    { label: 'Event Title', value: '{{ $eventTitle }}', group: 'Event' },
+    { label: 'Event Date', value: '{{ $eventDate }}', group: 'Event' },
+    { label: 'Event Time', value: '{{ $eventTime }}', group: 'Event' },
+    { label: 'Event Location', value: '{{ $eventLocation }}', group: 'Event' },
+    { label: 'Event Link', value: '{{ $eventLink }}', group: 'Event' },
+    { label: 'Event ID', value: '{{ $eventId }}', group: 'Event' },
+
+    // Content update
+    { label: 'Content Type', value: '{{ $typeLabel }}', group: 'Content' },
+    { label: 'Category', value: '{{ $categoryLabel }}', group: 'Content' },
+    { label: 'Title', value: '{{ $title }}', group: 'Content' },
+    { label: 'Excerpt', value: '{{ $excerpt }}', group: 'Content' },
+    { label: 'URL', value: '{{ $url }}', group: 'Content' },
+    { label: 'Image URL', value: '{{ $imageUrl }}', group: 'Content' },
+
+    // Password reset
+    { label: 'Reset URL', value: '{{ $resetUrl }}', group: 'Password' },
+    { label: 'Expiry (mins)', value: '{{ $expireCount }}', group: 'Password' },
+
+    // App
+    { label: 'App Name', value: "{{ config('app.name') }}", group: 'App' },
+    { label: 'Frontend URL', value: "{{ config('app.frontend_url') }}", group: 'App' },
 ]
+
+const VARIABLE_GROUPS = Array.from(new Set(VARIABLES.map(v => v.group)))
 
 const EmailSettingsPage = () => {
     const { toast } = useToast()
@@ -53,7 +96,7 @@ const EmailSettingsPage = () => {
     const [form, setForm] = useState({ name: '', subject: '', body: '', variables: [] as string[], is_active: true })
     const [isSaving, setIsSaving] = useState(false)
     const [saveSuccess, setSaveSuccess] = useState(false)
-    const [editorMode, setEditorMode] = useState<'visual' | 'code'>('code')
+    const [editorMode, setEditorMode] = useState<'visual' | 'code'>('visual')
     const [previewHtml, setPreviewHtml] = useState<string>('')
     const [previewSubject, setPreviewSubject] = useState<string>('')
     const [isPreviewLoading, setIsPreviewLoading] = useState(false)
@@ -61,6 +104,7 @@ const EmailSettingsPage = () => {
     const [testEmail, setTestEmail] = useState('')
     const [isSendingTest, setIsSendingTest] = useState(false)
     const [activeTab, setActiveTab] = useState('editor')
+    const bodyTextareaRef = useRef<HTMLTextAreaElement>(null)
 
     useEffect(() => {
         if (templates && templates.length > 0 && !selectedTemplate) {
@@ -94,7 +138,9 @@ const EmailSettingsPage = () => {
             setPreviewHtml(response.data.html)
             setPreviewSubject(response.data.subject)
         } catch (err: any) {
-            setPreviewError(err.response?.data?.error || 'Failed to render preview')
+            const message = err.response?.data?.error || 'Failed to render preview'
+            setPreviewError(message)
+            toast({ title: 'Preview Error', description: message, variant: 'destructive' })
         } finally {
             setIsPreviewLoading(false)
         }
@@ -137,16 +183,58 @@ const EmailSettingsPage = () => {
 
     const insertVariable = (variable: string, field: 'subject' | 'body') => {
         if (field === 'subject') {
-            setForm(prev => ({ ...prev, subject: prev.subject + ' ' + variable }))
+            const input = document.getElementById('subject-input') as HTMLInputElement | null
+            if (input) {
+                const start = input.selectionStart || 0
+                const end = input.selectionEnd || 0
+                const newValue = form.subject.slice(0, start) + variable + form.subject.slice(end)
+                setForm(prev => ({ ...prev, subject: newValue }))
+                setTimeout(() => {
+                    input.focus()
+                    input.setSelectionRange(start + variable.length, start + variable.length)
+                }, 0)
+            } else {
+                setForm(prev => ({ ...prev, subject: prev.subject + ' ' + variable }))
+            }
+            return
+        }
+
+        if (editorMode === 'code') {
+            const textarea = bodyTextareaRef.current
+            if (textarea) {
+                const start = textarea.selectionStart || 0
+                const end = textarea.selectionEnd || 0
+                const newValue = form.body.slice(0, start) + variable + form.body.slice(end)
+                setForm(prev => ({ ...prev, body: newValue }))
+                setTimeout(() => {
+                    textarea.focus()
+                    textarea.setSelectionRange(start + variable.length, start + variable.length)
+                }, 0)
+            } else {
+                setForm(prev => ({ ...prev, body: prev.body + ' ' + variable }))
+            }
         } else {
+            // Visual editor: append for simplicity (RichTextEditor would need a ref for cursor insertion)
             setForm(prev => ({ ...prev, body: prev.body + ' ' + variable }))
+            toast({ title: 'Variable Added', description: 'Switch to Code mode to insert at a specific cursor position.' })
         }
     }
 
     const filteredVariables = React.useMemo(() => {
         if (!selectedTemplate?.variables?.length) return VARIABLES
-        return VARIABLES.filter(v => selectedTemplate.variables?.includes(v.label) || selectedTemplate.variables?.some((varName: string) => v.value.includes(varName)))
+        return VARIABLES.filter(v =>
+            selectedTemplate.variables?.includes(v.label) ||
+            selectedTemplate.variables?.some((varName: string) => v.value.includes(varName))
+        )
     }, [selectedTemplate])
+
+    const variablesByGroup = React.useMemo(() => {
+        const vars = filteredVariables
+        return VARIABLE_GROUPS.map(group => ({
+            group,
+            variables: vars.filter(v => v.group === group),
+        })).filter(g => g.variables.length > 0)
+    }, [filteredVariables])
 
     return (
         <AdminLayout>
@@ -198,10 +286,10 @@ const EmailSettingsPage = () => {
                                                 onClick={() => setSelectedTemplate(template)}
                                                 className={`w-full text-left px-4 py-3 transition-colors ${selectedTemplate?.id === template.id ? 'bg-primary/10' : 'hover:bg-secondary/30'}`}
                                             >
-                                                <div className="flex items-center justify-between">
-                                                    <span className="text-sm font-medium text-foreground">{template.name}</span>
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <span className="text-sm font-medium text-foreground truncate">{template.name}</span>
                                                     {SYSTEM_TEMPLATES.includes(template.key) && (
-                                                        <Badge variant="outline" className="text-[9px]">System</Badge>
+                                                        <Badge variant="outline" className="text-[9px] shrink-0">System</Badge>
                                                     )}
                                                 </div>
                                                 <div className="text-[10px] text-muted-foreground truncate mt-0.5">{template.key}</div>
@@ -232,13 +320,13 @@ const EmailSettingsPage = () => {
                                                     <CardDescription className="text-xs">Key: {selectedTemplate.key}</CardDescription>
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <Label className="text-xs text-muted-foreground">Active</Label>
-                                                    <input
-                                                        type="checkbox"
+                                                    <Checkbox
+                                                        id="template-active"
                                                         checked={form.is_active}
-                                                        onChange={(e) => setForm(prev => ({ ...prev, is_active: e.target.checked }))}
-                                                        className="accent-primary h-4 w-4"
+                                                        onCheckedChange={(checked: boolean) => setForm(prev => ({ ...prev, is_active: checked }))}
+                                                        className="border-border"
                                                     />
+                                                    <Label htmlFor="template-active" className="text-xs text-muted-foreground">Active</Label>
                                                 </div>
                                             </div>
                                         </CardHeader>
@@ -255,8 +343,8 @@ const EmailSettingsPage = () => {
                                             <div className="space-y-2">
                                                 <div className="flex items-center justify-between">
                                                     <Label className="text-muted-foreground">Subject Line</Label>
-                                                    <div className="flex gap-1">
-                                                        {VARIABLES.slice(0, 4).map(v => (
+                                                    <div className="flex flex-wrap gap-1 max-w-md justify-end">
+                                                        {VARIABLES.filter(v => ['Person', 'Event', 'Consultation'].includes(v.group)).slice(0, 5).map(v => (
                                                             <button
                                                                 key={v.label + 'subject'}
                                                                 onClick={() => insertVariable(v.value, 'subject')}
@@ -268,6 +356,7 @@ const EmailSettingsPage = () => {
                                                     </div>
                                                 </div>
                                                 <Input
+                                                    id="subject-input"
                                                     value={form.subject}
                                                     onChange={(e) => setForm(prev => ({ ...prev, subject: e.target.value }))}
                                                     className="bg-background border-border text-foreground"
@@ -277,42 +366,59 @@ const EmailSettingsPage = () => {
 
                                             <div className="space-y-2">
                                                 <div className="flex items-center justify-between">
-                                                    <Label className="text-muted-foreground">Body (Blade / HTML)</Label>
+                                                    <Label className="text-muted-foreground">Body</Label>
                                                     <Tabs value={editorMode} onValueChange={(val: any) => setEditorMode(val)}>
                                                         <TabsList className="h-7 p-0.5">
-                                                            <TabsTrigger value="code" className="text-[10px] gap-1 px-2"><Code size={10} /> Code</TabsTrigger>
                                                             <TabsTrigger value="visual" className="text-[10px] gap-1 px-2"><Sparkles size={10} /> Visual</TabsTrigger>
+                                                            <TabsTrigger value="code" className="text-[10px] gap-1 px-2"><Code size={10} /> Code</TabsTrigger>
                                                         </TabsList>
                                                     </Tabs>
                                                 </div>
 
-                                                <div className="flex flex-wrap gap-1.5 mb-2">
-                                                    {filteredVariables.map(v => (
-                                                        <button
-                                                            key={v.label}
-                                                            onClick={() => insertVariable(v.value, 'body')}
-                                                            className="text-[9px] bg-primary/10 hover:bg-primary/20 text-primary px-2 py-0.5 rounded border border-primary/20 transition-all font-bold"
-                                                        >
-                                                            + {v.label}
-                                                        </button>
-                                                    ))}
+                                                <div className="bg-secondary/10 border border-border/50 rounded-lg p-3 space-y-3">
+                                                    <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Insert Variable</div>
+                                                    <div className="space-y-3">
+                                                        {variablesByGroup.map(({ group, variables }) => (
+                                                            <div key={group} className="space-y-1">
+                                                                <div className="text-[10px] font-bold text-muted-foreground">{group}</div>
+                                                                <div className="flex flex-wrap gap-1">
+                                                                    {variables.map(v => (
+                                                                        <button
+                                                                            key={v.label}
+                                                                            onClick={() => insertVariable(v.value, 'body')}
+                                                                            className="text-[9px] bg-primary/10 hover:bg-primary/20 text-primary px-2 py-0.5 rounded border border-primary/20 transition-all font-bold"
+                                                                            title={v.value}
+                                                                        >
+                                                                            + {v.label}
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
                                                 </div>
 
                                                 {editorMode === 'code' ? (
                                                     <Textarea
+                                                        ref={bodyTextareaRef}
                                                         value={form.body}
                                                         onChange={(e) => setForm(prev => ({ ...prev, body: e.target.value }))}
                                                         className="min-h-[400px] bg-[#010409] text-emerald-400 font-mono text-sm border-border"
                                                         placeholder="Enter Blade-compatible HTML here..."
                                                     />
                                                 ) : (
-                                                    <Textarea
-                                                        value={form.body}
-                                                        onChange={(e) => setForm(prev => ({ ...prev, body: e.target.value }))}
-                                                        className="min-h-[400px] bg-background border-border text-foreground"
-                                                        placeholder="Enter email body HTML here..."
-                                                    />
+                                                    <div className="min-h-[400px] bg-background border border-border rounded-lg overflow-hidden">
+                                                        <RichTextEditor
+                                                            value={form.body}
+                                                            onChange={(value) => setForm(prev => ({ ...prev, body: value }))}
+                                                            className="min-h-[400px]"
+                                                        />
+                                                    </div>
                                                 )}
+
+                                                <p className="text-xs text-muted-foreground">
+                                                    Tip: Use <strong>Code</strong> mode for precise control over Blade variables and HTML. Use <strong>Visual</strong> mode for formatting text and links.
+                                                </p>
                                             </div>
 
                                             <div className="flex items-center gap-3 pt-2">
@@ -359,7 +465,10 @@ const EmailSettingsPage = () => {
                                         {previewError && (
                                             <div className="p-4 bg-red-500/10 text-red-600 text-sm flex items-start gap-3 border-b border-red-200">
                                                 <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />
-                                                <p>{previewError}</p>
+                                                <div className="space-y-1">
+                                                    <p className="font-semibold">Preview could not be rendered</p>
+                                                    <p className="font-mono text-xs break-all">{previewError}</p>
+                                                </div>
                                             </div>
                                         )}
                                         <div className="bg-slate-100 min-h-[600px] relative">
