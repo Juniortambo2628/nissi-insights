@@ -81,8 +81,23 @@
     @php
         $siteName = \App\Models\SiteSetting::getValue('site_name', config('app.name', 'Nissi Insights'));
         $frontendUrl = rtrim(config('app.frontend_url', config('app.url', 'https://nissi-insights.com')), '/');
-        $logoPath = \App\Models\SiteSetting::getValue('logo_light', '/assets/logos/nissi-landscape-black.png');
-        $logoUrl = filter_var($logoPath, FILTER_VALIDATE_URL) ? $logoPath : $frontendUrl . '/' . ltrim($logoPath, '/');
+
+        // Some legacy settings contain comma-separated URLs or malformed values.
+        $rawLogo = \App\Models\SiteSetting::getValue('logo_light', '/assets/logos/nissi-landscape-black.png');
+        $logoCandidates = array_filter(array_map('trim', explode(',', $rawLogo)));
+        $logoUrl = null;
+        foreach ($logoCandidates as $candidate) {
+            $candidate = str_replace(['http//', 'https//'], ['http://', 'https://'], $candidate);
+            if (filter_var($candidate, FILTER_VALIDATE_URL)) {
+                $logoUrl = $candidate;
+                break;
+            }
+            if (str_starts_with($candidate, '/')) {
+                $logoUrl = $frontendUrl . $candidate;
+                break;
+            }
+        }
+
         $addresses = json_decode(\App\Models\SiteSetting::getValue('business_addresses', '[]'), true) ?: [];
         $primaryAddress = $addresses[0]['address'] ?? '';
         $primaryPhone = $addresses[0]['phone'] ?? '';
