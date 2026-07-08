@@ -12,4 +12,11 @@ class SiteSetting extends Model
         'type',
         'group',
     ];
+
+    public static function getValue(string $key, $default = null)
+    {
+        $setting = static::where('key', $key)->first();
+
+        return $setting?->value ?? $default;
+    }
 }

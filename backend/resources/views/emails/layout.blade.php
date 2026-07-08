@@ -27,9 +27,15 @@
             border-bottom: 1px solid #f1f5f9;
         }
         .logo {
-            max-height: 75px;
+            max-height: 60px;
             width: auto;
             margin: 0 auto;
+        }
+        .logo-fallback {
+            font-size: 24px;
+            font-weight: bold;
+            color: #0f172a;
+            text-decoration: none;
         }
         .content {
             padding: 40px 30px;
@@ -72,9 +78,22 @@
     </style>
 </head>
 <body>
+    @php
+        $siteName = \App\Models\SiteSetting::getValue('site_name', config('app.name', 'Nissi Insights'));
+        $frontendUrl = rtrim(config('app.frontend_url', config('app.url', 'https://nissi-insights.com')), '/');
+        $logoPath = \App\Models\SiteSetting::getValue('logo_light', '/assets/logos/nissi-landscape-black.png');
+        $logoUrl = filter_var($logoPath, FILTER_VALIDATE_URL) ? $logoPath : $frontendUrl . '/' . ltrim($logoPath, '/');
+        $addresses = json_decode(\App\Models\SiteSetting::getValue('business_addresses', '[]'), true) ?: [];
+        $primaryAddress = $addresses[0]['address'] ?? '';
+        $primaryPhone = $addresses[0]['phone'] ?? '';
+    @endphp
     <div class="container">
         <div class="header">
-            <img src="{{ config('app.url') }}/storage/uploads/6dziGBZaJ8qXkTGW5dXGu5gtb6NVmyQQbXtbpryA.png" alt="Nissi Insights Logo" class="logo">
+            @if($logoUrl)
+                <img src="{{ $logoUrl }}" alt="{{ $siteName }} Logo" class="logo">
+            @else
+                <a href="{{ config('app.frontend_url') }}" class="logo-fallback">{{ $siteName }}</a>
+            @endif
         </div>
         <div class="content">
             @if(isset($content))
@@ -84,8 +103,13 @@
             @endif
         </div>
         <div class="footer">
-            <p>&copy; {{ date('Y') }} Nissi Insights. All rights reserved.</p>
-            <p>One Canary Wharf, London, E14 5AB</p>
+            <p>&copy; {{ date('Y') }} {{ $siteName }}. All rights reserved.</p>
+            @if($primaryAddress)
+                <p>{{ $primaryAddress }}</p>
+            @endif
+            @if($primaryPhone)
+                <p>{{ $primaryPhone }}</p>
+            @endif
             <div style="margin-top: 15px;">
                 <a href="{{ config('app.frontend_url') }}" style="color: #64748b; margin: 0 10px; text-decoration: none;">Website</a> |
                 <a href="{{ config('app.frontend_url') }}/privacy" style="color: #64748b; margin: 0 10px; text-decoration: none;">Privacy Policy</a>
