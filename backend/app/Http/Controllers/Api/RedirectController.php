@@ -13,11 +13,17 @@ class RedirectController extends Controller
     {
         $query = Redirect::query();
 
-        if ($request->has('active_only')) {
+        if ($request->boolean('active_only')) {
             $query->active();
         }
 
-        return response()->json($query->orderByDesc('priority')->orderBy('from_path')->paginate($request->input('per_page', 100)));
+        $query->orderByDesc('priority')->orderBy('from_path');
+
+        if ($request->boolean('all')) {
+            return response()->json($query->get());
+        }
+
+        return response()->json($query->paginate($request->input('per_page', 100)));
     }
 
     public function publicList()

@@ -35,7 +35,7 @@ interface Redirect {
 }
 
 const AdminRedirectsContent = () => {
-    const { data: redirects, isLoading, mutate } = useApi<Redirect[]>('/redirects')
+    const { data: redirects, isLoading, mutate } = useApi<Redirect[]>('/redirects?all=true')
     const { toast } = useToast()
     const [searchTerm, setSearchTerm] = useState('')
     const [showForm, setShowForm] = useState(false)
