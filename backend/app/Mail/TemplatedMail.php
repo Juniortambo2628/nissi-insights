@@ -50,20 +50,10 @@ class TemplatedMail extends Mailable
     {
         $template = $this->getTemplate();
 
-        if ($template) {
-            $html = $this->renderString($this->wrapInLayout($template->body));
-
-            return new Content(
-                htmlString: $html,
-                text: $this->plainText($html),
-            );
-        }
-
-        $html = $this->renderString($this->wrapInLayout($this->fallbackBody()));
-
         return new Content(
-            htmlString: $html,
-            text: $this->plainText($html),
+            htmlString: $this->renderString($this->wrapInLayout(
+                $template ? $template->body : $this->fallbackBody()
+            )),
         );
     }
 
@@ -130,19 +120,6 @@ BLADE;
     protected function renderString(string $content): string
     {
         return Blade::render($content, $this->data);
-    }
-
-    protected function plainText(string $html): string
-    {
-        $text = preg_replace('/<style\b[^>]*>[\s\S]*?<\/style>/i', '', $html);
-        $text = preg_replace('/<script\b[^>]*>[\s\S]*?<\/script>/i', '', $text);
-        $text = preg_replace('/<br\s*\/?>/i', "\n", $text);
-        $text = preg_replace('/<\/p>/i', "\n\n", $text);
-        $text = preg_replace('/<[^>]+>/', ' ', $text);
-        $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        $text = preg_replace('/\n{3,}/', "\n\n", $text);
-
-        return trim($text);
     }
 
     protected function wrapInLayout(string $body): string

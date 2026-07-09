@@ -51,11 +51,8 @@ class EmailTemplate extends Model
             $body = view('emails.layout', ['content' => $body])->render();
         }
 
-        $html = Blade::render($body, $data);
-
         return new Content(
-            htmlString: $html,
-            text: static::toPlainText($html),
+            htmlString: Blade::render($body, $data),
         );
     }
 
@@ -68,18 +65,5 @@ class EmailTemplate extends Model
         }
 
         return html_entity_decode(Blade::render($template->subject, $data), ENT_QUOTES, 'UTF-8');
-    }
-
-    protected static function toPlainText(string $html): string
-    {
-        $text = preg_replace('/<style\b[^>]*>[\s\S]*?<\/style>/i', '', $html);
-        $text = preg_replace('/<script\b[^>]*>[\s\S]*?<\/script>/i', '', $text);
-        $text = preg_replace('/<br\s*\/?>/i', "\n", $text);
-        $text = preg_replace('/<\/p>/i', "\n\n", $text);
-        $text = preg_replace('/<[^>]+>/', ' ', $text);
-        $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        $text = preg_replace('/\n{3,}/', "\n\n", $text);
-
-        return trim($text);
     }
 }
