@@ -182,9 +182,17 @@ class EmailTemplateController extends Controller
 
             return response()->json(['message' => 'Test email sent to ' . $recipient]);
         } catch (\Exception $e) {
-            \Log::error('Failed to send test email: ' . $e->getMessage());
+            \Log::error('Failed to send test email: ' . $e->getMessage(), [
+                'exception' => $e,
+                'template_id' => $template->id,
+                'template_key' => $template->key,
+                'recipient' => $recipient,
+            ]);
 
-            return response()->json(['error' => 'Failed to send test email: ' . $e->getMessage()], 422);
+            return response()->json([
+                'error' => 'Failed to send test email: ' . $e->getMessage(),
+                'exception' => get_class($e),
+            ], 422);
         }
     }
 

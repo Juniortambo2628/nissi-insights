@@ -85,7 +85,8 @@ class TemplatedMail extends Mailable
 
     protected function generateMessageId(): string
     {
-        $host = parse_url(config('app.url', 'https://nissi-insights.com'), PHP_URL_HOST);
+        $appUrl = config('app.url') ?: 'https://nissi-insights.com';
+        $host = parse_url($appUrl, PHP_URL_HOST) ?: 'nissi-insights.com';
 
         return '<' . uniqid('nissi_', true) . '@' . $host . '>';
     }
