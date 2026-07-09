@@ -236,7 +236,7 @@
                 <div style="margin-top: 16px;">
                     <a href="{{ $frontendUrl }}">Website</a>
                     <span style="color: #cbd5e1;">|</span>
-                    <a href="{{ $frontendUrl('/privacy') }}">Privacy Policy</a>
+                    <a href="{{ $frontendUrl . '/privacy' }}">Privacy Policy</a>
                 </div>
             </div>
         </div>
