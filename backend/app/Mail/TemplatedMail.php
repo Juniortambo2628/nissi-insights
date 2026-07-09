@@ -5,14 +5,22 @@ namespace App\Mail;
 use App\Models\EmailLog;
 use App\Models\EmailTemplate;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Blade;
 
-class TemplatedMail extends Mailable implements ShouldQueue
+/**
+ * Synchronous templated mailable.
+ *
+ * Note: this intentionally does NOT implement ShouldQueue. In Laravel, a
+ * mailable that implements ShouldQueue is automatically queued when Mail::send()
+ * is used, which means emails only dispatch if a queue worker is running. On
+ * this shared-hosting deployment there is no queue worker, so all callers expect
+ * Mail::to()->send() to deliver immediately.
+ */
+class TemplatedMail extends Mailable
 {
     use Queueable, SerializesModels;
 
