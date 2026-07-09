@@ -101,6 +101,8 @@ class EventRegistrationController extends Controller
             $adminMail->log($adminAddress, 'sent');
         } catch (\Exception $e) {
             \Log::error("Failed to send event registration email to admin: " . $e->getMessage());
+            (new TemplatedMail('event_registered_admin', $adminData, $registration))
+                ->log($adminAddress, 'failed', $e->getMessage());
         }
     }
 

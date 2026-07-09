@@ -27,7 +27,9 @@ class TemplatedMail extends Mailable implements ShouldQueue
         $template = $this->getTemplate();
 
         return new Envelope(
-            subject: $this->renderString($template->subject),
+            subject: $template
+                ? $this->renderString($template->subject)
+                : "Nissi Insights Notification (template {$this->templateKey})",
         );
     }
 
@@ -35,8 +37,14 @@ class TemplatedMail extends Mailable implements ShouldQueue
     {
         $template = $this->getTemplate();
 
+        if ($template) {
+            return new Content(
+                htmlString: $this->renderString($this->wrapInLayout($template->body)),
+            );
+        }
+
         return new Content(
-            htmlString: $this->renderString($this->wrapInLayout($template->body)),
+            htmlString: $this->renderString($this->wrapInLayout($this->fallbackBody())),
         );
     }
 
@@ -45,9 +53,31 @@ class TemplatedMail extends Mailable implements ShouldQueue
         return [];
     }
 
-    protected function getTemplate(): EmailTemplate
+    protected function getTemplate(): ?EmailTemplate
     {
-        return EmailTemplate::active()->byKey($this->templateKey)->firstOrFail();
+        return EmailTemplate::active()->byKey($this->templateKey)->first();
+    }
+
+    protected function fallbackBody(): string
+    {
+        return <<<'BLADE'
+<div style="padding: 20px; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #334155;">
+    <p>Hi {{ $name ?? 'there' }},</p>
+    <p>This is a notification from Nissi Insights.</p>
+
+    @if(!empty($eventTitle))
+    <p><strong>Event:</strong> {{ $eventTitle }}</p>
+    @endif
+    @if(!empty($eventDate))
+    <p><strong>Date:</strong> {{ $eventDate }}</p>
+    @endif
+    @if(!empty($eventTime))
+    <p><strong>Time:</strong> {{ $eventTime }}</p>
+    @endif
+
+    <p style="color: #64748b; font-size: 12px; margin-top: 24px;">Note: the email template "{{ $templateKey ?? '' }}" is missing or inactive. Please check Admin &rarr; Email Configuration.</p>
+</div>
+BLADE;
     }
 
     protected function renderString(string $content): string
