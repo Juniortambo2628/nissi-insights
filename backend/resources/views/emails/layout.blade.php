@@ -173,7 +173,7 @@
         $siteName = \App\Models\SiteSetting::getValue('site_name', config('app.name', 'Nissi Insights'));
         $frontendUrl = frontend_url();
 
-        // Resolve logo URLs. Dark logo is preferred for the dark header.
+        // Resolve logo URLs. Light/white logo is used for the dark header.
         $resolveLogo = function (?string $raw) use ($frontendUrl): ?string {
             if (empty($raw)) {
                 return null;
@@ -195,9 +195,11 @@
             return null;
         };
 
-        $darkLogoUrl = $resolveLogo(\App\Models\SiteSetting::getValue('logo_dark'));
+        // logo_light is the light/white logo meant for dark backgrounds.
         $lightLogoUrl = $resolveLogo(\App\Models\SiteSetting::getValue('logo_light'));
-        $logoUrl = $darkLogoUrl ?: $lightLogoUrl;
+        // Fallback to the bundled white logo if no setting is configured.
+        $defaultWhiteLogo = $frontendUrl . '/assets/logos/nissi-landscape-white.png';
+        $logoUrl = $lightLogoUrl ?: $defaultWhiteLogo;
 
         $addresses = json_decode(\App\Models\SiteSetting::getValue('business_addresses', '[]'), true) ?: [];
         $primaryAddress = $addresses[0]['address'] ?? '';
@@ -205,18 +207,10 @@
     @endphp
     <div class="email-wrapper">
         <div class="container">
-            <div class="header">
-                @if($logoUrl)
-                    @if($darkLogoUrl)
-                        <img src="{{ $darkLogoUrl }}" alt="{{ $siteName }}" class="logo" width="240" height="56" border="0" style="display:block;max-height:56px;width:auto;">
-                    @else
-                        <div class="logo-box">
-                            <img src="{{ $lightLogoUrl }}" alt="{{ $siteName }}" class="logo" width="240" height="56" border="0" style="display:block;max-height:56px;width:auto;">
-                        </div>
-                    @endif
-                @else
-                    <a href="{{ $frontendUrl }}" class="logo-fallback">{{ $siteName }}</a>
-                @endif
+            <div class="header" bgcolor="#0f172a" style="background-color:#0f172a; padding:32px 24px; text-align:center; border-bottom:4px solid #2563eb;">
+                <a href="{{ $frontendUrl }}" style="text-decoration:none; display:inline-block;">
+                    <img src="{{ $logoUrl }}" alt="{{ $siteName }}" class="logo" width="240" height="56" border="0" style="display:block; max-height:56px; width:auto; margin:0 auto;">
+                </a>
             </div>
             <div class="content">
                 @if(isset($content))
