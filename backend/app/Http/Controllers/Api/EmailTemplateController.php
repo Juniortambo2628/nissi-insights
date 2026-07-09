@@ -97,7 +97,7 @@ class EmailTemplateController extends Controller
                 $subject = $template->subject;
             }
 
-            $renderedSubject = Blade::render($subject, $dummyData);
+            $renderedSubject = html_entity_decode(Blade::render($subject, $dummyData), ENT_QUOTES, 'UTF-8');
             $renderedBody = $this->wrapInLayout(Blade::render($body, $dummyData));
 
             return response()->json([
@@ -156,8 +156,9 @@ class EmailTemplateController extends Controller
             'domain' => $domain,
             'deliverability_guidance' => [
                 "Set MAIL_MAILER=smtp and provide valid SMTP credentials in .env for real delivery.",
-                "Ensure {$domain} has an SPF record allowing {$host} (e.g. \"v=spf1 include:{$host} ~all\").",
-                "Add a DKIM record for {$domain} if your mail provider supports it.",
+                "Create or update SPF for {$domain}: v=spf1 +a +mx include:{$host} ~all",
+                "Add DMARC for {$domain}: v=DMARC1; p=quarantine; rua=mailto:dmarc@{$domain}; pct=100;",
+                "Add a DKIM record for {$domain} if your mail provider supports it (cPanel users can enable DKIM in Email Deliverability).",
                 "Verify the 'From' address ({$fromAddress}) exists and matches the SMTP account.",
                 "For cPanel hosting, create the email account in cPanel and use mail.yourdomain.com with SSL on port 465.",
             ],
@@ -228,6 +229,7 @@ class EmailTemplateController extends Controller
             'eventLocation' => 'One Canada Square, London',
             'eventLink' => frontend_url('/events/sample-event'),
             'eventId' => 1,
+            'eventImage' => frontend_url('/assets/logos/logo-landscape.png'),
             'requestData' => $requestData,
             'rsvp' => $rsvp,
             'subscriber' => $subscriber,

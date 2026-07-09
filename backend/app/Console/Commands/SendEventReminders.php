@@ -129,6 +129,7 @@ class SendEventReminders extends Command
             'eventLocation' => $event->location ?? 'TBC',
             'eventLink' => $event->link ?? null,
             'eventId' => $event->id,
+            'eventImage' => $event->image ? url($event->image) : null,
         ];
     }
 

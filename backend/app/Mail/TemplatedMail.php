@@ -8,6 +8,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Mail\Mailables\Headers;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Blade;
 
@@ -35,9 +36,13 @@ class TemplatedMail extends Mailable
         $template = $this->getTemplate();
 
         return new Envelope(
-            subject: $template
-                ? $this->renderString($template->subject)
-                : "Nissi Insights Notification (template {$this->templateKey})",
+            subject: html_entity_decode(
+                $template
+                    ? $this->renderString($template->subject)
+                    : "Nissi Insights Notification (template {$this->templateKey})",
+                ENT_QUOTES,
+                'UTF-8'
+            ),
         );
     }
 
@@ -46,19 +51,43 @@ class TemplatedMail extends Mailable
         $template = $this->getTemplate();
 
         if ($template) {
+            $html = $this->renderString($this->wrapInLayout($template->body));
+
             return new Content(
-                htmlString: $this->renderString($this->wrapInLayout($template->body)),
+                htmlString: $html,
+                text: $this->plainText($html),
             );
         }
 
+        $html = $this->renderString($this->wrapInLayout($this->fallbackBody()));
+
         return new Content(
-            htmlString: $this->renderString($this->wrapInLayout($this->fallbackBody())),
+            htmlString: $html,
+            text: $this->plainText($html),
         );
     }
 
     public function attachments(): array
     {
         return [];
+    }
+
+    public function headers(): Headers
+    {
+        return new Headers(
+            messageId: $this->generateMessageId(),
+            text: [
+                'X-Mailer' => 'NissiInsightsMailer/1.0',
+                'X-Priority' => '3',
+            ],
+        );
+    }
+
+    protected function generateMessageId(): string
+    {
+        $host = parse_url(config('app.url', 'https://nissi-insights.com'), PHP_URL_HOST);
+
+        return '<' . uniqid('nissi_', true) . '@' . $host . '>';
     }
 
     protected function getTemplate(): ?EmailTemplate
@@ -69,28 +98,50 @@ class TemplatedMail extends Mailable
     protected function fallbackBody(): string
     {
         return <<<'BLADE'
-<div style="padding: 20px; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #334155;">
-    <p>Hi {{ $name ?? 'there' }},</p>
-    <p>This is a notification from Nissi Insights.</p>
+<h1>Notification</h1>
+<p>Hi {{ $name ?? 'there' }},</p>
+<p>This is a notification from Nissi Insights.</p>
 
-    @if(!empty($eventTitle))
-    <p><strong>Event:</strong> {{ $eventTitle }}</p>
+<div class="event-card">
+    @if(!empty($eventImage))
+    <img src="{{ $eventImage }}" alt="{{ $eventTitle ?? 'Event' }}" class="event-image">
     @endif
-    @if(!empty($eventDate))
-    <p><strong>Date:</strong> {{ $eventDate }}</p>
-    @endif
-    @if(!empty($eventTime))
-    <p><strong>Time:</strong> {{ $eventTime }}</p>
-    @endif
-
-    <p style="color: #64748b; font-size: 12px; margin-top: 24px;">Note: the email template "{{ $templateKey ?? '' }}" is missing or inactive. Please check Admin &rarr; Email Configuration.</p>
+    <div class="event-details">
+        @if(!empty($eventTitle))
+        <div class="detail-row"><strong>Event:</strong> {{ $eventTitle }}</div>
+        @endif
+        @if(!empty($eventDate))
+        <div class="detail-row"><strong>Date:</strong> {{ $eventDate }}</div>
+        @endif
+        @if(!empty($eventTime))
+        <div class="detail-row"><strong>Time:</strong> {{ $eventTime }}</div>
+        @endif
+        @if(!empty($eventLocation))
+        <div class="detail-row"><strong>Location:</strong> {{ $eventLocation }}</div>
+        @endif
+    </div>
 </div>
+
+<p style="color: #64748b; font-size: 12px; margin-top: 24px;">Note: the email template "{{ $templateKey ?? '' }}" is missing or inactive. Please check Admin &rarr; Email Configuration.</p>
 BLADE;
     }
 
     protected function renderString(string $content): string
     {
         return Blade::render($content, $this->data);
+    }
+
+    protected function plainText(string $html): string
+    {
+        $text = preg_replace('/<style\b[^>]*>[\s\S]*?<\/style>/i', '', $html);
+        $text = preg_replace('/<script\b[^>]*>[\s\S]*?<\/script>/i', '', $text);
+        $text = preg_replace('/<br\s*\/?>/i', "\n", $text);
+        $text = preg_replace('/<\/p>/i', "\n\n", $text);
+        $text = preg_replace('/<[^>]+>/', ' ', $text);
+        $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $text = preg_replace('/\n{3,}/', "\n\n", $text);
+
+        return trim($text);
     }
 
     protected function wrapInLayout(string $body): string
