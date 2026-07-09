@@ -78,7 +78,8 @@ class TemplatedMail extends Mailable
         $appUrl = config('app.url') ?: 'https://nissi-insights.com';
         $host = parse_url($appUrl, PHP_URL_HOST) ?: 'nissi-insights.com';
 
-        return '<' . uniqid('nissi_', true) . '@' . $host . '>';
+        // No angle brackets here; Laravel will wrap the ID when adding the header.
+        return uniqid('nissi_', true) . '@' . $host;
     }
 
     protected function getTemplate(): ?EmailTemplate
