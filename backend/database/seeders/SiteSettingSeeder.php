@@ -29,17 +29,21 @@ class SiteSettingSeeder extends Seeder
             ['key' => 'logo_dark', 'value' => '/assets/logos/nissi-landscape-white.png', 'type' => 'image', 'group' => 'branding'],
             ['key' => 'favicon', 'value' => '/assets/favicons/favicon.png', 'type' => 'image', 'group' => 'branding'],
             ['key' => 'dashboard_favicon', 'value' => '/assets/favicons/dashboard-favicon.png', 'type' => 'image', 'group' => 'branding'],
-            ['key' => 'hero_title', 'value' => 'Intelligence for the future of energy', 'type' => 'text', 'group' => 'homepage'],
+            ['key' => 'hero_title_line1', 'value' => 'Intelligence for', 'type' => 'text', 'group' => 'homepage'],
+            ['key' => 'hero_title_line2', 'value' => 'the future of energy', 'type' => 'text', 'group' => 'homepage'],
             
             // About Page
             ['key' => 'about_title', 'value' => 'Intelligence for the Global Energy Transition', 'type' => 'text', 'group' => 'about'],
             ['key' => 'about_tagline', 'value' => 'Visionary Strategy & Rigorous Analysis', 'type' => 'text', 'group' => 'about'],
             ['key' => 'about_story', 'value' => 'Nissi Insights was founded on the principle that market intelligence should be more than just data—it should be a strategic asset. We connect global decision-makers with the granular insights they need to navigate the world\'s most complex energy and financial landscapes, providing a bridge between emerging markets and global capital.', 'type' => 'textarea', 'group' => 'about'],
+            ['key' => 'hero_about_media', 'value' => '/NI-Digital-Assets/international-diplomacy.jpg', 'type' => 'image', 'group' => 'about'],
+            ['key' => 'about_purpose_tagline', 'value' => 'Purpose & Direction', 'type' => 'text', 'group' => 'about'],
+            ['key' => 'about_purpose_title', 'value' => 'Our commitment to excellence and strategic foresight.', 'type' => 'text', 'group' => 'about'],
+            ['key' => 'about_purpose_text', 'value' => 'Nissi Insights was founded to bridge the gap between complex market intelligence and actionable strategy. We serve sovereign wealth funds, institutional investors, and multinational organizations navigating the intersection of energy markets, fintech innovation, and international diplomacy.', 'type' => 'textarea', 'group' => 'about'],
             ['key' => 'about_mission_title', 'value' => 'Our Strategic Mission', 'type' => 'text', 'group' => 'about'],
             ['key' => 'about_mission_text', 'value' => 'To empower sovereign entities and private enterprises with actionable intelligence that drives sustainable growth, ensures energy security, and facilitates transparent international cooperation.', 'type' => 'textarea', 'group' => 'about'],
             ['key' => 'about_vision_title', 'value' => 'Our Vision for 2030', 'type' => 'text', 'group' => 'about'],
             ['key' => 'about_vision_text', 'value' => 'To be the preeminent global advisor for energy and fintech intelligence, recognized for our integrity, our depth of analysis, and our commitment to a stable and prosperous global energy future.', 'type' => 'textarea', 'group' => 'about'],
-            ['key' => 'about_image', 'value' => '/NI-Digital-Assets/international-diplomacy.jpg', 'type' => 'image', 'group' => 'about'],
 
             // Contact Page
             ['key' => 'contact_email', 'value' => 'info@nissi-insights.com', 'type' => 'text', 'group' => 'contact'],
