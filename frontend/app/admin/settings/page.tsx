@@ -76,8 +76,6 @@ const AdminSettingsPage = () => {
         { key: 'hero_pillar_energy_advisory', label: 'Pillar: Energy Advisory Hero', type: 'media' },
         { key: 'hero_pillar_fintech', label: 'Pillar: Fintech Hero', type: 'media' },
         { key: 'hero_pillar_international_diplomacy', label: 'Pillar: Diplomacy Hero', type: 'media' },
-        { key: 'hero_events_media', label: 'Events Page Hero', type: 'media' },
-        { key: 'hero_knowledge_base_media', label: 'Knowledge Hub Hero', type: 'media' },
     ]
 
     const handleSaveAll = async () => {
@@ -227,7 +225,7 @@ const AdminSettingsPage = () => {
                         {activeSettingsTab === 'general' && (
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                 {['general'].map(group => {
-                                    const settings = settingsByGroup?.[group] || []
+                                    const settings = (settingsByGroup?.[group] || []).filter(s => s.key !== 'main_nav_links')
                                     if (settings.length === 0) return null
                                     const Icon = groupIcons[group] || Globe
                                     return (
@@ -253,17 +251,48 @@ const AdminSettingsPage = () => {
                         )}
 
                         {activeSettingsTab === 'branding' && (
-                            <Card className="bg-secondary/5 border-border max-w-4xl">
-                                <CardHeader className="bg-secondary/10 border-b border-border">
-                                    <CardTitle className="text-foreground">Brand Assets</CardTitle>
-                                    <CardDescription className="text-muted-foreground">Manage your logos and favicons across the site.</CardDescription>
-                                </CardHeader>
-                                <CardContent className="p-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        {settingsByGroup?.['branding']?.map(renderSetting)}
-                                    </div>
-                                </CardContent>
-                            </Card>
+                            <div className="space-y-8">
+                                <Card className="bg-secondary/5 border-border max-w-4xl">
+                                    <CardHeader className="bg-secondary/10 border-b border-border">
+                                        <CardTitle className="text-foreground">Brand Assets</CardTitle>
+                                        <CardDescription className="text-muted-foreground">Manage your logos and favicons across the site.</CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="p-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                            {settingsByGroup?.['branding']?.map(renderSetting)}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+
+                                <Card className="bg-secondary/5 border-border max-w-4xl">
+                                    <CardHeader className="bg-secondary/10 border-b border-border">
+                                        <CardTitle className="text-foreground">Section Hero Images</CardTitle>
+                                        <CardDescription className="text-muted-foreground">Background images for Events and Knowledge Base sections.</CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="p-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                            <div className="space-y-3">
+                                                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-tighter">Events Page Hero</Label>
+                                                <ImageUploader 
+                                                    value={localSettings['hero_events_media'] || ''}
+                                                    onChange={(url) => setLocalSettings(prev => ({ ...prev, hero_events_media: url }))}
+                                                    label=""
+                                                    className="w-full"
+                                                />
+                                            </div>
+                                            <div className="space-y-3">
+                                                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-tighter">Knowledge Base Hero</Label>
+                                                <ImageUploader 
+                                                    value={localSettings['hero_knowledge_base_media'] || ''}
+                                                    onChange={(url) => setLocalSettings(prev => ({ ...prev, hero_knowledge_base_media: url }))}
+                                                    label=""
+                                                    className="w-full"
+                                                />
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </div>
                         )}
 
                         {activeSettingsTab === 'contact' && (
