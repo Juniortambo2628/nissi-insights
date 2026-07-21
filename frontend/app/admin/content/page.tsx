@@ -7,7 +7,14 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Save, Loader2, Layout, Zap, BarChart3, Image as ImageIcon, Film, FileText, Mail, Briefcase, Globe, Settings, Palette } from 'lucide-react'
+import { Save, Loader2, Layout, Zap, BarChart3, Film, FileText, Mail, Briefcase, Settings, Palette, Check } from 'lucide-react'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 
 import ImageUploader from '@/components/admin/ImageUploader'
 import api from '@/lib/api'
@@ -221,41 +228,10 @@ const AdminContentPage = () => {
 
     return (
         <AdminLayout>
-            <div className="space-y-8">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight">Content Manager</h1>
-                        <p className="text-muted-foreground">Edit homepage section text, images, and hero backgrounds.</p>
-                    </div>
-                    <Button
-                        onClick={handleSave}
-                        disabled={isSaving}
-                        className={`gap-2 px-8 font-bold shadow-xl ${saveSuccess ? 'bg-emerald-600 hover:bg-emerald-700' : 'shadow-primary/20'}`}
-                    >
-                        {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                        {saveSuccess ? 'Saved!' : 'Save Changes'}
-                    </Button>
-                </div>
-
-                {/* Section Tabs */}
-                <div className="flex gap-2 border-b border-border/50 pb-0">
-                    {sectionConfig.map((section) => {
-                        const Icon = section.icon
-                        return (
-                            <button
-                                key={section.id}
-                                onClick={() => setActiveTab(section.id)}
-                                className={`flex items-center gap-2 px-5 py-3 text-sm font-bold transition-all border-b-2 ${
-                                    activeTab === section.id
-                                        ? 'border-primary text-primary'
-                                        : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-                                }`}
-                            >
-                                <Icon size={16} />
-                                {section.title}
-                            </button>
-                        )
-                    })}
+            <div className="space-y-8 pb-24">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">Content Manager</h1>
+                    <p className="text-muted-foreground">Edit homepage section text, images, and hero backgrounds.</p>
                 </div>
 
                 {/* Active Section Editor */}
@@ -328,6 +304,53 @@ const AdminContentPage = () => {
                         </CardContent>
                     </Card>
                 )}
+            </div>
+
+            {/* Section Context Switcher Toolbar */}
+            <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-full max-w-2xl px-6 z-50">
+                <div className="bg-background/80 backdrop-blur-md border border-primary/20 shadow-2xl shadow-primary/10 rounded-2xl p-3 flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3 flex-1">
+                        <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                            {activeSection && <activeSection.icon size={18} />}
+                        </div>
+                        <div className="flex-1">
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Active Section</p>
+                            <Select
+                                value={activeTab}
+                                onValueChange={setActiveTab}
+                            >
+                                <SelectTrigger className="border-none bg-transparent p-0 h-auto shadow-none focus:ring-0 text-sm font-bold text-foreground">
+                                    <SelectValue placeholder="Select Section" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-background border-border max-h-[300px] overflow-y-auto">
+                                    {sectionConfig.map((section) => (
+                                        <SelectItem key={section.id} value={section.id}>
+                                            <div className="flex items-center gap-2">
+                                                <section.icon size={14} />
+                                                {section.title}
+                                            </div>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                    <div className="h-10 w-px bg-border/50" />
+                    <div className="flex items-center gap-3">
+                        <div className="text-right hidden sm:block mr-2">
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Fields</p>
+                            <p className="text-sm font-bold text-primary">{activeSection?.fields.length || 0}</p>
+                        </div>
+                        <Button
+                            onClick={handleSave}
+                            disabled={isSaving}
+                            className={`gap-2 px-6 font-bold rounded-xl transition-all ${saveSuccess ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-primary hover:bg-primary/90'}`}
+                        >
+                            {isSaving ? <Loader2 size={16} className="animate-spin" /> : saveSuccess ? <Check size={16} /> : <Save size={16} />}
+                            {saveSuccess ? 'Saved!' : 'Save'}
+                        </Button>
+                    </div>
+                </div>
             </div>
         </AdminLayout>
     )
