@@ -67,7 +67,6 @@ const AdminSettingsPage = () => {
         { key: 'hero_home_video_1', label: 'Home Hero Video 1', type: 'video' },
         { key: 'hero_home_video_2', label: 'Home Hero Video 2', type: 'video' },
         { key: 'hero_home_video_3', label: 'Home Hero Video 3', type: 'video' },
-        { key: 'hero_about_media', label: 'About Page Hero', type: 'media' },
         { key: 'hero_services_media', label: 'Services Page Hero', type: 'media' },
         { key: 'hero_insights_media', label: 'Insights Page Hero', type: 'media' },
         { key: 'hero_case_studies_media', label: 'Case Studies Hero', type: 'media' },
@@ -191,7 +190,6 @@ const AdminSettingsPage = () => {
     const settingsTabs = [
         { id: 'general', label: 'General', icon: Globe },
         { id: 'branding', label: 'Branding', icon: Palette },
-        { id: 'about', label: 'About Us', icon: ShieldCheck },
         { id: 'contact', label: 'Contact Details', icon: Mail },
         { id: 'launch', label: 'Launch', icon: Rocket },
         { id: 'hero-media', label: 'Page Hero Media', icon: Layout },
@@ -263,20 +261,6 @@ const AdminSettingsPage = () => {
                                 <CardContent className="p-6">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                         {settingsByGroup?.['branding']?.map(renderSetting)}
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        )}
-
-                        {activeSettingsTab === 'about' && (
-                            <Card className="bg-secondary/5 border-border max-w-4xl">
-                                <CardHeader className="bg-secondary/10 border-b border-border">
-                                    <CardTitle className="text-foreground">About Us Page Content</CardTitle>
-                                    <CardDescription className="text-muted-foreground">Manage the story, mission, and vision of Nissi Insights.</CardDescription>
-                                </CardHeader>
-                                <CardContent className="p-6">
-                                    <div className="grid grid-cols-1 gap-8">
-                                        {settingsByGroup?.['about']?.map(renderSetting)}
                                     </div>
                                 </CardContent>
                             </Card>
