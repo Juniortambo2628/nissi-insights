@@ -29,6 +29,9 @@ export default function AboutClient() {
     const title = getSetting('about_title', 'Trusted intelligence for a complex world.')
     const tagline = getSetting('about_tagline', 'About Us')
     const story = getSetting('about_story', 'Nissi Insights provides strategic advisory and market intelligence to help decision-makers navigate the energy transition, financial technology, and international markets.')
+    const purposeTagline = getSetting('about_purpose_tagline', 'Purpose & Direction')
+    const purposeTitle = getSetting('about_purpose_title', 'Our commitment to excellence and strategic foresight.')
+    const purposeText = getSetting('about_purpose_text', 'Nissi Insights provides strategic advisory and market intelligence to help decision-makers navigate the energy transition, financial technology, and international markets.')
     const heroImage = getMediaUrl(getSetting('hero_about_media', '/NI-Digital-Assets/international-diplomacy.jpg'))
     const missionTitle = getSetting('about_mission_title', 'Our Mission')
     const missionText = getSetting('about_mission_text', 'To provide actionable intelligence that drives confident decision-making.')
@@ -65,12 +68,12 @@ export default function AboutClient() {
                             className="space-y-16"
                         >
                             <div className="relative">
-                                <span className="text-primary font-bold text-xs uppercase tracking-[0.3em] mb-4 block">Purpose & Direction</span>
+                                <span className="text-primary font-bold text-xs uppercase tracking-[0.3em] mb-4 block">{purposeTagline}</span>
                                 <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-8 leading-tight">
-                                    Our commitment to <span className="text-primary">excellence</span> and strategic foresight.
+                                    {purposeTitle}
                                 </h2>
                                 <p className="text-muted-foreground text-lg leading-relaxed max-w-xl">
-                                    {story}
+                                    {purposeText}
                                 </p>
                             </div>
 

@@ -59,7 +59,10 @@ const sectionConfig = [
         fields: [
             { key: 'about_title', label: 'Page Title', type: 'text', placeholder: 'e.g. Intelligence for the Future' },
             { key: 'about_tagline', label: 'Page Tagline', type: 'text', placeholder: 'e.g. Our Mission & Vision' },
-            { key: 'about_story', label: 'Our Story (Hero Subtitle)', type: 'textarea', placeholder: 'Nissi Insights was founded...' },
+            { key: 'about_story', label: 'Hero Subtitle', type: 'textarea', placeholder: 'Nissi Insights was founded...' },
+            { key: 'about_purpose_tagline', label: 'Purpose Section Tagline', type: 'text', placeholder: 'e.g. Purpose & Direction' },
+            { key: 'about_purpose_title', label: 'Purpose Section Title', type: 'text', placeholder: 'e.g. Our commitment to excellence...' },
+            { key: 'about_purpose_text', label: 'Purpose Section Description', type: 'textarea', placeholder: 'Describe your purpose and strategic direction...' },
             { key: 'about_mission_title', label: 'Mission Title', type: 'text', placeholder: 'e.g. Connecting decision-makers...' },
             { key: 'about_mission_text1', label: 'Mission Text Block 1', type: 'textarea' },
             { key: 'about_mission_text2', label: 'Mission Text Block 2', type: 'textarea' },
