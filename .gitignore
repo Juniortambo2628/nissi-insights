@@ -47,3 +47,7 @@
 /NI-Digital-Assets
 /Template
 /tmp
+
+# SSH Keys (never commit)
+github-actions-nissi-insights
+github-actions-nissi-insights.pub

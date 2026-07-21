@@ -1,0 +1,119 @@
+name: Deploy Backend to cPanel
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+  workflow_dispatch:
+
+env:
+  SERVER_HOST: ${{ secrets.SERVER_HOST }}
+  SERVER_USER: ${{ secrets.SERVER_USER }}
+  SERVER_PORT: ${{ secrets.SERVER_PORT || '22' }}
+  DEPLOY_PATH: /home/${{ secrets.SERVER_USER }}
+  APP_PATH: /home/${{ secrets.SERVER_USER }}/nissi-insights-core
+  PUBLIC_PATH: /home/${{ secrets.SERVER_USER }}/public_html/api
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, ctype, json, bcmath, pdo, tokenizer
+          tools: composer:v2
+
+      - name: Install Composer Dependencies
+        working-directory: backend
+        run: composer install --no-dev --optimize-autoloader --no-interaction
+
+      - name: Setup SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p ${{ env.SERVER_PORT }} ${{ env.SERVER_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Deploy to Server
+        run: |
+          # Sync backend application code to nissi-insights-core
+          rsync -avz --delete \
+            -e "ssh -i ~/.ssh/deploy_key -p ${{ env.SERVER_PORT }}" \
+            --exclude="vendor" \
+            --exclude="storage" \
+            --exclude="public" \
+            --exclude="tests" \
+            --exclude=".git" \
+            --exclude=".env" \
+            --exclude=".env.*" \
+            --exclude="debug_settings.php" \
+            --exclude="init_hero_media.php" \
+            --exclude="out.txt" \
+            backend/ ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }}:${{ env.APP_PATH }}/
+
+      - name: Deploy Public Assets
+        run: |
+          # Sync public directory to public_html/api
+          rsync -avz --delete \
+            -e "ssh -i ~/.ssh/deploy_key -p ${{ env.SERVER_PORT }}" \
+            backend/public/ ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }}:${{ env.PUBLIC_PATH }}/
+
+      - name: Copy Production Entry Point
+        run: |
+          # Copy index.production.php as index.php
+          scp -P ${{ env.SERVER_PORT }} \
+            -i ~/.ssh/deploy_key \
+            backend/public/index.production.php \
+            ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }}:${{ env.PUBLIC_PATH }}/index.php
+
+      - name: Install Production Dependencies on Server
+        run: |
+          ssh -i ~/.ssh/deploy_key -p ${{ env.SERVER_PORT }} ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }} << 'EOF'
+            cd ${{ env.APP_PATH }}
+            if [ -f composer.json ]; then
+              composer install --no-dev --optimize-autoloader --no-interaction 2>/dev/null || true
+            fi
+          EOF
+
+      - name: Setup Storage Symlink
+        run: |
+          ssh -i ~/.ssh/deploy_key -p ${{ env.SERVER_PORT }} ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }} << 'EOF'
+            cd ${{ env.APP_PATH }}/public
+            if [ ! -L storage ]; then
+              ln -sf ../storage storage
+            fi
+          EOF
+
+      - name: Set Permissions
+        run: |
+          ssh -i ~/.ssh/deploy_key -p ${{ env.SERVER_PORT }} ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }} << 'EOF'
+            chmod -R 755 ${{ env.APP_PATH }}/storage 2>/dev/null || true
+            chmod -R 755 ${{ env.PUBLIC_PATH }} 2>/dev/null || true
+          EOF
+
+      - name: Run Migrations
+        run: |
+          ssh -i ~/.ssh/deploy_key -p ${{ env.SERVER_PORT }} ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }} << 'EOF'
+            cd ${{ env.APP_PATH }}
+            php artisan migrate --force 2>/dev/null || true
+          EOF
+
+      - name: Clear Caches
+        run: |
+          ssh -i ~/.ssh/deploy_key -p ${{ env.SERVER_PORT }} ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }} << 'EOF'
+            cd ${{ env.APP_PATH }}
+            php artisan config:cache 2>/dev/null || true
+            php artisan route:cache 2>/dev/null || true
+            php artisan view:cache 2>/dev/null || true
+          EOF
+
+      - name: Cleanup SSH Key
+        if: always()
+        run: rm -rf ~/.ssh/deploy_key
