@@ -19,17 +19,15 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->timestamps();
 
+            $table->unique('from_path');
             $table->index(['is_active', 'priority']);
         });
-
-        // Use a prefix unique index to stay within MySQL's 1000-byte key limit.
-        DB::statement('ALTER TABLE redirects ADD UNIQUE redirects_from_path_unique (from_path(191))');
     }
 
     public function down(): void
     {
         Schema::table('redirects', function (Blueprint $table) {
-            $table->dropUnique('redirects_from_path_unique');
+            $table->dropUnique(['from_path']);
         });
 
         Schema::dropIfExists('redirects');
