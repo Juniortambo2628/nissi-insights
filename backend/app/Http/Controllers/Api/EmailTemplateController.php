@@ -39,6 +39,9 @@ class EmailTemplateController extends Controller
             'is_active' => 'boolean',
         ]);
 
+        $validated['subject'] = html_entity_decode($validated['subject'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $validated['body'] = html_entity_decode($validated['body'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
         $template = EmailTemplate::create($validated);
 
         return response()->json($template, 201);
@@ -59,6 +62,9 @@ class EmailTemplateController extends Controller
             'variables.*' => 'string',
             'is_active' => 'boolean',
         ]);
+
+        $validated['subject'] = html_entity_decode($validated['subject'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $validated['body'] = html_entity_decode($validated['body'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
         $emailTemplate->update($validated);
 
@@ -105,7 +111,10 @@ class EmailTemplateController extends Controller
                 return response()->json(['error' => 'No template body to preview.'], 422);
             }
 
-            $renderedSubject = html_entity_decode(Blade::render($subject ?? 'Preview', $dummyData), ENT_QUOTES, 'UTF-8');
+            $body = html_entity_decode($body, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $subject = html_entity_decode($subject ?? 'Preview', ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+            $renderedSubject = html_entity_decode(Blade::render($subject, $dummyData), ENT_QUOTES, 'UTF-8');
             $renderedBody = $this->wrapInLayout(Blade::render($body, $dummyData));
 
             return response()->json([
