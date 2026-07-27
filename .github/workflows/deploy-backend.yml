@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'backend/**'
+      - '.github/workflows/**'
   workflow_dispatch:
 
 env:
@@ -126,6 +127,60 @@ jobs:
             if [ -f composer.json ]; then
               composer install --no-dev --optimize-autoloader --no-interaction 2>/dev/null || true
             fi
+          EOF
+
+      - name: Ensure Imagick Extension
+        run: |
+          ssh -i ~/.ssh/deploy_key -p ${{ env.SERVER_PORT }} ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }} << 'EOF'
+            PHP_BIN="/opt/cpanel/ea-php83/root/usr/bin/php"
+            PECL_BIN="/opt/cpanel/ea-php83/root/usr/bin/pecl"
+            PHP_INI="/opt/cpanel/ea-php83/root/etc/php.ini"
+
+            # Already working? Skip.
+            if $PHP_BIN -m 2>/dev/null | grep -qi imagick; then
+              echo "imagick already loaded, skipping."
+              exit 0
+            fi
+
+            echo "imagick not loaded, attempting install..."
+
+            # Try to install system libraries + imagick via PECL (needs root/sudo)
+            if command -v sudo >/dev/null 2>&1; then
+              sudo yum install -y ImageMagick-6-q16 ImageMagick-6-devel 2>/dev/null || \
+                sudo dnf install -y ImageMagick-6-q16 ImageMagick-6-devel 2>/dev/null || true
+
+              echo "" | sudo $PECL_BIN install imagick 2>/dev/null || true
+            fi
+
+            # Check again after install attempt
+            if $PHP_BIN -m 2>/dev/null | grep -qi imagick; then
+              echo "imagick installed successfully."
+
+              # Ensure extension is enabled in php.ini
+              if ! grep -q "^extension=imagick.so" "$PHP_INI" 2>/dev/null; then
+                if grep -q "^;extension=imagick.so" "$PHP_INI" 2>/dev/null; then
+                  sed -i 's/^;extension=imagick.so/extension=imagick.so/' "$PHP_INI"
+                else
+                  echo "extension=imagick.so" >> "$PHP_INI"
+                fi
+              fi
+            else
+              echo "imagick install failed, disabling broken extension to suppress errors..."
+              # Comment out broken extension=imagick.so to stop the startup warning
+              sed -i 's/^extension=imagick.so/;extension=imagick.so/' "$PHP_INI" 2>/dev/null || true
+              echo "extension suppressed."
+            fi
+          EOF
+
+      - name: Restart PHP-FPM
+        run: |
+          ssh -i ~/.ssh/deploy_key -p ${{ env.SERVER_PORT }} ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }} << 'EOF'
+            # Try cPanel EasyApache service script first, fall back to systemctl
+            if [ -x /scripts/restartsrv ]; then
+              sudo /scripts/restartsrv ea-php83-php-fpm 2>/dev/null || true
+            fi
+            sudo systemctl restart ea-php83-php-fpm 2>/dev/null || \
+            sudo service ea-php83-php-fpm restart 2>/dev/null || true
           EOF
 
       - name: Setup Storage Symlink
