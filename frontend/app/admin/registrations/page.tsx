@@ -10,7 +10,9 @@ import {
     Search,
     Filter,
     RefreshCw,
-    ExternalLink
+    ExternalLink,
+    Mail,
+    Loader2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -54,6 +56,7 @@ const AdminRegistrationsContent = () => {
     const { data: events } = useApi<Event[]>('/events?all=true')
     const { toast } = useToast()
     const [searchTerm, setSearchTerm] = useState('')
+    const [isSendingReminder, setIsSendingReminder] = useState(false)
 
     const filteredRegistrations = registrations?.filter((reg) =>
         reg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -66,8 +69,35 @@ const AdminRegistrationsContent = () => {
             await api.put(`/event-registrations/${reg.id}`, { attended: !reg.attended })
             toast({ title: "Updated", description: `Marked ${reg.name} as ${!reg.attended ? 'attended' : 'not attended'}.` })
             mutate()
-        } catch (error) {
+        } catch {
             toast({ title: "Error", description: "Failed to update attendance.", variant: "destructive" })
+        }
+    }
+
+    const sendReminder = async () => {
+        if (!eventId) {
+            toast({ title: "Select an Event", description: "Please select a specific event from the filter to send reminders.", variant: "destructive" })
+            return
+        }
+        setIsSendingReminder(true)
+        try {
+            const response = await api.post('/event-registrations/send-reminder', {
+                event_id: parseInt(eventId),
+            })
+            const { sent, failed } = response.data
+            toast({
+                title: "Reminders Sent",
+                description: `${sent} reminder(s) sent successfully${failed > 0 ? `, ${failed} failed` : ''}.`,
+            })
+        } catch (error: unknown) {
+            const errObj = error as { response?: { data?: { error?: string } } }
+            toast({
+                title: "Error",
+                description: errObj?.response?.data?.error || "Failed to send reminders.",
+                variant: "destructive"
+            })
+        } finally {
+            setIsSendingReminder(false)
         }
     }
 
@@ -169,10 +199,23 @@ const AdminRegistrationsContent = () => {
                 title="Event Registrations"
                 subtitle="Track participants and manage attendance for your events."
                 action={
-                    <Button onClick={exportToCsv} variant="outline" className="gap-2 border-border text-foreground hover:bg-secondary">
-                        <Download size={18} />
-                        Export to CSV
-                    </Button>
+                    <div className="flex gap-2">
+                        {eventId && (
+                            <Button
+                                onClick={sendReminder}
+                                disabled={isSendingReminder}
+                                variant="outline"
+                                className="gap-2 border-primary/30 text-primary hover:bg-primary/10"
+                            >
+                                {isSendingReminder ? <Loader2 size={18} className="animate-spin" /> : <Mail size={18} />}
+                                Send Reminder
+                            </Button>
+                        )}
+                        <Button onClick={exportToCsv} variant="outline" className="gap-2 border-border text-foreground hover:bg-secondary">
+                            <Download size={18} />
+                            Export to CSV
+                        </Button>
+                    </div>
                 }
             >
                 <div className="flex flex-col md:flex-row gap-4">

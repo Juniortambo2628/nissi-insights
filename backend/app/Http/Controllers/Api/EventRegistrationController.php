@@ -73,6 +73,55 @@ class EventRegistrationController extends Controller
         return response()->json(null, 204);
     }
 
+    public function sendReminder(Request $request)
+    {
+        $validated = $request->validate([
+            'event_id' => 'required|exists:events,id',
+            'registration_ids' => 'nullable|array',
+            'registration_ids.*' => 'integer|exists:event_registrations,id',
+            'template_key' => 'nullable|string|in:event_reminder_approaching,event_reminder_started,event_thank_you_ended',
+        ]);
+
+        $event = \App\Models\Event::with('registrations')->findOrFail($validated['event_id']);
+        $templateKey = $validated['template_key'] ?? 'event_reminder_approaching';
+        $registrationIds = $validated['registration_ids'] ?? null;
+
+        $registrations = $registrationIds
+            ? $event->registrations()->whereIn('id', $registrationIds)->get()
+            : $event->registrations;
+
+        if ($registrations->isEmpty()) {
+            return response()->json(['error' => 'No registrations found for this event.'], 404);
+        }
+
+        $sent = 0;
+        $failed = 0;
+        $errors = [];
+
+        foreach ($registrations as $registration) {
+            try {
+                $data = $this->templateData($registration);
+                $mail = new TemplatedMail($templateKey, $data, $registration);
+                Mail::to($registration->email)->send($mail);
+                $mail->log($registration->email, 'sent');
+                $sent++;
+            } catch (\Exception $e) {
+                \Log::error("Failed to send manual reminder to {$registration->email}: " . $e->getMessage());
+                (new TemplatedMail($templateKey, $this->templateData($registration), $registration))
+                    ->log($registration->email, 'failed', $e->getMessage());
+                $failed++;
+                $errors[] = "{$registration->email}: {$e->getMessage()}";
+            }
+        }
+
+        return response()->json([
+            'message' => "Reminders sent: {$sent}, failed: {$failed}",
+            'sent' => $sent,
+            'failed' => $failed,
+            'errors' => $errors,
+        ]);
+    }
+
     protected function sendRegistrationEmails(EventRegistration $registration): void
     {
         $commonData = $this->templateData($registration);

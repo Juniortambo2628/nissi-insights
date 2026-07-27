@@ -170,6 +170,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Event Registrations
     Route::get('/event-registrations', [EventRegistrationController::class, 'index']);
+    Route::post('/event-registrations/send-reminder', [EventRegistrationController::class, 'sendReminder']);
     Route::put('/event-registrations/{eventRegistration}', [EventRegistrationController::class, 'update']);
     Route::delete('/event-registrations/{eventRegistration}', [EventRegistrationController::class, 'destroy']);
 

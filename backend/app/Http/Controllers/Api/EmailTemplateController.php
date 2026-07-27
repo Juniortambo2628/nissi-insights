@@ -75,36 +75,49 @@ class EmailTemplateController extends Controller
     public function preview(Request $request)
     {
         $request->validate([
-            'template_key' => 'required_without:template_id|string',
-            'template_id' => 'required_without:template_key|integer|exists:email_templates,id',
+            'template_key' => 'nullable|string',
+            'template_id' => 'nullable|integer|exists:email_templates,id',
             'content' => 'nullable|string',
             'subject' => 'nullable|string',
         ]);
+
+        if (!$request->has('template_key') && !$request->has('template_id') && !$request->has('content')) {
+            return response()->json(['error' => 'Provide template_key, template_id, or content to preview.'], 422);
+        }
 
         $dummyData = $this->dummyData();
 
         try {
             $body = $request->input('content');
-            $subject = $request->input('subject', 'Preview Subject');
+            $subject = $request->input('subject');
 
-            if (!$body && $request->has('template_id')) {
+            if ($request->has('template_id')) {
                 $template = EmailTemplate::findOrFail($request->template_id);
-                $body = $template->body;
-                $subject = $template->subject;
-            } elseif (!$body && $request->has('template_key')) {
+                $body = $body ?: $template->body;
+                $subject = $subject ?: $template->subject;
+            } elseif ($request->has('template_key')) {
                 $template = EmailTemplate::byKey($request->template_key)->firstOrFail();
-                $body = $template->body;
-                $subject = $template->subject;
+                $body = $body ?: $template->body;
+                $subject = $subject ?: $template->subject;
             }
 
-            $renderedSubject = html_entity_decode(Blade::render($subject, $dummyData), ENT_QUOTES, 'UTF-8');
+            if (empty($body)) {
+                return response()->json(['error' => 'No template body to preview.'], 422);
+            }
+
+            $renderedSubject = html_entity_decode(Blade::render($subject ?? 'Preview', $dummyData), ENT_QUOTES, 'UTF-8');
             $renderedBody = $this->wrapInLayout(Blade::render($body, $dummyData));
 
             return response()->json([
                 'html' => $renderedBody,
                 'subject' => $renderedSubject,
             ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['error' => $e->getMessage(), 'errors' => $e->errors()], 422);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['error' => 'Template not found.'], 404);
         } catch (\Exception $e) {
+            \Log::error('Email template preview failed: ' . $e->getMessage(), ['exception' => $e]);
             return response()->json(['error' => 'Template Error: ' . $e->getMessage()], 422);
         }
     }
@@ -249,6 +262,10 @@ class EmailTemplateController extends Controller
             'imageUrl' => frontend_url('/assets/logos/logo-landscape.png'),
             'resetUrl' => frontend_url('/admin/reset-password?token=sample-token'),
             'expireCount' => 60,
+            'attendees' => collect([$rsvp]),
+            'items' => collect([$rsvp]),
+            'appName' => config('app.name', 'Nissi Insights'),
+            'frontendUrl' => frontend_url(),
         ];
     }
 
