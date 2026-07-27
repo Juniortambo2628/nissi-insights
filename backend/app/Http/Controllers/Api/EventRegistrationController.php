@@ -79,7 +79,7 @@ class EventRegistrationController extends Controller
             'event_id' => 'required|exists:events,id',
             'registration_ids' => 'nullable|array',
             'registration_ids.*' => 'integer|exists:event_registrations,id',
-            'template_key' => 'nullable|string|in:event_reminder_approaching,event_reminder_started,event_thank_you_ended',
+            'template_key' => 'nullable|string|exists:email_templates,key',
         ]);
 
         $event = \App\Models\Event::with('registrations')->findOrFail($validated['event_id']);
