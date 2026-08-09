@@ -40,9 +40,12 @@ export default function KnowledgeBaseClient() {
     if (isError) return <div className="min-h-screen flex items-center justify-center pt-24 text-muted-foreground">Failed to load resources.</div>
 
     // Extract unique types
-    const types: string[] = ['All', ...Array.from(new Set((resources ?? []).map((r: Record<string, unknown>) => String(r.type ?? ''))))]
+    const resourceList: any[] = resources ?? []
+    const allTypes: string[] = resourceList.map((r) => String(r.type ?? ''))
+    const uniqueTypes: string[] = [...new Set(allTypes)]
+    const types: string[] = ['All', ...uniqueTypes]
 
-    const filteredResources = resources?.filter((resource: any) => {
+    const filteredResources = resourceList.filter((resource: any) => {
         const matchesSearch = resource.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
                               (resource.description && resource.description.toLowerCase().includes(searchQuery.toLowerCase()))
         const matchesType = activeType === 'All' || resource.type === activeType
@@ -82,7 +85,7 @@ export default function KnowledgeBaseClient() {
                     </div>
 
                     {/* Resource Grid */}
-                    {filteredResources?.length > 0 ? (
+                    {filteredResources.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                             {filteredResources.map((resource: any, index: number) => (
                                 <motion.div
