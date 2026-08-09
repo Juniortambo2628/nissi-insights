@@ -17,6 +17,52 @@ it('lists site settings grouped by group', function () {
     $response->assertJsonStructure(['general', 'seo']);
 });
 
+it('returns launch settings', function () {
+    SiteSetting::factory()->create(['key' => 'is_launched', 'value' => 'true', 'group' => 'general']);
+    SiteSetting::factory()->create(['key' => 'launch_date', 'value' => '2026-01-01', 'group' => 'general']);
+
+    $response = $this->getJson('/api/settings/launch');
+
+    $response->assertOk();
+});
+
+it('shows a single setting when authenticated', function () {
+    $setting = SiteSetting::factory()->create();
+
+    $response = $this->actingAs($this->user)
+        ->getJson("/api/settings/{$setting->id}");
+
+    $response->assertOk()
+        ->assertJsonPath('key', $setting->key);
+});
+
+it('returns 404 for non-existent setting', function () {
+    $response = $this->actingAs($this->user)
+        ->getJson('/api/settings/999');
+
+    $response->assertNotFound();
+});
+
+it('creates a setting when authenticated', function () {
+    $response = $this->actingAs($this->user)
+        ->postJson('/api/settings', [
+            'key' => 'new_setting',
+            'value' => 'new value',
+            'group' => 'general',
+        ]);
+
+    $response->assertCreated();
+    $this->assertDatabaseHas('site_settings', ['key' => 'new_setting']);
+});
+
+it('validates required fields on create', function () {
+    $response = $this->actingAs($this->user)
+        ->postJson('/api/settings', []);
+
+    $response->assertUnprocessable()
+        ->assertJsonValidationErrors(['key']);
+});
+
 it('batch updates settings when authenticated', function () {
     SiteSetting::factory()->create(['key' => 'site_name', 'value' => 'Old Name']);
     SiteSetting::factory()->create(['key' => 'site_tagline', 'value' => 'Old Tagline']);
@@ -46,6 +92,26 @@ it('updates a single setting when authenticated', function () {
     $response->assertOk();
 });
 
+it('deletes a setting when authenticated', function () {
+    $setting = SiteSetting::factory()->create();
+
+    $response = $this->actingAs($this->user)
+        ->deleteJson("/api/settings/{$setting->id}");
+
+    $response->assertNoContent();
+    $this->assertDatabaseMissing('site_settings', ['id' => $setting->id]);
+});
+
+it('requires authentication for store', function () {
+    $response = $this->postJson('/api/settings', [
+        'key' => 'test',
+        'value' => 'test',
+        'group' => 'general',
+    ]);
+
+    $response->assertUnauthorized();
+});
+
 it('requires authentication for updates', function () {
     $setting = SiteSetting::factory()->create();
 
@@ -54,4 +120,12 @@ it('requires authentication for updates', function () {
 
     $this->putJson('/api/settings/batch', ['settings' => [['key' => 'test', 'value' => 'test']]])
         ->assertUnauthorized();
+});
+
+it('requires authentication for delete', function () {
+    $setting = SiteSetting::factory()->create();
+
+    $response = $this->deleteJson("/api/settings/{$setting->id}");
+
+    $response->assertUnauthorized();
 });

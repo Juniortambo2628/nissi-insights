@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\EmailTemplate;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 class EmailTemplateFactory extends Factory
 {
@@ -11,12 +12,14 @@ class EmailTemplateFactory extends Factory
 
     public function definition(): array
     {
+        $name = fake()->unique()->words(3, true);
+
         return [
-            'key' => fake()->unique()->slug(),
-            'name' => fake()->words(3, true),
+            'key' => Str::slug($name),
+            'name' => ucfirst($name),
             'subject' => fake()->sentence(),
-            'body' => '<h1>Hello {{ name }}</h1><p>{{ content }}</p>',
-            'variables' => ['name', 'content'],
+            'body' => '<p>Hello {{ first_name }},</p><p>This is a test email.</p>',
+            'variables' => ['first_name', 'last_name', 'email'],
             'is_active' => true,
         ];
     }

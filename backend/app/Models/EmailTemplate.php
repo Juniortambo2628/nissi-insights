@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Support\Facades\Blade;
 
 class EmailTemplate extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'key',
         'name',
