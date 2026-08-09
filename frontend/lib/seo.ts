@@ -73,7 +73,7 @@ export function buildDynamicMetadata(
     }
 }
 
-export function buildArticleJsonLd(entity: SeoEntity, path: string) {
+export function buildArticleJsonLd(entity: SeoEntity | null, path: string) {
     if (!entity) return null
 
     return {
