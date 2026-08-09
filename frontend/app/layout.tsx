@@ -61,24 +61,32 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   let launchSettings = null;
+  let settings: SiteSetting[] = [];
   try {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
-    const response = await fetch(`${apiUrl}/settings/launch`, {
-      next: { revalidate: 60 },
-      headers: { 'Accept': 'application/json' }
-    });
+    const [launchRes, settingsRes] = await Promise.all([
+      fetch(`${apiUrl}/settings/launch`, {
+        next: { revalidate: 60 },
+        headers: { 'Accept': 'application/json' }
+      }),
+      fetch(`${apiUrl}/settings`, { next: { revalidate: 60 } }),
+    ]);
 
-    if (response.ok) {
-        launchSettings = await response.json();
+    if (launchRes.ok) {
+        launchSettings = await launchRes.json();
     } else {
-        const text = await response.text();
-        console.error(`Failed to fetch launch settings: ${response.status} ${response.statusText}`, text.substring(0, 100));
+        const text = await launchRes.text();
+        console.error(`Failed to fetch launch settings: ${launchRes.status} ${launchRes.statusText}`, text.substring(0, 100));
+    }
+
+    if (settingsRes.ok) {
+        const settingsByGroup: Record<string, SiteSetting[]> = await settingsRes.json();
+        settings = Object.values(settingsByGroup).flat();
     }
   } catch (error) {
-    console.error('Network error fetching launch settings in RootLayout:', error);
+    console.error('Network error fetching settings in RootLayout:', error);
   }
 
-  const settings = await fetchSettings();
   const get = (key: string) => settings.find(s => s.key === key)?.value;
   const siteName = get('site_name') || 'Nissi Insights';
   const siteDescription = get('site_description') || defaultDescription;

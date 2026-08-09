@@ -5,11 +5,13 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CaseStudyResource;
 use App\Models\CaseStudy;
+use App\Traits\HasSlug;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 
 class CaseStudyController extends Controller
 {
+    use HasSlug;
+
     public function index()
     {
         return CaseStudyResource::collection(CaseStudy::all());
@@ -20,6 +22,7 @@ class CaseStudyController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'client_name' => 'nullable|string',
+            'significant_figure' => 'nullable|string|max:255',
             'problem' => 'nullable|string',
             'methodology' => 'nullable|string',
             'outcome' => 'nullable|string',
@@ -32,8 +35,9 @@ class CaseStudyController extends Controller
             'meta_description' => 'nullable|string|max:500',
         ]);
 
-        $validated['slug'] = Str::slug($validated['title']);
+        $validated['slug'] = $this->generateSlug($validated['title'], CaseStudy::class);
         $caseStudy = CaseStudy::create($validated);
+
         return new CaseStudyResource($caseStudy);
     }
 
@@ -47,6 +51,7 @@ class CaseStudyController extends Controller
         $validated = $request->validate([
             'title' => 'string|max:255',
             'client_name' => 'nullable|string',
+            'significant_figure' => 'nullable|string|max:255',
             'problem' => 'nullable|string',
             'methodology' => 'nullable|string',
             'outcome' => 'nullable|string',
@@ -60,17 +65,18 @@ class CaseStudyController extends Controller
         ]);
 
         if (isset($validated['title'])) {
-            $validated['slug'] = Str::slug($validated['title']);
+            $validated['slug'] = $this->generateUniqueSlug($validated['title'], $caseStudy->id, CaseStudy::class);
         }
 
         $caseStudy->update($validated);
+
         return new CaseStudyResource($caseStudy);
     }
 
     public function destroy(CaseStudy $caseStudy)
     {
         $caseStudy->delete();
+
         return response()->json(null, 204);
     }
 }
-

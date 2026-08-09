@@ -2,8 +2,6 @@
 
 import React from 'react'
 import { useApi } from '@/hooks/use-api'
-import Navbar from '@/components/Navbar'
-import Footer from '@/components/Footer'
 import VideoHero from '@/components/VideoHero'
 import { motion } from 'framer-motion'
 import { ArrowRight, Clock, Tag } from 'lucide-react'
@@ -12,6 +10,7 @@ import Image from 'next/image'
 import { cn, getMediaUrl } from '@/lib/utils'
 import ViewToggle, { ViewMode } from '@/components/ViewToggle'
 import { useSettings } from '@/hooks/use-settings'
+import CategoryFilter from '@/components/CategoryFilter'
 
 export default function InsightsClient() {
     const { getSetting } = useSettings()
@@ -30,9 +29,7 @@ export default function InsightsClient() {
         )
 
     return (
-        <main className="flex min-h-screen flex-col bg-background font-inter">
-            <Navbar />
-
+        <>
             <VideoHero
                 tagline="Thought Leadership"
                 title="Insights &amp; Research"
@@ -47,21 +44,11 @@ export default function InsightsClient() {
                     {/* Filter Bar */}
                     <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-16 pb-6 border-b border-border/50">
                         {/* Category Filter */}
-                        <div className="flex flex-wrap gap-2">
-                            {categories.map((cat) => (
-                                <button
-                                    key={cat}
-                                    onClick={() => setActiveCategory(cat)}
-                                    className={`text-[10px] font-bold uppercase tracking-widest px-4 py-2 transition-all rounded-lg border ${
-                                        activeCategory === cat
-                                            ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20'
-                                            : 'bg-background border-border text-muted-foreground hover:text-foreground hover:border-border/80'
-                                    }`}
-                                >
-                                    {cat}
-                                </button>
-                            ))}
-                        </div>
+                        <CategoryFilter
+                            categories={categories}
+                            activeCategory={activeCategory}
+                            onChange={setActiveCategory}
+                        />
 
                         <ViewToggle mode={viewMode} onChange={setViewMode} label="Layout" />
                     </div>
@@ -145,8 +132,6 @@ export default function InsightsClient() {
                     </div>
                 </div>
             </section>
-
-            <Footer />
-        </main>
+        </>
     )
 }

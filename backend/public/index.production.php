@@ -5,7 +5,7 @@ use Illuminate\Http\Request;
 define('LARAVEL_START', microtime(true));
 
 // Production paths - Laravel app lives at ../../nissi-insights-core relative to this file
-$appBase = __DIR__ . '/../../nissi-insights-core';
+$appBase = __DIR__.'/../../nissi-insights-core';
 
 // Determine if the application is in maintenance mode...
 if (file_exists($maintenance = $appBase.'/storage/framework/maintenance.php')) {

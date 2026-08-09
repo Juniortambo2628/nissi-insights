@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 
 class Event extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'title',
         'slug',
@@ -44,6 +45,11 @@ class Event extends Model
     public function registrations()
     {
         return $this->hasMany(EventRegistration::class);
+    }
+
+    public function documents()
+    {
+        return $this->hasMany(EventDocument::class)->orderBy('sort_order')->orderBy('created_at', 'desc');
     }
 
     public function eventDateInTimezone(): Carbon
@@ -85,5 +91,21 @@ class Event extends Model
         } else {
             $this->status = 'upcoming';
         }
+    }
+
+    public function templateDataForRegistration(EventRegistration $registration): array
+    {
+        $start = $this->startTime();
+
+        return [
+            'name' => $registration->name,
+            'eventTitle' => $this->title,
+            'eventDate' => $start->format('F j, Y'),
+            'eventTime' => $start->format('g:i a T'),
+            'eventLocation' => $this->location ?? 'TBC',
+            'eventLink' => $this->link ?? null,
+            'eventId' => $this->id,
+            'eventImage' => $this->image ? config('app.url').'/api/storage/'.ltrim($this->image, '/') : null,
+        ];
     }
 }

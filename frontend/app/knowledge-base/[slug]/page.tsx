@@ -1,27 +1,15 @@
 import React from 'react'
 import ResourceDetailsClient from '@/components/ResourceDetailsClient'
 import { buildDynamicMetadata, buildArticleJsonLd } from '@/lib/seo'
+import { fetchEntity } from '@/lib/api'
 
 interface PageProps {
     params: Promise<{ slug: string }>
 }
 
-async function fetchResource(slug: string) {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
-    try {
-        const res = await fetch(`${apiUrl}/resources/${slug}`, { next: { revalidate: 60 } })
-        if (res.ok) {
-            return await res.json()
-        }
-    } catch (error) {
-        console.error("Error fetching resource on server:", error)
-    }
-    return null
-}
-
 export async function generateMetadata({ params }: PageProps) {
     const { slug } = await params
-    const resource = await fetchResource(slug)
+    const resource = await fetchEntity(slug, 'resources')
 
     return buildDynamicMetadata(resource, {
         path: `/knowledge-base/${slug}`,
@@ -33,7 +21,7 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function Page({ params }: PageProps) {
     const { slug } = await params
-    const initialData = await fetchResource(slug)
+    const initialData = await fetchEntity(slug, 'resources')
     const jsonLd = buildArticleJsonLd(initialData, `/knowledge-base/${slug}`)
 
     return (

@@ -11,34 +11,34 @@ class UploadController extends Controller
     public function store(Request $request)
     {
         $file = $request->file('file');
-        if (!$file) {
+        if (! $file) {
             return response()->json(['message' => 'No file uploaded'], 400);
         }
 
         $mime = $file->getClientMimeType();
         $isVid = str_starts_with($mime, 'video/') || $file->getClientOriginalExtension() === 'mp4';
-        
+
         // Allow up to 20MB for videos, 10MB for other formats (images, PDFs)
         $maxSize = $isVid ? '20480' : '10240';
 
         $request->validate([
-            'file' => 'required|file|mimes:jpg,jpeg,png,webp,svg,mp4,gif,pdf|max:' . $maxSize,
+            'file' => 'required|file|mimes:jpg,jpeg,png,webp,svg,mp4,gif,pdf,doc,docx,xls,xlsx,ppt,pptx,txt|max:'.$maxSize,
         ]);
 
         $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
         $extension = $file->getClientOriginalExtension();
-        
+
         $slugifiedName = \Illuminate\Support\Str::slug($originalName);
         if (empty($slugifiedName)) {
-            $slugifiedName = 'file-' . uniqid();
+            $slugifiedName = 'file-'.uniqid();
         }
-        
-        $filename = $slugifiedName . '.' . $extension;
-        
+
+        $filename = $slugifiedName.'.'.$extension;
+
         // Ensure unique filename on disk
         $count = 1;
-        while (Storage::disk('public')->exists('uploads/' . $filename)) {
-            $filename = $slugifiedName . '-' . $count . '.' . $extension;
+        while (Storage::disk('public')->exists('uploads/'.$filename)) {
+            $filename = $slugifiedName.'-'.$count.'.'.$extension;
             $count++;
         }
 
@@ -68,6 +68,7 @@ class UploadController extends Controller
 
         if (Storage::disk('public')->exists($request->path)) {
             Storage::disk('public')->delete($request->path);
+
             return response()->json(['message' => 'File deleted'], 200);
         }
 
@@ -76,7 +77,7 @@ class UploadController extends Controller
 
     public function serve(string $path)
     {
-        if (!Storage::disk('public')->exists($path)) {
+        if (! Storage::disk('public')->exists($path)) {
             abort(404);
         }
 
@@ -93,24 +94,24 @@ class UploadController extends Controller
 
     private function optimizeImage(string $path)
     {
-        $fullPath = storage_path('app/public/' . $path);
-        if (!file_exists($fullPath)) {
+        $fullPath = storage_path('app/public/'.$path);
+        if (! file_exists($fullPath)) {
             return;
         }
 
         $info = @getimagesize($fullPath);
-        if (!$info) {
+        if (! $info) {
             return;
         }
 
         $mime = $info['mime'];
 
         // Only optimize JPEG, PNG, and WebP using GD library
-        if (!in_array($mime, ['image/jpeg', 'image/png', 'image/webp'])) {
+        if (! in_array($mime, ['image/jpeg', 'image/png', 'image/webp'])) {
             return;
         }
 
-        if (!extension_loaded('gd')) {
+        if (! extension_loaded('gd')) {
             return;
         }
 
@@ -133,7 +134,7 @@ class UploadController extends Controller
                 return;
         }
 
-        if (!$image) {
+        if (! $image) {
             return;
         }
 
@@ -145,10 +146,10 @@ class UploadController extends Controller
         if ($width > $maxDimension || $height > $maxDimension) {
             if ($width > $height) {
                 $newWidth = $maxDimension;
-                $newHeight = (int)($height * ($maxDimension / $width));
+                $newHeight = (int) ($height * ($maxDimension / $width));
             } else {
                 $newHeight = $maxDimension;
-                $newWidth = (int)($width * ($maxDimension / $height));
+                $newWidth = (int) ($width * ($maxDimension / $height));
             }
 
             $resizedImage = imagecreatetruecolor($newWidth, $newHeight);

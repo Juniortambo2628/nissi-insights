@@ -2,19 +2,13 @@
 
 import React from 'react'
 import { useApi } from '@/hooks/use-api'
-import Navbar from '@/components/Navbar'
-import Footer from '@/components/Footer'
 import { Button } from '@/components/ui/button'
 import { motion } from 'framer-motion'
 import { ArrowRight, ArrowLeft, CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
 import VideoHero from '@/components/VideoHero'
-
-const categoryVideos: Record<string, string> = {
-    'Energy Advisory': '/assets/videos/services/energy-advisory.mp4',
-    'Fintech': '/assets/videos/services/fintech-video.mp4',
-    'International Diplomacy': '/assets/videos/services/international-diplomacy-video.mp4',
-}
+import DetailErrorState from '@/components/DetailErrorState'
+import { categoryVideos } from '@/lib/constants'
 
 const benefits = [
     'Data-driven insights tailored to your market',
@@ -39,38 +33,27 @@ export default function ServiceDetailClient({ initialData, slug }: ServiceDetail
 
     if (isLoading && !service) {
         return (
-            <main className="flex min-h-screen flex-col bg-background">
-                <Navbar />
-                <div className="flex-1 flex items-center justify-center pt-32">
-                    <div className="text-white/50 text-lg animate-pulse">Mapping service architecture...</div>
-                </div>
-                <Footer />
-            </main>
+            <div className="flex-1 flex items-center justify-center pt-32">
+                <div className="text-white/50 text-lg animate-pulse">Mapping service architecture...</div>
+            </div>
         )
     }
 
     if (isError || !service) {
         return (
-            <main className="flex min-h-screen flex-col bg-background">
-                <Navbar />
-                <div className="flex-1 flex items-center justify-center pt-32">
-                    <div className="text-center">
-                        <h1 className="text-4xl font-bold text-foreground mb-4">Service Not Found</h1>
-                        <p className="text-muted-foreground mb-8">The requested advisory service could not be found.</p>
-                        <Button asChild variant="outline"><Link href="/#services">Explore Services</Link></Button>
-                    </div>
-                </div>
-                <Footer />
-            </main>
+            <DetailErrorState
+                title="Service Not Found"
+                description="The requested advisory service could not be found."
+                backHref="/#services"
+                backLabel="Explore Services"
+            />
         )
     }
 
     const videoSrc = categoryVideos[service.category] || '/assets/videos/services/all-services-video.mp4'
 
     return (
-        <main className="flex min-h-screen flex-col bg-background">
-            <Navbar />
-
+        <>
             <VideoHero
                 tagline={service.category}
                 title={service.title}
@@ -180,8 +163,6 @@ export default function ServiceDetailClient({ initialData, slug }: ServiceDetail
                     </motion.div>
                 </div>
             </section>
-
-            <Footer />
-        </main>
+        </>
     )
 }

@@ -3,9 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 
 class StockController extends Controller
 {
@@ -21,9 +20,9 @@ class StockController extends Controller
             if ($apiKey) {
                 foreach ($symbols as $symbol) {
                     try {
-                        $response = Http::withoutVerifying()->timeout(3)->get("https://finnhub.io/api/v1/quote", [
+                        $response = Http::withoutVerifying()->timeout(3)->get('https://finnhub.io/api/v1/quote', [
                             'symbol' => $symbol,
-                            'token' => $apiKey
+                            'token' => $apiKey,
                         ]);
 
                         if ($response->successful()) {

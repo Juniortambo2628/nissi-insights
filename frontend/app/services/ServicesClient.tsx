@@ -2,8 +2,6 @@
 
 import React from 'react'
 import { useApi } from '@/hooks/use-api'
-import Navbar from '@/components/Navbar'
-import Footer from '@/components/Footer'
 import { motion } from 'framer-motion'
 import { ArrowRight, Zap, Landmark, Globe } from 'lucide-react'
 import Link from 'next/link'
@@ -43,9 +41,7 @@ export default function ServicesClient() {
     const categories = Object.keys(categoryMeta)
 
     return (
-        <main className="flex min-h-screen flex-col bg-background">
-            <Navbar />
-
+        <>
             <VideoHero 
                 tagline="Our Services"
                 title="Advisory services built <br />for complex markets."
@@ -151,8 +147,6 @@ export default function ServicesClient() {
                     </section>
                 )
             })}
-
-            <Footer />
-        </main>
+        </>
     )
 }

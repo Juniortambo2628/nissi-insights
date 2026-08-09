@@ -3,13 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Mail\TemplatedMail;
 use App\Models\EventRegistration;
+use App\Traits\SendsTemplatedMail;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
 
 class EventRegistrationController extends Controller
 {
+    use SendsTemplatedMail;
+
     public function index(Request $request)
     {
         $query = EventRegistration::with('event');
@@ -21,6 +22,13 @@ class EventRegistrationController extends Controller
         return response()->json($query->orderBy('created_at', 'desc')->get());
     }
 
+    public function show(EventRegistration $eventRegistration)
+    {
+        $eventRegistration->load('event');
+
+        return response()->json($eventRegistration);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -30,6 +38,11 @@ class EventRegistrationController extends Controller
             'phone' => 'nullable|string|max:20',
             'organization' => 'nullable|string|max:255',
         ]);
+
+        $event = \App\Models\Event::findOrFail($validated['event_id']);
+        if ($event->status === 'past') {
+            return response()->json(['message' => 'Registration is not available for past events.'], 422);
+        }
 
         $registration = EventRegistration::create($validated);
         $registration->load('event');
@@ -44,23 +57,24 @@ class EventRegistrationController extends Controller
         $oldAttended = $eventRegistration->attended;
 
         $validated = $request->validate([
-            'attended' => 'required|boolean',
+            'name' => 'sometimes|string|max:255',
+            'email' => 'sometimes|email|max:255',
+            'phone' => 'nullable|string|max:20',
+            'organization' => 'nullable|string|max:255',
+            'attended' => 'sometimes|boolean',
         ]);
 
         $eventRegistration->update($validated);
 
         // If changed to attended, send thank you email
-        if (!$oldAttended && $eventRegistration->attended) {
-            try {
-                $eventRegistration->load('event');
-                $mail = new TemplatedMail('event_attended_thank_you', $this->templateData($eventRegistration), $eventRegistration);
-                Mail::to($eventRegistration->email)->send($mail);
-                $mail->log($eventRegistration->email, 'sent');
-            } catch (\Exception $e) {
-                \Log::error("Failed to send event thank you email: " . $e->getMessage());
-                (new TemplatedMail('event_attended_thank_you', $this->templateData($eventRegistration), $eventRegistration))
-                    ->log($eventRegistration->email, 'failed', $e->getMessage());
-            }
+        if (! $oldAttended && $eventRegistration->attended) {
+            $eventRegistration->load('event');
+            $this->sendTemplatedMail(
+                'event_attended_thank_you',
+                $eventRegistration->email,
+                $eventRegistration->event->templateDataForRegistration($eventRegistration),
+                $eventRegistration
+            );
         }
 
         return response()->json($eventRegistration);
@@ -99,18 +113,17 @@ class EventRegistrationController extends Controller
         $errors = [];
 
         foreach ($registrations as $registration) {
-            try {
-                $data = $this->templateData($registration);
-                $mail = new TemplatedMail($templateKey, $data, $registration);
-                Mail::to($registration->email)->send($mail);
-                $mail->log($registration->email, 'sent');
+            $success = $this->sendTemplatedMail(
+                $templateKey,
+                $registration->email,
+                $registration->event->templateDataForRegistration($registration),
+                $registration
+            );
+            if ($success) {
                 $sent++;
-            } catch (\Exception $e) {
-                \Log::error("Failed to send manual reminder to {$registration->email}: " . $e->getMessage());
-                (new TemplatedMail($templateKey, $this->templateData($registration), $registration))
-                    ->log($registration->email, 'failed', $e->getMessage());
+            } else {
                 $failed++;
-                $errors[] = "{$registration->email}: {$e->getMessage()}";
+                $errors[] = "{$registration->email}: Failed to send";
             }
         }
 
@@ -124,51 +137,18 @@ class EventRegistrationController extends Controller
 
     protected function sendRegistrationEmails(EventRegistration $registration): void
     {
-        $commonData = $this->templateData($registration);
+        $commonData = $registration->event->templateDataForRegistration($registration);
 
         // Client confirmation
-        try {
-            $clientMail = new TemplatedMail('event_registered_client', $commonData, $registration);
-            Mail::to($registration->email)->send($clientMail);
-            $clientMail->log($registration->email, 'sent');
-        } catch (\Exception $e) {
-            \Log::error("Failed to send event registration email to client: " . $e->getMessage());
-            (new TemplatedMail('event_registered_client', $commonData, $registration))
-                ->log($registration->email, 'failed', $e->getMessage());
-        }
+        $this->sendTemplatedMail('event_registered_client', $registration->email, $commonData, $registration);
 
         // Admin notification
-        try {
-            $adminAddress = config('mail.admin_address', config('mail.from.address'));
-            $adminData = array_merge($commonData, [
-                'email' => $registration->email,
-                'phone' => $registration->phone,
-                'organization' => $registration->organization,
-            ]);
-            $adminMail = new TemplatedMail('event_registered_admin', $adminData, $registration);
-            Mail::to($adminAddress)->send($adminMail);
-            $adminMail->log($adminAddress, 'sent');
-        } catch (\Exception $e) {
-            \Log::error("Failed to send event registration email to admin: " . $e->getMessage());
-            (new TemplatedMail('event_registered_admin', $adminData, $registration))
-                ->log($adminAddress, 'failed', $e->getMessage());
-        }
-    }
-
-    protected function templateData(EventRegistration $registration): array
-    {
-        $event = $registration->event;
-        $start = $event->startTime();
-
-        return [
-            'name' => $registration->name,
-            'eventTitle' => $event->title,
-            'eventDate' => $start->format('F j, Y'),
-            'eventTime' => $start->format('g:i a T'),
-            'eventLocation' => $event->location ?? 'TBC',
-            'eventLink' => $event->link ?? null,
-            'eventId' => $event->id,
-            'eventImage' => $event->image ? config('app.url') . '/api/storage/' . ltrim($event->image, '/') : null,
-        ];
+        $adminAddress = config('mail.admin_address', config('mail.from.address'));
+        $adminData = array_merge($commonData, [
+            'email' => $registration->email,
+            'phone' => $registration->phone,
+            'organization' => $registration->organization,
+        ]);
+        $this->sendTemplatedMail('event_registered_admin', $adminAddress, $adminData, $registration);
     }
 }

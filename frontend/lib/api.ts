@@ -24,3 +24,18 @@ api.interceptors.request.use(
 );
 
 export default api;
+
+export const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://nissi-insights.com';
+export const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+
+export async function fetchEntity(slug: string, endpoint: string): Promise<Record<string, unknown> | null> {
+    try {
+        const res = await fetch(`${apiUrl}/${endpoint}/${slug}`, { next: { revalidate: 60 } });
+        if (res.ok) {
+            return await res.json();
+        }
+    } catch (error) {
+        console.error(`Error fetching ${endpoint} on server:`, error);
+    }
+    return null;
+}

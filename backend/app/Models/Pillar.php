@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Pillar extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'title',
         'slug',
@@ -27,6 +28,10 @@ class Pillar extends Model
         'icon',
         'image',
         'is_active',
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
     ];
 
     public function services(): HasMany

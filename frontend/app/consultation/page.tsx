@@ -1,8 +1,6 @@
 "use client"
 
 import React from 'react'
-import Navbar from '@/components/Navbar'
-import Footer from '@/components/Footer'
 import VideoHero from '@/components/VideoHero'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -63,9 +61,7 @@ export default function ConsultationPage() {
     }
 
     return (
-        <main className="flex min-h-screen flex-col bg-background">
-            <Navbar />
-
+        <>
             <VideoHero
                 tagline="Strategic Consultation"
                 title="Secure your competitive <br />advantage."
@@ -224,8 +220,6 @@ export default function ConsultationPage() {
                     </div>
                 </div>
             </section>
-
-            <Footer />
-        </main>
+        </>
     )
 }

@@ -1,10 +1,7 @@
 <?php
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
-
-
 
 beforeEach(function () {
     $this->user = User::factory()->create([
@@ -79,4 +76,3 @@ it('validates required fields on login', function () {
     $response->assertUnprocessable()
         ->assertJsonValidationErrors(['email', 'password']);
 });
-

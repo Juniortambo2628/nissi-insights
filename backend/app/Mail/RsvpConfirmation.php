@@ -2,10 +2,9 @@
 
 namespace App\Mail;
 
-use App\Models\Rsvp;
 use App\Models\EmailTemplate;
+use App\Models\Rsvp;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
@@ -31,7 +30,7 @@ class RsvpConfirmation extends Mailable
     public function envelope(): Envelope
     {
         $subject = 'Receipt of Your Request - Nissi Insights';
-        
+
         if ($this->rsvp->type === 'early_access') {
             $subject = 'Hold tight, your access is requested! - Nissi Insights';
         } elseif ($this->rsvp->type === 'rsvp') {
@@ -60,7 +59,7 @@ class RsvpConfirmation extends Mailable
             markdown: 'emails.rsvp.confirmation',
             with: [
                 'rsvp' => $this->rsvp,
-                'logoUrl' => config('app.frontend_url', 'https://nissi-insights.com') . '/assets/logos/logo-landscape.png',
+                'logoUrl' => config('app.frontend_url', 'https://nissi-insights.com').'/assets/logos/logo-landscape.png',
             ],
         );
     }

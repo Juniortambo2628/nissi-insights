@@ -13,11 +13,12 @@ class CaseStudyFactory extends Factory
     public function definition(): array
     {
         $title = fake()->unique()->sentence(4);
+
         return [
             'title' => $title,
             'slug' => Str::slug($title),
             'client_name' => fake()->company(),
-            'significant_figure' => fake()->numerify('##') . '%',
+            'significant_figure' => fake()->numerify('##').'%',
             'problem' => fake()->paragraph(),
             'methodology' => fake()->paragraph(),
             'outcome' => fake()->paragraph(),

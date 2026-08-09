@@ -5,14 +5,17 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ServiceResource;
 use App\Models\Service;
+use App\Traits\HasSlug;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 
 class ServiceController extends Controller
 {
+    use HasSlug;
+
     public function index()
     {
         $services = Service::with('pillar')->where('is_active', true)->get();
+
         return ServiceResource::collection($services);
     }
 
@@ -27,8 +30,9 @@ class ServiceController extends Controller
             'image' => 'nullable|string',
         ]);
 
-        $validated['slug'] = Str::slug($validated['title']);
+        $validated['slug'] = $this->generateSlug($validated['title'], Service::class);
         $service = Service::create($validated);
+
         return new ServiceResource($service);
     }
 
@@ -50,17 +54,18 @@ class ServiceController extends Controller
         ]);
 
         if (isset($validated['title'])) {
-            $validated['slug'] = Str::slug($validated['title']);
+            $validated['slug'] = $this->generateUniqueSlug($validated['title'], $service->id, Service::class);
         }
 
         $service->update($validated);
+
         return new ServiceResource($service);
     }
 
     public function destroy(Service $service)
     {
         $service->delete();
+
         return response()->json(null, 204);
     }
 }
-

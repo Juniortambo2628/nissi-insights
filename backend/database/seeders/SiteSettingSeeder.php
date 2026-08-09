@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class SiteSettingSeeder extends Seeder
@@ -31,7 +30,7 @@ class SiteSettingSeeder extends Seeder
             ['key' => 'dashboard_favicon', 'value' => '/assets/favicons/dashboard-favicon.png', 'type' => 'image', 'group' => 'branding'],
             ['key' => 'hero_title_line1', 'value' => 'Intelligence for', 'type' => 'text', 'group' => 'homepage'],
             ['key' => 'hero_title_line2', 'value' => 'the future of energy', 'type' => 'text', 'group' => 'homepage'],
-            
+
             // About Page
             ['key' => 'about_title', 'value' => 'Intelligence for the Global Energy Transition', 'type' => 'text', 'group' => 'about'],
             ['key' => 'about_tagline', 'value' => 'Visionary Strategy & Rigorous Analysis', 'type' => 'text', 'group' => 'about'],
@@ -66,7 +65,7 @@ class SiteSettingSeeder extends Seeder
             ['key' => 'rsvp_media', 'value' => '/assets/videos/hero.mp4', 'type' => 'image', 'group' => 'launch'],
             ['key' => 'rsvp_bg_light', 'value' => '', 'type' => 'image', 'group' => 'launch'],
             ['key' => 'rsvp_bg_dark', 'value' => '', 'type' => 'image', 'group' => 'launch'],
-            
+
             // RSVP Event Details
             ['key' => 'rsvp_venue', 'value' => 'The Sage Delicacy, Gigiri', 'type' => 'text', 'group' => 'launch'],
             ['key' => 'rsvp_address', 'value' => 'Corner of, 183 Gigiri Close, United Nations Cresent, Nairobi', 'type' => 'text', 'group' => 'launch'],

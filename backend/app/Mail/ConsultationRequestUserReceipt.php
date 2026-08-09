@@ -2,13 +2,12 @@
 
 namespace App\Mail;
 
+use App\Models\EmailTemplate;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
-use App\Models\EmailTemplate;
 
 class ConsultationRequestUserReceipt extends Mailable
 {
@@ -33,7 +32,7 @@ class ConsultationRequestUserReceipt extends Mailable
             subject: EmailTemplate::subjectIfExists(
                 'consultation_request_user',
                 ['requestData' => $this->requestData],
-                'We Received Your Request: ' . ($this->requestData->subject ?? 'Consultation Inquiry')
+                'We Received Your Request: '.($this->requestData->subject ?? 'Consultation Inquiry')
             ),
         );
     }
@@ -49,12 +48,12 @@ class ConsultationRequestUserReceipt extends Mailable
 
         $customTemplate = \App\Models\SiteSetting::where('key', 'email_template_user')->first();
 
-        if ($customTemplate && !empty($customTemplate->value)) {
-            if (!str_contains($customTemplate->value, '@extends')) {
+        if ($customTemplate && ! empty($customTemplate->value)) {
+            if (! str_contains($customTemplate->value, '@extends')) {
                 return new Content(
                     view: 'emails.dynamic',
                     with: [
-                        'dynamicContent' => \Illuminate\Support\Facades\Blade::render($customTemplate->value, ['requestData' => $this->requestData])
+                        'dynamicContent' => \Illuminate\Support\Facades\Blade::render($customTemplate->value, ['requestData' => $this->requestData]),
                     ]
                 );
             } else {

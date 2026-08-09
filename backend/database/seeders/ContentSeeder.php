@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\Insight;
 use App\Models\CaseStudy;
+use App\Models\Insight;
 use App\Models\Service;
+use Illuminate\Database\Seeder;
 
 class ContentSeeder extends Seeder
 {
@@ -363,6 +363,6 @@ class ContentSeeder extends Seeder
             Service::updateOrCreate(['slug' => $data['slug']], $data);
         }
 
-        $this->command->info('Content seeded: ' . count($insights) . ' insights, ' . count($caseStudies) . ' case studies, ' . count($services) . ' services.');
+        $this->command->info('Content seeded: '.count($insights).' insights, '.count($caseStudies).' case studies, '.count($services).' services.');
     }
 }

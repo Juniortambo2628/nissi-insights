@@ -4,9 +4,6 @@ import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Calendar, MapPin, ChevronRight, Clock } from 'lucide-react'
 import Link from 'next/link'
-import Navbar from '@/components/Navbar'
-import Footer from '@/components/Footer'
-import VideoHero from '@/components/VideoHero'
 import api from '@/lib/api'
 import { format } from 'date-fns'
 import { useSettings } from '@/hooks/use-settings'
@@ -50,9 +47,7 @@ export default function EventsClient() {
     const pastEvents = events.filter(e => e.status === 'past')
 
     return (
-        <main className="flex min-h-screen flex-col bg-background font-inter">
-            <Navbar />
-            
+        <>
             <VideoHero 
                 title="Global Events & <span class='text-primary'>Intelligence</span>"
                 tagline="Engagement"
@@ -113,9 +108,7 @@ export default function EventsClient() {
                     </div>
                 )}
             </section>
-
-            <Footer />
-        </main>
+        </>
     )
 }
 
@@ -133,9 +126,13 @@ const EventCard = ({ event, isPast = false }: { event: Event, isPast?: boolean }
                     className="transition-transform duration-700 group-hover:scale-110"
                     fallbackText="Event"
                 />
-                {!isPast && (
+                {!isPast ? (
                     <div className="absolute top-4 right-4 px-3 py-1 bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-widest rounded-full">
                         Registration Open
+                    </div>
+                ) : (
+                    <div className="absolute top-4 right-4 px-3 py-1 bg-slate-500/80 text-white text-[10px] font-bold uppercase tracking-widest rounded-full">
+                        Past Event
                     </div>
                 )}
             </div>

@@ -2,8 +2,6 @@
 
 import React from 'react'
 import { useApi } from '@/hooks/use-api'
-import Navbar from '@/components/Navbar'
-import Footer from '@/components/Footer'
 import { Button } from '@/components/ui/button'
 import { motion } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
@@ -11,6 +9,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import SocialShare from '@/components/SocialShare'
 import { getMediaUrl } from '@/lib/utils'
+import DetailErrorState from '@/components/DetailErrorState'
 
 interface CaseStudyDetailClientProps {
     initialData: any
@@ -27,35 +26,24 @@ export default function CaseStudyDetailClient({ initialData, slug }: CaseStudyDe
 
     if (isLoading && !caseStudy) {
         return (
-            <main className="flex min-h-screen flex-col bg-[#050a1a]">
-                <Navbar />
-                <div className="flex-1 flex items-center justify-center pt-32">
-                    <div className="text-muted-foreground/50 text-lg animate-pulse">Retrieving case study...</div>
-                </div>
-                <Footer />
-            </main>
+            <div className="flex-1 flex items-center justify-center pt-32">
+                <div className="text-muted-foreground/50 text-lg animate-pulse">Retrieving case study...</div>
+            </div>
         )
     }
 
     if (isError || !caseStudy) {
         return (
-            <main className="flex min-h-screen flex-col bg-background">
-                <Navbar />
-                <div className="flex-1 flex items-center justify-center pt-32">
-                    <div className="text-center">
-                        <h1 className="text-4xl font-bold text-foreground mb-4">Case Study Not Found</h1>
-                        <Button asChild variant="outline"><Link href="/case-studies">Back to Case Studies</Link></Button>
-                    </div>
-                </div>
-                <Footer />
-            </main>
+            <DetailErrorState
+                title="Case Study Not Found"
+                backHref="/case-studies"
+                backLabel="Back to Case Studies"
+            />
         )
     }
 
     return (
-        <main className="flex min-h-screen flex-col bg-background">
-            <Navbar />
-
+        <>
             {/* Hero */}
             <section className="relative pt-40 pb-24 bg-background overflow-hidden border-b border-border/50">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(59,130,246,0.1)_0%,transparent_70%)]" />
@@ -190,8 +178,6 @@ export default function CaseStudyDetailClient({ initialData, slug }: CaseStudyDe
                     </div>
                 </section>
             )}
-
-            <Footer />
-        </main>
+        </>
     )
 }

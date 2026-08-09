@@ -1,8 +1,8 @@
 <?php
 
-use App\Models\User;
-use App\Models\Service;
 use App\Models\Pillar;
+use App\Models\Service;
+use App\Models\User;
 
 beforeEach(function () {
     $this->user = User::factory()->create();

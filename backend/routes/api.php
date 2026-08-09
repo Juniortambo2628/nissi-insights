@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AnalyticsController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CaseStudyController;
@@ -9,11 +8,13 @@ use App\Http\Controllers\Api\ConsultationRequestController;
 use App\Http\Controllers\Api\EmailLogController;
 use App\Http\Controllers\Api\EmailTemplateController;
 use App\Http\Controllers\Api\EventController;
+use App\Http\Controllers\Api\EventDocumentController;
 use App\Http\Controllers\Api\EventRegistrationController;
 use App\Http\Controllers\Api\InsightController;
 use App\Http\Controllers\Api\PillarController;
 use App\Http\Controllers\Api\RedirectController;
 use App\Http\Controllers\Api\ResourceController;
+use App\Http\Controllers\Api\RsvpController;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\Api\SiteSettingController;
@@ -24,7 +25,7 @@ use App\Http\Controllers\Api\TeamMemberController;
 use App\Http\Controllers\Api\TestimonialController;
 use App\Http\Controllers\Api\UploadController;
 use App\Http\Controllers\Api\ValueController;
-use App\Http\Controllers\RsvpController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -39,6 +40,7 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::get('/events', [EventController::class, 'index']);
 Route::get('/events/{slug}', [EventController::class, 'show']);
 Route::post('/events/register', [EventRegistrationController::class, 'store']);
+Route::get('/events/{event}/documents', [EventDocumentController::class, 'index']);
 Route::get('/stocks', [StockController::class, 'index']);
 
 Route::get('/services', [ServiceController::class, 'index']);
@@ -83,6 +85,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Rsvps
     Route::get('/rsvps', [RsvpController::class, 'index']);
+    Route::get('/rsvps/{rsvp}', [RsvpController::class, 'show']);
     Route::put('/rsvps/{rsvp}', [RsvpController::class, 'update']);
     Route::delete('/rsvps/{rsvp}', [RsvpController::class, 'destroy']);
 
@@ -102,13 +105,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/case-studies/{caseStudy}', [CaseStudyController::class, 'destroy']);
 
     // Stats CRUD
+    Route::get('/stats/{stat}', [StatController::class, 'show']);
     Route::post('/stats', [StatController::class, 'store']);
     Route::put('/stats/{stat}', [StatController::class, 'update']);
     Route::delete('/stats/{stat}', [StatController::class, 'destroy']);
 
     // Settings
+    Route::get('/settings/{siteSetting}', [SiteSettingController::class, 'show']);
+    Route::post('/settings', [SiteSettingController::class, 'store']);
     Route::put('/settings/batch', [SiteSettingController::class, 'batchUpdate']);
     Route::put('/settings/{siteSetting}', [SiteSettingController::class, 'update']);
+    Route::delete('/settings/{siteSetting}', [SiteSettingController::class, 'destroy']);
 
     // Testimonials CRUD
     Route::post('/testimonials', [TestimonialController::class, 'store']);
@@ -136,14 +143,18 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Subscribers (admin)
     Route::get('/subscribers', [SubscriberController::class, 'index']);
+    Route::get('/subscribers/{subscriber}', [SubscriberController::class, 'show']);
+    Route::put('/subscribers/{subscriber}', [SubscriberController::class, 'update']);
     Route::delete('/subscribers/{subscriber}', [SubscriberController::class, 'destroy']);
 
     // Team Members
+    Route::get('/team-members/{teamMember}', [TeamMemberController::class, 'show']);
     Route::post('/team-members', [TeamMemberController::class, 'store']);
     Route::put('/team-members/{teamMember}', [TeamMemberController::class, 'update']);
     Route::delete('/team-members/{teamMember}', [TeamMemberController::class, 'destroy']);
 
     // Values
+    Route::get('/values/{value}', [ValueController::class, 'show']);
     Route::post('/values', [ValueController::class, 'store']);
     Route::put('/values/{value}', [ValueController::class, 'update']);
     Route::delete('/values/{value}', [ValueController::class, 'destroy']);
@@ -160,6 +171,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Consultation Requests
     Route::get('/consultation-requests', [ConsultationRequestController::class, 'index']);
+    Route::get('/consultation-requests/{consultationRequest}', [ConsultationRequestController::class, 'show']);
     Route::put('/consultation-requests/{consultationRequest}', [ConsultationRequestController::class, 'update']);
     Route::delete('/consultation-requests/{consultationRequest}', [ConsultationRequestController::class, 'destroy']);
 
@@ -168,8 +180,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/events/{event}', [EventController::class, 'update']);
     Route::delete('/events/{event}', [EventController::class, 'destroy']);
 
+    // Event Documents
+    Route::get('/event-documents', [EventDocumentController::class, 'index']);
+    Route::get('/event-documents/{eventDocument}', [EventDocumentController::class, 'show']);
+    Route::post('/event-documents', [EventDocumentController::class, 'store']);
+    Route::put('/event-documents/{eventDocument}', [EventDocumentController::class, 'update']);
+    Route::delete('/event-documents/{eventDocument}', [EventDocumentController::class, 'destroy']);
+
     // Event Registrations
     Route::get('/event-registrations', [EventRegistrationController::class, 'index']);
+    Route::get('/event-registrations/{eventRegistration}', [EventRegistrationController::class, 'show']);
     Route::post('/event-registrations/send-reminder', [EventRegistrationController::class, 'sendReminder']);
     Route::put('/event-registrations/{eventRegistration}', [EventRegistrationController::class, 'update']);
     Route::delete('/event-registrations/{eventRegistration}', [EventRegistrationController::class, 'destroy']);

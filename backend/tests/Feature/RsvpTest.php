@@ -1,7 +1,7 @@
 <?php
 
-use App\Models\User;
 use App\Models\Rsvp;
+use App\Models\User;
 
 beforeEach(function () {
     $this->user = User::factory()->create();

@@ -2,8 +2,6 @@
 
 import React from 'react'
 import { useApi } from '@/hooks/use-api'
-import Navbar from '@/components/Navbar'
-import Footer from '@/components/Footer'
 import VideoHero from '@/components/VideoHero'
 import { motion } from 'framer-motion'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
@@ -35,8 +33,7 @@ export default function PillarDetailClient({ initialData, slug }: PillarDetailCl
 
     if (isLoading && !pillar) {
         return (
-            <main className="flex min-h-screen flex-col bg-background">
-                <Navbar />
+            <>
                 <div className="h-[60vh] bg-secondary/10 animate-pulse" />
                 <div className="max-w-[1200px] mx-auto px-6 py-24 w-full">
                     <div className="h-4 w-32 bg-primary/20 animate-pulse mb-12" />
@@ -47,16 +44,13 @@ export default function PillarDetailClient({ initialData, slug }: PillarDetailCl
                         ))}
                     </div>
                 </div>
-                <Footer />
-            </main>
+            </>
         )
     }
     if (!pillar) return <div className="min-h-screen bg-background flex items-center justify-center">Pillar not found</div>
 
     return (
-        <main className="flex min-h-screen flex-col bg-background">
-            <Navbar />
-
+        <>
             <VideoHero 
                 tagline="Our Strategic Pillar"
                 title={pillar.title}
@@ -145,8 +139,6 @@ export default function PillarDetailClient({ initialData, slug }: PillarDetailCl
                     </div>
                 </div>
             </section>
-
-            <Footer />
-        </main>
+        </>
     )
 }

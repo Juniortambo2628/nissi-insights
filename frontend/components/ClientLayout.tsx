@@ -8,6 +8,7 @@ import Chatbot from '@/components/Chatbot'
 import BackToTop from '@/components/BackToTop'
 import WhatsAppButton from '@/components/WhatsAppButton'
 import { usePageView } from '@/hooks/usePageView'
+import PublicLayout from '@/components/PublicLayout'
 
 function AnalyticsTracker() {
     usePageView()
@@ -21,7 +22,13 @@ const ClientLayout = ({ children }: { children: React.ReactNode }) => {
     return (
         <CookieConsentProvider>
             <AnalyticsTracker />
-            {children}
+            {isAdmin ? (
+                children
+            ) : (
+                <PublicLayout>
+                    {children}
+                </PublicLayout>
+            )}
             {/* Only show visitor widgets on public pages */}
             {!isAdmin && (
                 <>

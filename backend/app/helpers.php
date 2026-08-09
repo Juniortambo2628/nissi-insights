@@ -26,6 +26,6 @@ if (! function_exists('frontend_url')) {
             return $url;
         }
 
-        return $url . '/' . ltrim($path, '/');
+        return $url.'/'.ltrim($path, '/');
     }
 }

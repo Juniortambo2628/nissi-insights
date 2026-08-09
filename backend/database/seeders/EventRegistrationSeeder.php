@@ -2,16 +2,16 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\EventRegistration;
 use App\Models\Event;
+use App\Models\EventRegistration;
+use Illuminate\Database\Seeder;
 
 class EventRegistrationSeeder extends Seeder
 {
     public function run()
     {
         $events = Event::all();
-        
+
         $registrations = [
             [
                 'name' => 'John Doe',
@@ -47,7 +47,7 @@ class EventRegistrationSeeder extends Seeder
                 'phone' => '+254 722 000 111',
                 'organization' => 'Nairobi Commercial Bank',
                 'attended' => true,
-            ]
+            ],
         ];
 
         foreach ($events as $event) {

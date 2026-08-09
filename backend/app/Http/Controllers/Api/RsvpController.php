@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Controller;
+use App\Mail\RsvpConfirmation;
 use App\Models\Rsvp;
 use Illuminate\Http\Request;
-
-use App\Mail\RsvpConfirmation;
 use Illuminate\Support\Facades\Mail;
 
 class RsvpController extends Controller
@@ -15,7 +15,15 @@ class RsvpController extends Controller
      */
     public function index()
     {
-        return Rsvp::orderBy('created_at', 'desc')->get();
+        return response()->json(Rsvp::orderBy('created_at', 'desc')->get());
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(Rsvp $rsvp)
+    {
+        return response()->json($rsvp);
     }
 
     /**
@@ -32,7 +40,7 @@ class RsvpController extends Controller
             'interest' => 'nullable|string|max:255',
             'consent' => 'boolean',
             'newsletter' => 'boolean',
-            'attendance' => 'nullable|string|max:255',
+            'attendance' => 'nullable|string|in:accept,decline',
             'type' => 'nullable|string|in:rsvp,early_access',
         ]);
 
@@ -43,7 +51,7 @@ class RsvpController extends Controller
 
         return response()->json([
             'message' => 'Successfully registered for the pre-launch RSVP.',
-            'data' => $rsvp
+            'data' => $rsvp,
         ], 201);
     }
 
@@ -54,7 +62,7 @@ class RsvpController extends Controller
     {
         $validated = $request->validate([
             'name' => 'nullable|string|max:255',
-            'email' => 'nullable|email|max:255|unique:rsvps,email,' . $rsvp->id,
+            'email' => 'nullable|email|max:255|unique:rsvps,email,'.$rsvp->id,
             'company' => 'nullable|string|max:255',
             'job_title' => 'nullable|string|max:255',
             'sector' => 'nullable|string|max:255',

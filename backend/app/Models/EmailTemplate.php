@@ -66,4 +66,13 @@ class EmailTemplate extends Model
 
         return html_entity_decode(Blade::render($template->subject, $data), ENT_QUOTES, 'UTF-8');
     }
+
+    public static function wrapInLayout(string $body): string
+    {
+        if (str_contains($body, '<html')) {
+            return $body;
+        }
+
+        return view('emails.layout', ['content' => $body])->render();
+    }
 }

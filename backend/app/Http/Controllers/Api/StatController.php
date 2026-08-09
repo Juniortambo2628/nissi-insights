@@ -23,6 +23,7 @@ class StatController extends Controller
         ]);
 
         $stat = Stat::create($validated);
+
         return response()->json($stat, 201);
     }
 
@@ -41,12 +42,14 @@ class StatController extends Controller
         ]);
 
         $stat->update($validated);
+
         return response()->json($stat);
     }
 
     public function destroy(Stat $stat)
     {
         $stat->delete();
+
         return response()->json(null, 204);
     }
 }

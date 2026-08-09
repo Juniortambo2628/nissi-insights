@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Mail\ConsultationRequestAdminNotification;
+use App\Mail\ConsultationRequestUserReceipt;
 use App\Models\ConsultationRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\ConsultationRequestAdminNotification;
-use App\Mail\ConsultationRequestUserReceipt;
 
 class ConsultationRequestController extends Controller
 {
@@ -33,12 +33,12 @@ class ConsultationRequestController extends Controller
             // To Admin
             Mail::to(config('mail.from.address', 'admin@nissi-insights.com'))
                 ->send(new ConsultationRequestAdminNotification($consultationRequest));
-            
+
             // To User
             Mail::to($consultationRequest->email)
                 ->send(new ConsultationRequestUserReceipt($consultationRequest));
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Failed to send consultation emails: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('Failed to send consultation emails: '.$e->getMessage());
         }
 
         return response()->json($consultationRequest, 201);

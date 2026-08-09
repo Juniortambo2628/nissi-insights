@@ -1,27 +1,15 @@
 import React from 'react'
 import PillarDetailClient from '@/components/PillarDetailClient'
-import { buildDynamicMetadata, buildArticleJsonLd, buildCanonical } from '@/lib/seo'
+import { buildDynamicMetadata, buildArticleJsonLd } from '@/lib/seo'
+import { fetchEntity } from '@/lib/api'
 
 interface PageProps {
     params: Promise<{ slug: string }>
 }
 
-async function fetchPillar(slug: string) {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
-    try {
-        const res = await fetch(`${apiUrl}/pillars/${slug}`, { next: { revalidate: 60 } })
-        if (res.ok) {
-            return await res.json()
-        }
-    } catch (error) {
-        console.error("Error fetching pillar on server:", error)
-    }
-    return null
-}
-
 export async function generateMetadata({ params }: PageProps) {
     const { slug } = await params
-    const pillar = await fetchPillar(slug)
+    const pillar = await fetchEntity(slug, 'pillars')
 
     return buildDynamicMetadata(pillar, {
         path: `/pillars/${slug}`,
@@ -33,7 +21,7 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function Page({ params }: PageProps) {
     const { slug } = await params
-    const initialData = await fetchPillar(slug)
+    const initialData = await fetchEntity(slug, 'pillars')
     const jsonLd = buildArticleJsonLd(initialData, `/pillars/${slug}`)
 
     return (

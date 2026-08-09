@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\Service;
 use App\Models\Pillar;
+use App\Models\Service;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class ServiceFactory extends Factory
@@ -13,6 +13,7 @@ class ServiceFactory extends Factory
     public function definition(): array
     {
         $title = fake()->unique()->sentence(3);
+
         return [
             'title' => $title,
             'slug' => \Illuminate\Support\Str::slug($title),

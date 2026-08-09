@@ -4,8 +4,6 @@ import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Download, Calendar, ArrowLeft, Tag, ExternalLink, Loader2 } from 'lucide-react'
 import Link from 'next/link'
-import Navbar from '@/components/Navbar'
-import Footer from '@/components/Footer'
 import VideoHero from '@/components/VideoHero'
 import { useApi } from '@/hooks/use-api'
 import { useSettings } from '@/hooks/use-settings'
@@ -87,40 +85,30 @@ export default function ResourceDetailsClient({ initialData, slug }: ResourceDet
 
     if (isLoading && !resource) {
         return (
-            <div className="flex min-h-screen flex-col bg-background relative">
-                <Navbar />
-                <div className="flex-1 pt-32 px-6">
-                    <div className="max-w-[1400px] mx-auto">
-                        <div className="h-12 w-1/2 bg-foreground/10 animate-pulse mb-8" />
-                        <div className="h-64 bg-secondary/10 rounded-xl animate-pulse" />
-                    </div>
+            <div className="flex-1 pt-32 px-6">
+                <div className="max-w-[1400px] mx-auto">
+                    <div className="h-12 w-1/2 bg-foreground/10 animate-pulse mb-8" />
+                    <div className="h-64 bg-secondary/10 rounded-xl animate-pulse" />
                 </div>
-                <Footer />
             </div>
         )
     }
 
     if (isError || !resource) {
         return (
-            <div className="flex min-h-screen flex-col bg-background relative">
-                <Navbar />
-                <div className="flex-1 flex items-center justify-center">
-                    <div className="text-center">
-                        <h2 className="text-2xl font-bold text-foreground mb-4">Resource Not Found</h2>
-                        <Button asChild variant="outline">
-                            <Link href="/knowledge-base">Back to Knowledge Base</Link>
-                        </Button>
-                    </div>
+            <div className="flex-1 flex items-center justify-center">
+                <div className="text-center">
+                    <h2 className="text-2xl font-bold text-foreground mb-4">Resource Not Found</h2>
+                    <Button asChild variant="outline">
+                        <Link href="/knowledge-base">Back to Knowledge Base</Link>
+                    </Button>
                 </div>
-                <Footer />
             </div>
         )
     }
 
     return (
-        <div className="flex min-h-screen flex-col bg-background relative">
-            <Navbar />
-            
+        <>
             <VideoHero 
                 title={resource.title}
                 tagline={resource.type}
@@ -264,8 +252,6 @@ export default function ResourceDetailsClient({ initialData, slug }: ResourceDet
                     </form>
                 </DialogContent>
             </Dialog>
-
-            <Footer />
-        </div>
+        </>
     )
 }

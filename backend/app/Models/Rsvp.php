@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * @property int $id
@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class Rsvp extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'name',
         'email',
@@ -32,5 +33,10 @@ class Rsvp extends Model
         'newsletter',
         'attendance',
         'type',
+    ];
+
+    protected $casts = [
+        'consent' => 'boolean',
+        'newsletter' => 'boolean',
     ];
 }

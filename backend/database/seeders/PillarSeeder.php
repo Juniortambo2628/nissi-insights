@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Pillar;
 use App\Models\Service;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
 class PillarSeeder extends Seeder
@@ -45,7 +45,7 @@ class PillarSeeder extends Seeder
             // Associate services
             Service::where('category', $pData['title'])->update(['pillar_id' => $pillar->id]);
         }
-        
+
         // Special case for cross-category or mismatched names if any
         // e.g. Service::where('slug', 'some-service')->update(['pillar_id' => $energyPillar->id]);
     }

@@ -51,7 +51,7 @@ class TemplatedMail extends Mailable
         $template = $this->getTemplate();
 
         return new Content(
-            htmlString: $this->renderString($this->wrapInLayout(
+            htmlString: $this->renderString(EmailTemplate::wrapInLayout(
                 $template ? $template->body : $this->fallbackBody()
             )),
         );
@@ -79,7 +79,7 @@ class TemplatedMail extends Mailable
         $host = parse_url($appUrl, PHP_URL_HOST) ?: 'nissi-insights.com';
 
         // No angle brackets here; Laravel will wrap the ID when adding the header.
-        return uniqid('nissi_', true) . '@' . $host;
+        return uniqid('nissi_', true).'@'.$host;
     }
 
     protected function getTemplate(): ?EmailTemplate
@@ -121,15 +121,6 @@ BLADE;
     protected function renderString(string $content): string
     {
         return Blade::render($content, $this->data);
-    }
-
-    protected function wrapInLayout(string $body): string
-    {
-        if (str_contains($body, '<html')) {
-            return $body;
-        }
-
-        return view('emails.layout', ['content' => $body])->render();
     }
 
     /**

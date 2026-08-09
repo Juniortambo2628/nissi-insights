@@ -2,13 +2,12 @@
 
 namespace App\Mail;
 
+use App\Models\EmailTemplate;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
-use App\Models\EmailTemplate;
 
 class ConsultationRequestAdminNotification extends Mailable
 {
@@ -33,7 +32,7 @@ class ConsultationRequestAdminNotification extends Mailable
             subject: EmailTemplate::subjectIfExists(
                 'consultation_request_admin',
                 ['requestData' => $this->requestData],
-                'New Consultation Request: ' . ($this->requestData->subject ?? 'General Inquiry')
+                'New Consultation Request: '.($this->requestData->subject ?? 'General Inquiry')
             ),
         );
     }
@@ -49,13 +48,13 @@ class ConsultationRequestAdminNotification extends Mailable
 
         $customTemplate = \App\Models\SiteSetting::where('key', 'email_template_admin')->first();
 
-        if ($customTemplate && !empty($customTemplate->value)) {
+        if ($customTemplate && ! empty($customTemplate->value)) {
             // Check if it already has layout stuff, if not we use dynamic view
-            if (!str_contains($customTemplate->value, '@extends')) {
+            if (! str_contains($customTemplate->value, '@extends')) {
                 return new Content(
                     view: 'emails.dynamic',
                     with: [
-                        'dynamicContent' => \Illuminate\Support\Facades\Blade::render($customTemplate->value, ['requestData' => $this->requestData])
+                        'dynamicContent' => \Illuminate\Support\Facades\Blade::render($customTemplate->value, ['requestData' => $this->requestData]),
                     ]
                 );
             } else {

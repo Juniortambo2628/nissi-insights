@@ -36,6 +36,7 @@ class VerifyEmailTemplates extends Command
 
             if (! $template) {
                 $missing[] = $key;
+
                 continue;
             }
 
@@ -46,6 +47,7 @@ class VerifyEmailTemplates extends Command
 
         if (empty($missing) && empty($inactive)) {
             $this->info('All required email templates are present and active.');
+
             return self::SUCCESS;
         }
 

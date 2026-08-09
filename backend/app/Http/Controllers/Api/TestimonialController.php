@@ -29,6 +29,7 @@ class TestimonialController extends Controller
         ]);
 
         $testimonial = Testimonial::create($validated);
+
         return response()->json($testimonial, 201);
     }
 
@@ -46,12 +47,14 @@ class TestimonialController extends Controller
         ]);
 
         $testimonial->update($validated);
+
         return response()->json($testimonial);
     }
 
     public function destroy(Testimonial $testimonial)
     {
         $testimonial->delete();
+
         return response()->json(null, 204);
     }
 }

@@ -7,9 +7,8 @@ import { FileText, Filter, Search, Tag, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { getMediaUrl } from '@/lib/utils'
-import Navbar from '@/components/Navbar'
-import Footer from '@/components/Footer'
 import VideoHero from '@/components/VideoHero'
+import CategoryFilter from '@/components/CategoryFilter'
 import { useSettings } from '@/hooks/use-settings'
 import Link from 'next/link'
 
@@ -23,8 +22,7 @@ export default function KnowledgeBaseClient() {
 
     if (isLoading) {
         return (
-            <div className="flex min-h-screen flex-col bg-background relative">
-                <Navbar />
+            <>
                 <main className="flex-1 bg-background pt-32 pb-24">
                     <div className="max-w-[1400px] mx-auto px-6">
                         <div className="h-4 w-32 bg-primary/20 animate-pulse mb-6" />
@@ -36,8 +34,7 @@ export default function KnowledgeBaseClient() {
                         </div>
                     </div>
                 </main>
-                <Footer />
-            </div>
+            </>
         )
     }
     if (isError) return <div className="min-h-screen flex items-center justify-center pt-24 text-muted-foreground">Failed to load resources.</div>
@@ -53,9 +50,7 @@ export default function KnowledgeBaseClient() {
     })
 
     return (
-        <div className="flex min-h-screen flex-col bg-background relative">
-            <Navbar />
-            
+        <>
             <VideoHero 
                 title="Intelligence <span class='text-primary'>Hub</span>"
                 tagline="Engagement"
@@ -69,21 +64,11 @@ export default function KnowledgeBaseClient() {
 
                     {/* Filters & Search */}
                     <div className="flex flex-col md:flex-row gap-6 items-center justify-between mb-12">
-                        <div className="flex flex-wrap gap-2 w-full md:w-auto">
-                            {types.map((type: any) => (
-                                <button
-                                    key={type}
-                                    onClick={() => setActiveType(type)}
-                                    className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all border ${
-                                        activeType === type
-                                            ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20'
-                                            : 'bg-transparent border-border text-muted-foreground hover:border-primary/50 hover:text-foreground'
-                                    }`}
-                                >
-                                    {type}
-                                </button>
-                            ))}
-                        </div>
+                        <CategoryFilter
+                            categories={types}
+                            activeCategory={activeType}
+                            onChange={setActiveType}
+                        />
 
                         <div className="relative w-full md:w-96">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
@@ -167,7 +152,6 @@ export default function KnowledgeBaseClient() {
                     )}
                 </div>
             </main>
-            <Footer />
-        </div>
+        </>
     )
 }

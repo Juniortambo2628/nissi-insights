@@ -1,8 +1,6 @@
 "use client"
 
 import React from 'react'
-import Navbar from '@/components/Navbar'
-import Footer from '@/components/Footer'
 import VideoHero from '@/components/VideoHero'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
@@ -44,9 +42,7 @@ export default function AboutClient() {
     }, [team])
 
     return (
-        <main className="flex min-h-screen flex-col bg-background font-inter">
-            <Navbar />
-
+        <>
             <VideoHero
                 tagline={tagline}
                 title={title.replace(/\n/g, '<br />')}
@@ -242,8 +238,6 @@ export default function AboutClient() {
                     </Button>
                 </div>
             </section>
-
-            <Footer />
-        </main>
+        </>
     )
 }

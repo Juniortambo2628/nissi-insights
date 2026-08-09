@@ -21,7 +21,7 @@ class EmailLogController extends Controller
         }
 
         if ($request->has('recipient')) {
-            $query->where('recipient', 'like', '%' . $request->recipient . '%');
+            $query->where('recipient', 'like', '%'.$request->recipient.'%');
         }
 
         $perPage = $request->input('per_page', 50);

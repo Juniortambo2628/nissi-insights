@@ -1,27 +1,15 @@
 import React from 'react'
 import ServiceDetailClient from '@/components/ServiceDetailClient'
 import { buildDynamicMetadata } from '@/lib/seo'
+import { fetchEntity, appUrl } from '@/lib/api'
 
 interface PageProps {
     params: Promise<{ slug: string }>
 }
 
-async function fetchService(slug: string) {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
-    try {
-        const res = await fetch(`${apiUrl}/services/${slug}`, { next: { revalidate: 60 } })
-        if (res.ok) {
-            return await res.json()
-        }
-    } catch (error) {
-        console.error("Error fetching service on server:", error)
-    }
-    return null
-}
-
 export async function generateMetadata({ params }: PageProps) {
     const { slug } = await params
-    const service = await fetchService(slug)
+    const service = await fetchEntity(slug, 'services')
 
     return buildDynamicMetadata(service, {
         path: `/services/${slug}`,
@@ -33,7 +21,7 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function Page({ params }: PageProps) {
     const { slug } = await params
-    const initialData = await fetchService(slug)
+    const initialData = await fetchEntity(slug, 'services')
 
     const jsonLd = initialData ? {
         '@context': 'https://schema.org',
@@ -43,10 +31,10 @@ export default async function Page({ params }: PageProps) {
         provider: {
             '@type': 'Organization',
             name: 'Nissi Insights',
-            url: process.env.NEXT_PUBLIC_APP_URL || 'https://nissi-insights.com',
+            url: appUrl,
             logo: {
                 '@type': 'ImageObject',
-                url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://nissi-insights.com'}/favicon.png`,
+                url: `${appUrl}/favicon.png`,
             },
         },
         ...(initialData.category && { serviceType: initialData.category }),

@@ -1,8 +1,6 @@
 "use client"
 
 import React from 'react'
-import Navbar from '@/components/Navbar'
-import Footer from '@/components/Footer'
 import { useApi } from '@/hooks/use-api'
 import { motion } from 'framer-motion'
 import { Printer } from 'lucide-react'
@@ -29,9 +27,7 @@ export default function LegalPageLayout({ title, settingKey, lastUpdated = 'Marc
     }
 
     return (
-        <main className="flex min-h-screen flex-col bg-background">
-            <Navbar />
-
+        <>
             {/* Simple Hero */}
             <section className="pt-32 pb-16 bg-[#020810] border-b border-white/5">
                 <div className="max-w-[1400px] mx-auto px-6">
@@ -87,17 +83,6 @@ export default function LegalPageLayout({ title, settingKey, lastUpdated = 'Marc
                     </div>
                 </div>
             </section>
-
-            <Footer />
-
-            <style jsx global>{`
-                @media print {
-                    nav, footer, .pt-32, .mt-20 { display: none !important; }
-                    main { background: white !important; }
-                    .py-20 { padding: 0 !important; }
-                    .prose { max-width: 100% !important; color: black !important; }
-                }
-            `}</style>
-        </main>
+        </>
     )
 }

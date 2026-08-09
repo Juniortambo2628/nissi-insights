@@ -2,10 +2,8 @@
 
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Calendar, MapPin, Clock, ArrowLeft, Mail, User, Building, Phone, Send, CheckCircle2 } from 'lucide-react'
+import { Calendar, MapPin, Clock, ArrowLeft, Mail, User, Building, Phone, Send, CheckCircle2, FileText, Link as LinkIcon, Download, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
-import Navbar from '@/components/Navbar'
-import Footer from '@/components/Footer'
 import api from '@/lib/api'
 import { useApi } from '@/hooks/use-api'
 import { format } from 'date-fns'
@@ -14,6 +12,18 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 import { FallbackImage } from '@/components/ui/FallbackImage'
+import { getMediaUrl } from '@/lib/utils'
+
+interface EventDocument {
+    id: number
+    title: string
+    type: 'file' | 'link'
+    path: string
+    original_filename?: string
+    mime_type?: string
+    size?: number
+    url?: string
+}
 
 interface Event {
     id: number
@@ -26,6 +36,7 @@ interface Event {
     image: string
     link: string
     status: 'upcoming' | 'past'
+    documents?: EventDocument[]
 }
 
 interface EventDetailsClientProps {
@@ -78,9 +89,7 @@ export default function EventDetailsClient({ initialData, slug }: EventDetailsCl
     if (isError || !event) return <div className="h-screen bg-background flex items-center justify-center">Event not found</div>
 
     return (
-        <main className="flex min-h-screen flex-col bg-background font-inter">
-            <Navbar />
-            
+        <>
             {/* Hero Section */}
             <section className="relative h-[60vh] min-h-[500px] flex items-center overflow-hidden">
                 <div className="absolute inset-0">
@@ -115,6 +124,50 @@ export default function EventDetailsClient({ initialData, slug }: EventDetailsCl
                             </div>
                         </div>
 
+                        {/* Event Documents & Resources */}
+                        {event.documents && event.documents.length > 0 && (
+                            <div className="space-y-4">
+                                <h3 className="text-2xl font-bold text-foreground">Resources & Documents</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {event.documents.map((doc) => (
+                                        <div key={doc.id} className="p-6 bg-primary/5 border border-primary/20 rounded-2xl flex items-center justify-between gap-4 hover:border-primary/40 transition-colors">
+                                            <div className="flex items-center gap-4 min-w-0">
+                                                <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center shrink-0">
+                                                    {doc.type === 'file' ? (
+                                                        <FileText size={20} className="text-primary" />
+                                                    ) : (
+                                                        <LinkIcon size={20} className="text-primary" />
+                                                    )}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <h4 className="font-bold text-foreground text-sm truncate">{doc.title}</h4>
+                                                    <p className="text-xs text-muted-foreground truncate">
+                                                        {doc.type === 'file' ? (doc.original_filename || 'Uploaded file') : 'External link'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <Button
+                                                asChild
+                                                variant="outline"
+                                                size="sm"
+                                                className="border-primary/50 text-primary hover:bg-primary hover:text-white shrink-0"
+                                            >
+                                                {doc.type === 'file' ? (
+                                                    <a href={getMediaUrl(doc.path)} target="_blank" rel="noopener noreferrer" download>
+                                                        <Download size={16} className="mr-1" /> Download
+                                                    </a>
+                                                ) : (
+                                                    <a href={doc.path} target="_blank" rel="noopener noreferrer">
+                                                        <ExternalLink size={16} className="mr-1" /> Open
+                                                    </a>
+                                                )}
+                                            </Button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         {event.link && (
                             <div className="p-8 bg-primary/5 border border-primary/20 rounded-2xl flex items-center justify-between gap-6">
                                 <div>
@@ -146,13 +199,19 @@ export default function EventDetailsClient({ initialData, slug }: EventDetailsCl
                                 </div>
                             ) : event.status === 'past' ? (
                                 <div className="text-center py-12 relative z-10">
+                                    <div className="inline-flex items-center px-3 py-1 bg-slate-500/20 text-slate-400 text-[10px] font-bold uppercase tracking-widest rounded-full mb-4">
+                                        Past Event
+                                    </div>
                                     <h3 className="text-2xl font-bold text-foreground mb-4">Event Ended</h3>
                                     <p className="text-muted-foreground text-sm leading-relaxed">
-                                        This event has already taken place. Please check our upcoming events for future opportunities.
+                                        This event has already taken place. Browse the resources and documents above for related materials.
                                     </p>
                                 </div>
                             ) : (
                                 <div className="relative z-10">
+                                    <div className="inline-flex items-center px-3 py-1 bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-widest rounded-full mb-4">
+                                        Registration Open
+                                    </div>
                                     <h3 className="text-2xl font-bold text-foreground mb-2">Reserve Your Seat</h3>
                                     <p className="text-muted-foreground text-sm mb-8">Fill in your details to register for this session.</p>
 
@@ -228,8 +287,6 @@ export default function EventDetailsClient({ initialData, slug }: EventDetailsCl
                     </div>
                 </div>
             </section>
-
-            <Footer />
-        </main>
+        </>
     )
 }

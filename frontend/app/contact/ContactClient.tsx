@@ -1,8 +1,6 @@
 "use client"
 
 import React, { useState } from 'react'
-import Navbar from '@/components/Navbar'
-import Footer from '@/components/Footer'
 import VideoHero from '@/components/VideoHero'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -33,9 +31,7 @@ export default function ContactClient() {
         ? `Hello, I would like to request similar advisory services to the case study: "${paramCaseStudy}".` 
         : ''
     return (
-        <main className="flex min-h-screen flex-col bg-background">
-            <Navbar />
-
+        <>
             <VideoHero
                 tagline="Get in Touch"
                 title="Let's discuss your <br />next strategic move."
@@ -224,8 +220,6 @@ export default function ContactClient() {
                     </div>
                 </div>
             </section>
-
-            <Footer />
-        </main>
+        </>
     )
 }

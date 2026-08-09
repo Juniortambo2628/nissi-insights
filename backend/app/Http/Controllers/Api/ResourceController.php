@@ -3,22 +3,24 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Resource;
-use Illuminate\Support\Str;
+use App\Traits\HasSlug;
+use Illuminate\Http\Request;
 
 class ResourceController extends Controller
 {
+    use HasSlug;
+
     public function index(Request $request)
     {
         $query = Resource::query();
-        
+
         if ($request->has('all') && $request->all === 'true') {
             return $query->orderBy('created_at', 'desc')->get();
         }
-        
+
         $query->where('is_published', true);
-        
+
         if ($request->has('type')) {
             $query->where('type', $request->type);
         }
@@ -28,23 +30,18 @@ class ResourceController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'title' => 'required|string|max:255',
             'type' => 'required|string',
+            'content' => 'nullable|string',
+            'external_link' => 'nullable|string|max:255',
+            'is_published' => 'boolean',
+            'meta_title' => 'nullable|string|max:255',
+            'meta_description' => 'nullable|string|max:500',
         ]);
 
-        $data = $request->all();
-        
-        $slug = Str::slug($data['title']);
-        $originalSlug = $slug;
-        $count = 1;
-        while (Resource::where('slug', $slug)->exists()) {
-            $slug = $originalSlug . '-' . $count;
-            $count++;
-        }
-        $data['slug'] = $slug;
-        
-        $resource = Resource::create($data);
+        $validated['slug'] = $this->generateSlug($validated['title'], Resource::class);
+        $resource = Resource::create($validated);
 
         return response()->json($resource, 201);
     }
@@ -52,41 +49,35 @@ class ResourceController extends Controller
     public function show(string $slug)
     {
         $resource = Resource::where('slug', $slug)->firstOrFail();
+
         return response()->json($resource);
     }
 
-    public function update(Request $request, string $id)
+    public function update(Request $request, Resource $resource)
     {
-        $resource = Resource::findOrFail($id);
-        
-        $request->validate([
+        $validated = $request->validate([
             'title' => 'string|max:255',
+            'type' => 'string',
+            'content' => 'nullable|string',
+            'external_link' => 'nullable|string|max:255',
+            'is_published' => 'boolean',
+            'meta_title' => 'nullable|string|max:255',
+            'meta_description' => 'nullable|string|max:500',
         ]);
 
-        $data = $request->all();
-        if (isset($data['title']) && $data['title'] !== $resource->title) {
-            $slug = Str::slug($data['title']);
-            $originalSlug = $slug;
-            $count = 1;
-            while (Resource::where('slug', $slug)->where('id', '!=', $resource->id)->exists()) {
-                $slug = $originalSlug . '-' . $count;
-                $count++;
-            }
-            $data['slug'] = $slug;
+        if (isset($validated['title']) && $validated['title'] !== $resource->title) {
+            $validated['slug'] = $this->generateUniqueSlug($validated['title'], $resource->id, Resource::class);
         }
 
-        $resource->update($data);
-
+        $resource->update($validated);
 
         return response()->json($resource);
     }
 
-    public function destroy(string $id)
+    public function destroy(Resource $resource)
     {
-        $resource = Resource::findOrFail($id);
         $resource->delete();
 
         return response()->json(['message' => 'Resource deleted']);
     }
-
 }

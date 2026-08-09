@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class ResourceSeeder extends Seeder
@@ -44,7 +43,7 @@ class ResourceSeeder extends Seeder
                 'description' => 'Understanding the mechanisms, regulations, and potential of carbon markets in driving sustainable business practices.',
                 'tags' => json_encode(['Carbon', 'Sustainability', 'Markets']),
                 'is_published' => true,
-            ]
+            ],
         ];
 
         foreach ($resources as $resource) {

@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class EventSeeder extends Seeder
@@ -39,7 +38,7 @@ class EventSeeder extends Seeder
                 'title' => 'Fintech Revolution in Oil & Gas Payments',
                 'slug' => 'fintech-oil-gas-payments',
                 'description' => 'How digital currencies and blockchain are streamlining cross-border energy trade.',
-                'overview' => "Recording of our Q1 session on the evolution of energy finance.",
+                'overview' => 'Recording of our Q1 session on the evolution of energy finance.',
                 'date' => now()->subMonths(2)->setHour(11)->setMinute(0),
                 'location' => 'London, UK',
                 'image' => '/NI-Digital-Assets/oil-and-gas.jpg',

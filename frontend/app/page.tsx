@@ -5,21 +5,14 @@ import StatsSection from "@/components/sections/StatsSection";
 import ValueProposition from "@/components/sections/ValueProposition";
 import CTABanner from "@/components/sections/CTABanner";
 
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-
-
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col relative bg-background">
-      <Navbar />
+    <>
       <Hero />
       <ValueProposition />
       <StatsSection />
       <ServicesSection />
       <InsightsSection />
-      
-      <Footer />
-    </main>
+    </>
   );
 }

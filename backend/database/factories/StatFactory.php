@@ -13,7 +13,7 @@ class StatFactory extends Factory
     {
         return [
             'label' => fake()->unique()->words(3, true),
-            'value' => fake()->numerify('###') . '+',
+            'value' => fake()->numerify('###').'+',
             'icon' => fake()->word(),
             'order' => fake()->unique()->numberBetween(1, 100),
         ];

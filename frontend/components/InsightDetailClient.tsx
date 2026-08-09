@@ -2,8 +2,6 @@
 
 import React from 'react'
 import { useApi } from '@/hooks/use-api'
-import Navbar from '@/components/Navbar'
-import Footer from '@/components/Footer'
 import { Button } from '@/components/ui/button'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Clock, Tag } from 'lucide-react'
@@ -12,6 +10,7 @@ import Image from 'next/image'
 import { readingTime } from '@/lib/reading-time'
 import SocialShare from '@/components/SocialShare'
 import { getMediaUrl } from '@/lib/utils'
+import DetailErrorState from '@/components/DetailErrorState'
 
 interface InsightDetailClientProps {
     initialData: any
@@ -28,37 +27,26 @@ export default function InsightDetailClient({ initialData, slug }: InsightDetail
 
     if (isLoading && !insight) {
         return (
-            <main className="flex min-h-screen flex-col bg-background">
-                <Navbar />
-                <div className="flex-1 flex items-center justify-center pt-32">
-                    <div className="text-muted-foreground/50 text-lg animate-pulse">Analysing insights...</div>
-                </div>
-                <Footer />
-            </main>
+            <div className="flex-1 flex items-center justify-center pt-32">
+                <div className="text-muted-foreground/50 text-lg animate-pulse">Analysing insights...</div>
+            </div>
         )
     }
 
     if (isError || !insight) {
         return (
-            <main className="flex min-h-screen flex-col bg-background">
-                <Navbar />
-                <div className="flex-1 flex items-center justify-center pt-32">
-                    <div className="text-center">
-                        <h1 className="text-4xl font-bold text-foreground mb-4">Article Not Found</h1>
-                        <Button asChild variant="outline"><Link href="/insights">Back to Insights</Link></Button>
-                    </div>
-                </div>
-                <Footer />
-            </main>
+            <DetailErrorState
+                title="Article Not Found"
+                backHref="/insights"
+                backLabel="Back to Insights"
+            />
         )
     }
 
     const timeToRead = readingTime(insight.content || '')
 
     return (
-        <main className="flex min-h-screen flex-col bg-background">
-            <Navbar />
-
+        <>
             {/* Header */}
             <section className="relative pt-40 pb-20 bg-background overflow-hidden border-b border-border/50">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(59,130,246,0.1)_0%,transparent_70%)]" />
@@ -145,8 +133,6 @@ export default function InsightDetailClient({ initialData, slug }: InsightDetail
                     </div>
                 </section>
             )}
-
-            <Footer />
-        </main>
+        </>
     )
 }

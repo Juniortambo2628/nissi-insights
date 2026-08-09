@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\NotFoundLog;
-use App\Models\PageView;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 use App\Models\Event;
 use App\Models\EventRegistration;
+use App\Models\NotFoundLog;
+use App\Models\PageView;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class AnalyticsController extends Controller
 {
@@ -106,7 +106,7 @@ class AnalyticsController extends Controller
         $query = NotFoundLog::latest();
 
         if ($request->has('path')) {
-            $query->where('path', 'like', '%' . $request->path . '%');
+            $query->where('path', 'like', '%'.$request->path.'%');
         }
 
         $perPage = $request->input('per_page', 50);
@@ -132,9 +132,9 @@ class AnalyticsController extends Controller
         $eventsCount = Event::count();
         $totalRegistrations = EventRegistration::count();
         $totalAttendance = EventRegistration::where('attended', true)->count();
-        
-        $attendanceRate = $totalRegistrations > 0 
-            ? round(($totalAttendance / $totalRegistrations) * 100, 1) 
+
+        $attendanceRate = $totalRegistrations > 0
+            ? round(($totalAttendance / $totalRegistrations) * 100, 1)
             : 0;
 
         // Registrations per event
@@ -164,7 +164,7 @@ class AnalyticsController extends Controller
             'attendance_rate' => $attendanceRate,
             'registrations_by_event' => $registrationsByEvent,
             'registrations_over_time' => $registrationsOverTime,
-            'upcoming_events' => $upcomingEvents
+            'upcoming_events' => $upcomingEvents,
         ]);
     }
 
@@ -177,7 +177,7 @@ class AnalyticsController extends Controller
 
         try {
             $variables = DB::select("SHOW VARIABLES LIKE 'max_connections'");
-            $processes = DB::select("SHOW PROCESSLIST");
+            $processes = DB::select('SHOW PROCESSLIST');
             $dbMaxConnections = $variables[0]->Value ?? null;
             $dbConnectionCount = count($processes);
         } catch (\Exception $e) {
@@ -196,9 +196,9 @@ class AnalyticsController extends Controller
             'session_driver' => config('session.driver'),
             'queue_connection' => config('queue.default'),
             'recommendations' => [
-                "Set CACHE_STORE=file and SESSION_DRIVER=file in .env to reduce database load.",
+                'Set CACHE_STORE=file and SESSION_DRIVER=file in .env to reduce database load.',
                 "Run 'php artisan optimize' and 'php artisan config:cache' after changing .env.",
-                "If current_connections is near max_connections, ask your host to raise max_connections.",
+                'If current_connections is near max_connections, ask your host to raise max_connections.',
             ],
         ]);
     }

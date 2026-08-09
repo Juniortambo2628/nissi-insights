@@ -21,12 +21,12 @@ class ClientController extends Controller
             'name' => 'required|string|max:255',
             'logo' => 'nullable|string',
             'website' => 'nullable|string|url',
-            'category' => 'nullable|string|max:100',
             'is_active' => 'boolean',
             'order' => 'integer',
         ]);
 
         $client = Client::create($validated);
+
         return response()->json($client, 201);
     }
 
@@ -36,18 +36,19 @@ class ClientController extends Controller
             'name' => 'string|max:255',
             'logo' => 'nullable|string',
             'website' => 'nullable|string|url',
-            'category' => 'nullable|string|max:100',
             'is_active' => 'boolean',
             'order' => 'integer',
         ]);
 
         $client->update($validated);
+
         return response()->json($client);
     }
 
     public function destroy(Client $client)
     {
         $client->delete();
+
         return response()->json(null, 204);
     }
 }

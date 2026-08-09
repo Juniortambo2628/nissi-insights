@@ -12,8 +12,8 @@ class RedirectFactory extends Factory
     public function definition(): array
     {
         return [
-            'from_path' => '/' . fake()->unique()->slug(),
-            'to' => '/' . fake()->slug(),
+            'from_path' => '/'.fake()->unique()->slug(),
+            'to' => '/'.fake()->slug(),
             'status_code' => fake()->randomElement([301, 302]),
             'is_active' => true,
             'priority' => fake()->numberBetween(0, 100),

@@ -12,7 +12,7 @@ class SiteSettingController extends Controller
     public function index()
     {
         $settings = SiteSetting::all()->groupBy('group');
-        
+
         return $settings->map(function ($group) {
             return SiteSettingResource::collection($group);
         });
@@ -28,6 +28,7 @@ class SiteSettingController extends Controller
         ]);
 
         $setting = SiteSetting::create($validated);
+
         return SiteSettingResource::make($setting);
     }
 
@@ -45,12 +46,14 @@ class SiteSettingController extends Controller
         $validated['value'] = $this->cleanValue($siteSetting, $validated['value'] ?? '');
 
         $siteSetting->update($validated);
+
         return SiteSettingResource::make($siteSetting);
     }
 
     public function destroy(SiteSetting $siteSetting)
     {
         $siteSetting->delete();
+
         return response()->json(null, 204);
     }
 
@@ -79,6 +82,7 @@ class SiteSettingController extends Controller
         }
 
         $settings = SiteSetting::all()->groupBy('group');
+
         return $settings->map(function ($group) {
             return SiteSettingResource::collection($group);
         });
@@ -103,17 +107,16 @@ class SiteSettingController extends Controller
 
     public function getLaunchSettings()
     {
-        \Illuminate\Support\Facades\Log::info('getLaunchSettings called');
         $settings = SiteSetting::where('group', 'launch')->get()->pluck('value', 'key');
-        
+
         $menuFile = $settings->get('rsvp_menu_file');
-        
+
         // Use default if empty
-        if (!$menuFile) {
+        if (! $menuFile) {
             $menuFile = '/assets/defaults/rsvp-menu.pdf';
         } else {
             // Ensure path from DB is converted to URL if it's just a path
-            if (!filter_var($menuFile, FILTER_VALIDATE_URL)) {
+            if (! filter_var($menuFile, FILTER_VALIDATE_URL)) {
                 /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
                 $disk = \Illuminate\Support\Facades\Storage::disk('public');
                 $menuFile = $disk->url($menuFile);
@@ -136,4 +139,3 @@ class SiteSettingController extends Controller
         ]);
     }
 }
-

@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\EventRegistration;
 use App\Models\Event;
+use App\Models\EventRegistration;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class EventRegistrationFactory extends Factory

@@ -46,7 +46,10 @@ import { useToast } from '@/hooks/use-toast'
 import api from '@/lib/api'
 import { format } from 'date-fns'
 import ImageUploader from '@/components/admin/ImageUploader'
+import FileUploader from '@/components/admin/FileUploader'
 import { FallbackImage } from '@/components/ui/FallbackImage'
+import { getMediaUrl } from '@/lib/utils'
+import { X, FileText, Link as LinkIcon, GripVertical, ExternalLink, Download } from 'lucide-react'
 
 const AdminEventsPage = () => {
     const { data: events, isLoading, mutate } = useApi('/events?all=true')
@@ -55,6 +58,14 @@ const AdminEventsPage = () => {
     const [isDeleting, setIsDeleting] = useState(false)
     const [selectedEvent, setSelectedEvent] = useState<any>(null)
     const [isSaving, setIsSaving] = useState(false)
+    const [documents, setDocuments] = useState<any[]>([])
+    const [isSavingDocs, setIsSavingDocs] = useState(false)
+    const [newDocTitle, setNewDocTitle] = useState('')
+    const [newDocType, setNewDocType] = useState<'file' | 'link'>('file')
+    const [newDocPath, setNewDocPath] = useState('')
+    const [newDocFilename, setNewDocFilename] = useState('')
+    const [newDocMime, setNewDocMime] = useState('')
+    const [newDocSize, setNewDocSize] = useState<number>(0)
 
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
     const [sortBy, setSortBy] = useState<'date' | 'title' | 'status'>('date')
@@ -128,8 +139,10 @@ const AdminEventsPage = () => {
                 status: event.status,
                 is_published: !!event.is_published
             })
+            loadDocuments(event.id)
         } else {
             setSelectedEvent(null)
+            setDocuments([])
             setFormData({
                 title: '',
                 description: '',
@@ -144,7 +157,71 @@ const AdminEventsPage = () => {
                 is_published: false
             })
         }
+        resetNewDoc()
         setIsModalOpen(true)
+    }
+
+    const loadDocuments = async (eventId: number) => {
+        try {
+            const res = await api.get(`/event-documents?event_id=${eventId}`)
+            setDocuments(res.data)
+        } catch (error) {
+            console.error("Failed to load documents", error)
+        }
+    }
+
+    const resetNewDoc = () => {
+        setNewDocTitle('')
+        setNewDocType('file')
+        setNewDocPath('')
+        setNewDocFilename('')
+        setNewDocMime('')
+        setNewDocSize(0)
+    }
+
+    const handleAddDocument = async () => {
+        if (!selectedEvent || !newDocTitle || !newDocPath) return
+        setIsSavingDocs(true)
+        try {
+            const payload: any = {
+                event_id: selectedEvent.id,
+                title: newDocTitle,
+                type: newDocType,
+                path: newDocPath,
+                is_published: true,
+                sort_order: documents.length,
+            }
+            if (newDocType === 'file') {
+                payload.original_filename = newDocFilename
+                payload.mime_type = newDocMime
+                payload.size = newDocSize
+            }
+            const res = await api.post('/event-documents', payload)
+            setDocuments([...documents, res.data])
+            resetNewDoc()
+            toast({ title: "Document Added", description: "The document has been added to this event." })
+        } catch (error) {
+            toast({ title: "Error", description: "Failed to add document.", variant: "destructive" })
+        } finally {
+            setIsSavingDocs(false)
+        }
+    }
+
+    const handleDeleteDocument = async (docId: number) => {
+        try {
+            await api.delete(`/event-documents/${docId}`)
+            setDocuments(documents.filter(d => d.id !== docId))
+            toast({ title: "Document Removed", description: "The document has been removed." })
+        } catch (error) {
+            toast({ title: "Error", description: "Failed to remove document.", variant: "destructive" })
+        }
+    }
+
+    const handleFileUploadDoc = (data: any) => {
+        setNewDocPath(data.path)
+        setNewDocFilename(data.filename)
+        setNewDocMime(data.mime)
+        setNewDocSize(data.size)
     }
 
     const handleSave = async () => {
@@ -252,7 +329,7 @@ const AdminEventsPage = () => {
                                             {event.is_published ? 'Published' : 'Draft'}
                                         </div>
                                         <div className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${event.status === 'upcoming' ? 'bg-primary/20 text-primary' : 'bg-slate-500/20 text-slate-400'}`}>
-                                            {event.status}
+                                            {event.status === 'upcoming' ? 'Upcoming' : 'Past'}
                                         </div>
                                     </div>
                                 </div>
@@ -317,8 +394,13 @@ const AdminEventsPage = () => {
                                             {event.location}
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className={`inline-flex items-center px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${event.is_published ? 'bg-emerald-500/20 text-emerald-500' : 'bg-orange-500/20 text-orange-400'}`}>
-                                                {event.is_published ? 'Published' : 'Draft'}
+                                            <div className="flex flex-col gap-1">
+                                                <div className={`inline-flex items-center px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${event.is_published ? 'bg-emerald-500/20 text-emerald-500' : 'bg-orange-500/20 text-orange-400'}`}>
+                                                    {event.is_published ? 'Published' : 'Draft'}
+                                                </div>
+                                                <div className={`inline-flex items-center px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${event.status === 'upcoming' ? 'bg-primary/20 text-primary' : 'bg-slate-500/20 text-slate-400'}`}>
+                                                    {event.status === 'upcoming' ? 'Upcoming' : 'Past'}
+                                                </div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-right">
@@ -415,6 +497,109 @@ const AdminEventsPage = () => {
                             <Label>Full Overview / Detail</Label>
                             <Textarea value={formData.overview} onChange={e => setFormData({...formData, overview: e.target.value})} placeholder="Detailed information about the event..." className="min-h-[200px]" />
                         </div>
+
+                        {selectedEvent && (
+                            <div className="md:col-span-2 space-y-4">
+                                <Label>Event Documents & Resources</Label>
+                                <p className="text-xs text-muted-foreground">Upload files or add links that attendees can access before and after the event.</p>
+                                
+                                {/* Existing Documents */}
+                                {documents.length > 0 && (
+                                    <div className="space-y-2">
+                                        {documents.map((doc) => (
+                                            <div key={doc.id} className="flex items-center gap-3 p-3 bg-secondary/10 border border-border/30 rounded-lg group">
+                                                <GripVertical size={14} className="text-muted-foreground/40" />
+                                                {doc.type === 'file' ? (
+                                                    <FileText size={16} className="text-primary shrink-0" />
+                                                ) : (
+                                                    <LinkIcon size={16} className="text-primary shrink-0" />
+                                                )}
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm font-medium text-foreground truncate">{doc.title}</p>
+                                                    <p className="text-[10px] text-muted-foreground truncate">
+                                                        {doc.type === 'file' ? (doc.original_filename || doc.path) : doc.path}
+                                                    </p>
+                                                </div>
+                                                {doc.type === 'file' && doc.path && (
+                                                    <a href={getMediaUrl(doc.path)} target="_blank" rel="noreferrer" className="p-1 text-muted-foreground hover:text-primary transition-colors">
+                                                        <Download size={14} />
+                                                    </a>
+                                                )}
+                                                {doc.type === 'link' && doc.path && (
+                                                    <a href={doc.path} target="_blank" rel="noreferrer" className="p-1 text-muted-foreground hover:text-primary transition-colors">
+                                                        <ExternalLink size={14} />
+                                                    </a>
+                                                )}
+                                                <button onClick={() => handleDeleteDocument(doc.id)} className="p-1 text-muted-foreground hover:text-destructive transition-colors">
+                                                    <X size={14} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Add New Document */}
+                                <div className="p-4 bg-secondary/5 border border-dashed border-border/50 rounded-lg space-y-3">
+                                    <div className="flex gap-2">
+                                        <Button
+                                            type="button"
+                                            variant={newDocType === 'file' ? 'default' : 'outline'}
+                                            size="sm"
+                                            onClick={() => setNewDocType('file')}
+                                            className="h-8 text-xs"
+                                        >
+                                            <FileText size={14} className="mr-1" /> Upload File
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant={newDocType === 'link' ? 'default' : 'outline'}
+                                            size="sm"
+                                            onClick={() => setNewDocType('link')}
+                                            className="h-8 text-xs"
+                                        >
+                                            <LinkIcon size={14} className="mr-1" /> Add Link
+                                        </Button>
+                                    </div>
+
+                                    <Input
+                                        value={newDocTitle}
+                                        onChange={e => setNewDocTitle(e.target.value)}
+                                        placeholder="Document title (e.g. Agenda, Presentation Slides)"
+                                        className="bg-background border-border"
+                                    />
+
+                                    {newDocType === 'file' ? (
+                                        <>
+                                            <FileUploader
+                                                value={newDocPath}
+                                                onChange={(path) => {
+                                                    setNewDocPath(path)
+                                                    setNewDocFilename(path.split('/').pop() || '')
+                                                }}
+                                                label=""
+                                            />
+                                        </>
+                                    ) : (
+                                        <Input
+                                            value={newDocPath}
+                                            onChange={e => setNewDocPath(e.target.value)}
+                                            placeholder="https://..."
+                                            className="bg-background border-border"
+                                        />
+                                    )}
+
+                                    <Button
+                                        type="button"
+                                        onClick={handleAddDocument}
+                                        disabled={isSavingDocs || !newDocTitle || !newDocPath}
+                                        size="sm"
+                                        className="gap-2"
+                                    >
+                                        {isSavingDocs ? 'Adding...' : 'Add Document'}
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <DialogFooter>

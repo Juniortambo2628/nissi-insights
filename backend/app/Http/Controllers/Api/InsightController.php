@@ -5,18 +5,20 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\InsightResource;
 use App\Models\Insight;
+use App\Traits\HasSlug;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 
 class InsightController extends Controller
 {
+    use HasSlug;
+
     public function index()
     {
         $insights = Insight::with('user')
             ->where('is_published', true)
             ->orderBy('published_at', 'desc')
             ->get();
-            
+
         return InsightResource::collection($insights);
     }
 
@@ -35,14 +37,15 @@ class InsightController extends Controller
             'meta_description' => 'nullable|string|max:500',
         ]);
 
-        $validated['slug'] = Str::slug($validated['title']);
+        $validated['slug'] = $this->generateSlug($validated['title'], Insight::class);
         $validated['user_id'] = $request->user()->id;
-        
+
         if ($validated['is_published'] ?? false) {
             $validated['published_at'] = now();
         }
 
         $insight = Insight::create($validated);
+
         return new InsightResource($insight);
     }
 
@@ -67,21 +70,22 @@ class InsightController extends Controller
         ]);
 
         if (isset($validated['title'])) {
-            $validated['slug'] = Str::slug($validated['title']);
+            $validated['slug'] = $this->generateUniqueSlug($validated['title'], $insight->id, Insight::class);
         }
 
-        if (($validated['is_published'] ?? false) && !$insight->is_published) {
+        if (($validated['is_published'] ?? false) && ! $insight->is_published) {
             $validated['published_at'] = now();
         }
 
         $insight->update($validated);
+
         return new InsightResource($insight->load('user'));
     }
 
     public function destroy(Insight $insight)
     {
         $insight->delete();
+
         return response()->json(null, 204);
     }
 }
-

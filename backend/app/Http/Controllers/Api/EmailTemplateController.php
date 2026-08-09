@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Mail\TemplatedMail;
-use App\Models\EmailLog;
 use App\Models\EmailTemplate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
@@ -87,7 +86,7 @@ class EmailTemplateController extends Controller
             'subject' => 'nullable|string',
         ]);
 
-        if (!$request->has('template_key') && !$request->has('template_id') && !$request->has('content')) {
+        if (! $request->has('template_key') && ! $request->has('template_id') && ! $request->has('content')) {
             return response()->json(['error' => 'Provide template_key, template_id, or content to preview.'], 422);
         }
 
@@ -115,7 +114,7 @@ class EmailTemplateController extends Controller
             $subject = html_entity_decode($subject ?? 'Preview', ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
             $renderedSubject = html_entity_decode(Blade::render($subject, $dummyData), ENT_QUOTES, 'UTF-8');
-            $renderedBody = $this->wrapInLayout(Blade::render($body, $dummyData));
+            $renderedBody = EmailTemplate::wrapInLayout(Blade::render($body, $dummyData));
 
             return response()->json([
                 'html' => $renderedBody,
@@ -126,8 +125,9 @@ class EmailTemplateController extends Controller
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json(['error' => 'Template not found.'], 404);
         } catch (\Exception $e) {
-            \Log::error('Email template preview failed: ' . $e->getMessage(), ['exception' => $e]);
-            return response()->json(['error' => 'Template Error: ' . $e->getMessage()], 422);
+            \Log::error('Email template preview failed: '.$e->getMessage(), ['exception' => $e]);
+
+            return response()->json(['error' => 'Template Error: '.$e->getMessage()], 422);
         }
     }
 
@@ -177,12 +177,12 @@ class EmailTemplateController extends Controller
             'warning' => $mailer === 'log' ? 'MAIL_MAILER is set to log; no real emails are being delivered.' : null,
             'domain' => $domain,
             'deliverability_guidance' => [
-                "Set MAIL_MAILER=smtp and provide valid SMTP credentials in .env for real delivery.",
+                'Set MAIL_MAILER=smtp and provide valid SMTP credentials in .env for real delivery.',
                 "Create or update SPF for {$domain}: v=spf1 +a +mx include:{$host} ~all",
                 "Add DMARC for {$domain}: v=DMARC1; p=quarantine; rua=mailto:dmarc@{$domain}; pct=100;",
                 "Add a DKIM record for {$domain} if your mail provider supports it (cPanel users can enable DKIM in Email Deliverability).",
                 "Verify the 'From' address ({$fromAddress}) exists and matches the SMTP account.",
-                "For cPanel hosting, create the email account in cPanel and use mail.yourdomain.com with SSL on port 465.",
+                'For cPanel hosting, create the email account in cPanel and use mail.yourdomain.com with SSL on port 465.',
             ],
         ]);
     }
@@ -202,9 +202,9 @@ class EmailTemplateController extends Controller
             Mail::to($recipient)->send($mail);
             $mail->log($recipient, 'sent');
 
-            return response()->json(['message' => 'Test email sent to ' . $recipient]);
+            return response()->json(['message' => 'Test email sent to '.$recipient]);
         } catch (\Exception $e) {
-            \Log::error('Failed to send test email: ' . $e->getMessage(), [
+            \Log::error('Failed to send test email: '.$e->getMessage(), [
                 'exception' => $e,
                 'template_id' => $template->id,
                 'template_key' => $template->key,
@@ -212,7 +212,7 @@ class EmailTemplateController extends Controller
             ]);
 
             return response()->json([
-                'error' => 'Failed to send test email: ' . $e->getMessage(),
+                'error' => 'Failed to send test email: '.$e->getMessage(),
                 'exception' => get_class($e),
             ], 422);
         }
@@ -276,14 +276,5 @@ class EmailTemplateController extends Controller
             'appName' => config('app.name', 'Nissi Insights'),
             'frontendUrl' => frontend_url(),
         ];
-    }
-
-    protected function wrapInLayout(string $body): string
-    {
-        if (str_contains($body, '<html')) {
-            return $body;
-        }
-
-        return view('emails.layout', ['content' => $body])->render();
     }
 }
