@@ -9,6 +9,7 @@ import { format } from 'date-fns'
 import { useSettings } from '@/hooks/use-settings'
 import { getMediaUrl } from '@/lib/utils'
 import { FallbackImage } from '@/components/ui/FallbackImage'
+import VideoHero from '@/components/VideoHero'
 
 interface Event {
     id: number
