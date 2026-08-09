@@ -135,7 +135,7 @@ const Navbar = () => {
                 </Link>
 
                 {/* Desktop Menu */}
-                <div className="hidden lg:flex items-center gap-4">
+                <div className="hidden xl:flex items-center gap-4">
                     {/* Advisory Dropdown Trigger */}
                     <button
                         className="text-[11px] font-bold uppercase tracking-wider hover:text-primary transition-colors text-foreground/90 flex items-center gap-1"
@@ -170,7 +170,7 @@ const Navbar = () => {
 
                 {/* Mobile Toggle */}
                 <button
-                    className="lg:hidden p-2 text-white"
+                    className="xl:hidden p-2 text-white"
                     onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                     aria-label="Toggle menu"
                 >
@@ -181,7 +181,7 @@ const Navbar = () => {
             {/* Mega Menu */}
             {isMegaMenuOpen && dynamicServiceCategories.length > 0 && (
                 <div
-                    className="hidden lg:block absolute top-full left-0 right-0 bg-background border-b border-border shadow-2xl shadow-black/10"
+                    className="hidden xl:block absolute top-full left-0 right-0 bg-background border-b border-border shadow-2xl shadow-black/10"
                     onMouseEnter={() => setIsMegaMenuOpen(true)}
                     onMouseLeave={() => setIsMegaMenuOpen(false)}
                 >
@@ -209,7 +209,7 @@ const Navbar = () => {
 
             {/* Mobile Menu */}
             {isMobileMenuOpen && (
-                <div className="lg:hidden absolute top-full left-0 right-0 bg-background/98 backdrop-blur-xl border-b border-border p-6 flex flex-col gap-4 max-h-[80vh] overflow-y-auto">
+                <div className="xl:hidden absolute top-full left-0 right-0 bg-background/98 backdrop-blur-xl border-b border-border p-6 flex flex-col gap-4 max-h-[80vh] overflow-y-auto">
                     {/* Advisory Sections */}
                     {dynamicServiceCategories.map((cat) => (
                         <div key={cat.title} className="pb-4 border-b border-border/50">
