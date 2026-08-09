@@ -52,6 +52,11 @@ import { getMediaUrl } from '@/lib/utils'
 import { X, FileText, Link as LinkIcon, GripVertical, ExternalLink, Download } from 'lucide-react'
 import { Event, EventDocument } from '@/lib/types'
 
+function isEventEnded(event: Event): boolean {
+    const endTime = new Date(event.date).getTime() + (event.duration_minutes || 60) * 60 * 1000
+    return endTime < Date.now()
+}
+
 const AdminEventsPage = () => {
     const { data: events, isLoading, mutate } = useApi<Event[]>('/events?all=true')
     const { toast } = useToast()
@@ -67,6 +72,9 @@ const AdminEventsPage = () => {
     const [newDocFilename, setNewDocFilename] = useState('')
     const [newDocMime, setNewDocMime] = useState('')
     const [newDocSize, setNewDocSize] = useState<number>(0)
+    const [knowledgeResources, setKnowledgeResources] = useState<any[]>([])
+    const [showLinkResource, setShowLinkResource] = useState(false)
+    const [selectedResourceId, setSelectedResourceId] = useState<number | null>(null)
 
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
     const [sortBy, setSortBy] = useState<'date' | 'title' | 'status'>('date')
@@ -119,7 +127,11 @@ const AdminEventsPage = () => {
                 return dateB - dateA
             }
             if (sortBy === 'title') return (a.title || '').localeCompare(b.title || '')
-            if (sortBy === 'status') return (a.status || '').localeCompare(b.status || '')
+            if (sortBy === 'status') {
+                const statusA = isEventEnded(a) ? 'past' : 'upcoming'
+                const statusB = isEventEnded(b) ? 'past' : 'upcoming'
+                return statusA.localeCompare(statusB)
+            }
             return 0
         })
     }, [events, sortBy])
@@ -160,6 +172,7 @@ const AdminEventsPage = () => {
         }
         resetNewDoc()
         setIsModalOpen(true)
+        loadKnowledgeResources()
     }
 
     const loadDocuments = async (eventId: number) => {
@@ -168,6 +181,44 @@ const AdminEventsPage = () => {
             setDocuments(res.data)
         } catch (error) {
             console.error("Failed to load documents", error)
+        }
+    }
+
+    const loadKnowledgeResources = async () => {
+        try {
+            const res = await api.get('/resources?all=true')
+            setKnowledgeResources(res.data)
+        } catch (error) {
+            console.error("Failed to load knowledge resources", error)
+        }
+    }
+
+    const handleLinkResource = async () => {
+        if (!selectedEvent || !selectedResourceId) return
+        setIsSavingDocs(true)
+        try {
+            const resource = knowledgeResources.find(r => r.id === selectedResourceId)
+            if (!resource) return
+
+            // Create an event document linked to the knowledge hub resource
+            const payload = {
+                event_id: selectedEvent.id,
+                resource_id: selectedResourceId,
+                title: resource.title,
+                type: resource.external_link ? 'link' : 'file',
+                path: resource.external_link || resource.file_path || '',
+                is_published: true,
+                sort_order: documents.length,
+            }
+            const res = await api.post('/event-documents', payload)
+            setDocuments([...documents, res.data])
+            setSelectedResourceId(null)
+            setShowLinkResource(false)
+            toast({ title: "Resource Linked", description: "The knowledge hub resource has been linked to this event." })
+        } catch (error) {
+            toast({ title: "Error", description: "Failed to link resource.", variant: "destructive" })
+        } finally {
+            setIsSavingDocs(false)
         }
     }
 
@@ -329,8 +380,8 @@ const AdminEventsPage = () => {
                                         <div className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${event.is_published ? 'bg-emerald-500/20 text-emerald-400' : 'bg-orange-500/20 text-orange-400'}`}>
                                             {event.is_published ? 'Published' : 'Draft'}
                                         </div>
-                                        <div className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${event.status === 'upcoming' ? 'bg-primary/20 text-primary' : 'bg-slate-500/20 text-slate-400'}`}>
-                                            {event.status === 'upcoming' ? 'Upcoming' : 'Past'}
+                                        <div className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${!isEventEnded(event) ? 'bg-primary/20 text-primary' : 'bg-slate-500/20 text-slate-400'}`}>
+                                            {!isEventEnded(event) ? 'Upcoming' : 'Past'}
                                         </div>
                                     </div>
                                 </div>
@@ -399,8 +450,8 @@ const AdminEventsPage = () => {
                                                 <div className={`inline-flex items-center px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${event.is_published ? 'bg-emerald-500/20 text-emerald-500' : 'bg-orange-500/20 text-orange-400'}`}>
                                                     {event.is_published ? 'Published' : 'Draft'}
                                                 </div>
-                                                <div className={`inline-flex items-center px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${event.status === 'upcoming' ? 'bg-primary/20 text-primary' : 'bg-slate-500/20 text-slate-400'}`}>
-                                                    {event.status === 'upcoming' ? 'Upcoming' : 'Past'}
+                                                <div className={`inline-flex items-center px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${!isEventEnded(event) ? 'bg-primary/20 text-primary' : 'bg-slate-500/20 text-slate-400'}`}>
+                                                    {!isEventEnded(event) ? 'Upcoming' : 'Past'}
                                                 </div>
                                             </div>
                                         </td>
@@ -541,63 +592,100 @@ const AdminEventsPage = () => {
 
                                 {/* Add New Document */}
                                 <div className="p-4 bg-secondary/5 border border-dashed border-border/50 rounded-lg space-y-3">
-                                    <div className="flex gap-2">
+                                    <div className="flex gap-2 flex-wrap">
                                         <Button
                                             type="button"
-                                            variant={newDocType === 'file' ? 'default' : 'outline'}
+                                            variant={newDocType === 'file' && !showLinkResource ? 'default' : 'outline'}
                                             size="sm"
-                                            onClick={() => setNewDocType('file')}
+                                            onClick={() => { setNewDocType('file'); setShowLinkResource(false) }}
                                             className="h-8 text-xs"
                                         >
                                             <FileText size={14} className="mr-1" /> Upload File
                                         </Button>
                                         <Button
                                             type="button"
-                                            variant={newDocType === 'link' ? 'default' : 'outline'}
+                                            variant={newDocType === 'link' && !showLinkResource ? 'default' : 'outline'}
                                             size="sm"
-                                            onClick={() => setNewDocType('link')}
+                                            onClick={() => { setNewDocType('link'); setShowLinkResource(false) }}
                                             className="h-8 text-xs"
                                         >
                                             <LinkIcon size={14} className="mr-1" /> Add Link
                                         </Button>
+                                        <Button
+                                            type="button"
+                                            variant={showLinkResource ? 'default' : 'outline'}
+                                            size="sm"
+                                            onClick={() => setShowLinkResource(!showLinkResource)}
+                                            className="h-8 text-xs"
+                                        >
+                                            <ExternalLink size={14} className="mr-1" /> Link from Knowledge Hub
+                                        </Button>
                                     </div>
 
-                                    <Input
-                                        value={newDocTitle}
-                                        onChange={e => setNewDocTitle(e.target.value)}
-                                        placeholder="Document title (e.g. Agenda, Presentation Slides)"
-                                        className="bg-background border-border"
-                                    />
-
-                                    {newDocType === 'file' ? (
-                                        <>
-                                            <FileUploader
-                                                value={newDocPath}
-                                                onChange={(path) => {
-                                                    setNewDocPath(path)
-                                                    setNewDocFilename(path.split('/').pop() || '')
-                                                }}
-                                                label=""
-                                            />
-                                        </>
+                                    {showLinkResource ? (
+                                        <div className="space-y-3">
+                                            <select
+                                                value={selectedResourceId || ''}
+                                                onChange={e => setSelectedResourceId(Number(e.target.value) || null)}
+                                                className="w-full p-2 bg-background border border-border rounded-md text-sm"
+                                            >
+                                                <option value="">Select a knowledge hub resource...</option>
+                                                {knowledgeResources.filter(r => !documents.some(d => d.resource_id === r.id)).map((resource) => (
+                                                    <option key={resource.id} value={resource.id}>
+                                                        {resource.title} {resource.type ? `(${resource.type})` : ''}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <Button
+                                                type="button"
+                                                onClick={handleLinkResource}
+                                                disabled={isSavingDocs || !selectedResourceId}
+                                                size="sm"
+                                                className="gap-2"
+                                            >
+                                                {isSavingDocs ? 'Linking...' : 'Link Resource'}
+                                            </Button>
+                                        </div>
                                     ) : (
-                                        <Input
-                                            value={newDocPath}
-                                            onChange={e => setNewDocPath(e.target.value)}
-                                            placeholder="https://..."
-                                            className="bg-background border-border"
-                                        />
-                                    )}
+                                        <>
+                                            <Input
+                                                value={newDocTitle}
+                                                onChange={e => setNewDocTitle(e.target.value)}
+                                                placeholder="Document title (e.g. Agenda, Presentation Slides)"
+                                                className="bg-background border-border"
+                                            />
 
-                                    <Button
-                                        type="button"
-                                        onClick={handleAddDocument}
-                                        disabled={isSavingDocs || !newDocTitle || !newDocPath}
-                                        size="sm"
-                                        className="gap-2"
-                                    >
-                                        {isSavingDocs ? 'Adding...' : 'Add Document'}
-                                    </Button>
+                                            {newDocType === 'file' ? (
+                                                <>
+                                                    <FileUploader
+                                                        value={newDocPath}
+                                                        onChange={(path) => {
+                                                            setNewDocPath(path)
+                                                            setNewDocFilename(path.split('/').pop() || '')
+                                                        }}
+                                                        label=""
+                                                    />
+                                                </>
+                                            ) : (
+                                                <Input
+                                                    value={newDocPath}
+                                                    onChange={e => setNewDocPath(e.target.value)}
+                                                    placeholder="https://..."
+                                                    className="bg-background border-border"
+                                                />
+                                            )}
+
+                                            <Button
+                                                type="button"
+                                                onClick={handleAddDocument}
+                                                disabled={isSavingDocs || !newDocTitle || !newDocPath}
+                                                size="sm"
+                                                className="gap-2"
+                                            >
+                                                {isSavingDocs ? 'Adding...' : 'Add Document'}
+                                            </Button>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         )}

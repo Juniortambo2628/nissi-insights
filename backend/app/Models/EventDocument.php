@@ -11,6 +11,7 @@ class EventDocument extends Model
 
     protected $fillable = [
         'event_id',
+        'resource_id',
         'title',
         'type',
         'path',
@@ -30,6 +31,11 @@ class EventDocument extends Model
     public function event()
     {
         return $this->belongsTo(Event::class);
+    }
+
+    public function resource()
+    {
+        return $this->belongsTo(Resource::class);
     }
 
     public function getUrlAttribute(): ?string

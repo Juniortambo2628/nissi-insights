@@ -128,11 +128,11 @@ export default function EventDetailsClient({ initialData, slug }: EventDetailsCl
                         </div>
 
                         {/* Event Documents & Resources */}
-                        {event.documents && event.documents.length > 0 && (
+                        {(event.documents && event.documents.length > 0) || event.link ? (
                             <div className="space-y-4">
                                 <h3 className="text-2xl font-bold text-foreground">Resources & Documents</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {event.documents.map((doc) => (
+                                    {event.documents?.map((doc) => (
                                         <div key={doc.id} className="p-6 bg-primary/5 border border-primary/20 rounded-2xl flex items-center justify-between gap-4 hover:border-primary/40 transition-colors">
                                             <div className="flex items-center gap-4 min-w-0">
                                                 <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center shrink-0">
@@ -167,21 +167,27 @@ export default function EventDetailsClient({ initialData, slug }: EventDetailsCl
                                             </Button>
                                         </div>
                                     ))}
+                                    {event.link && (
+                                        <div className="p-6 bg-primary/5 border border-primary/20 rounded-2xl flex items-center justify-between gap-4 hover:border-primary/40 transition-colors">
+                                            <div className="flex items-center gap-4 min-w-0">
+                                                <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center shrink-0">
+                                                    <LinkIcon size={20} className="text-primary" />
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <h4 className="font-bold text-foreground text-sm">External Resources</h4>
+                                                    <p className="text-xs text-muted-foreground truncate">Additional links for this session</p>
+                                                </div>
+                                            </div>
+                                            <Button asChild variant="outline" size="sm" className="border-primary/50 text-primary hover:bg-primary hover:text-white shrink-0">
+                                                <a href={event.link} target="_blank" rel="noopener noreferrer">
+                                                    <ExternalLink size={16} className="mr-1" /> Access
+                                                </a>
+                                            </Button>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
-                        )}
-
-                        {event.link && (
-                            <div className="p-8 bg-primary/5 border border-primary/20 rounded-2xl flex items-center justify-between gap-6">
-                                <div>
-                                    <h4 className="font-bold text-foreground mb-1">External Resources</h4>
-                                    <p className="text-sm text-muted-foreground">Additional documents or links related to this session.</p>
-                                </div>
-                                <Button asChild variant="outline" className="border-primary/50 text-primary hover:bg-primary hover:text-white">
-                                    <a href={event.link} target="_blank" rel="noopener noreferrer">Access Resources</a>
-                                </Button>
-                            </div>
-                        )}
+                        ) : null}
                     </div>
 
                     {/* Registration Form */}

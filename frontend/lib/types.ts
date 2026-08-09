@@ -96,6 +96,7 @@ export interface EventRegistration {
 export interface EventDocument {
   id: number
   event_id: number
+  resource_id: number | null
   title: string
   type: 'file' | 'link'
   file_path: string | null
@@ -104,6 +105,7 @@ export interface EventDocument {
   file_name: string | null
   original_filename: string | null
   mime_type: string | null
+  file_size: number | null
   size: number | null
   sort_order: number
   created_at: string
