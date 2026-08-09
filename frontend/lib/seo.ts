@@ -73,7 +73,8 @@ export function buildDynamicMetadata(
     }
 }
 
-export function buildArticleJsonLd(entity: SeoEntity | null, path: string) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function buildArticleJsonLd(entity: any | null, path: string) {
     if (!entity) return null
 
     return {
@@ -106,7 +107,8 @@ export function buildArticleJsonLd(entity: SeoEntity | null, path: string) {
     }
 }
 
-export function buildEventJsonLd(entity: (SeoEntity & { date?: string; location?: string | null }) | null, path: string) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function buildEventJsonLd(entity: any | null, path: string) {
     if (!entity) return null
 
     return {

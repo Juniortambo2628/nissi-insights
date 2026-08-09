@@ -1,5 +1,4 @@
 import axios from 'axios';
-import type { SeoEntity } from './seo';
 
 const api = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api',
@@ -29,7 +28,8 @@ export default api;
 export const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://nissi-insights.com';
 export const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
-export async function fetchEntity(slug: string, endpoint: string): Promise<SeoEntity | null> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function fetchEntity(slug: string, endpoint: string): Promise<any | null> {
     try {
         const res = await fetch(`${apiUrl}/${endpoint}/${slug}`, { next: { revalidate: 60 } });
         if (res.ok) {
