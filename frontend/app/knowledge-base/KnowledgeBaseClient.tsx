@@ -40,7 +40,7 @@ export default function KnowledgeBaseClient() {
     if (isError) return <div className="min-h-screen flex items-center justify-center pt-24 text-muted-foreground">Failed to load resources.</div>
 
     // Extract unique types
-    const types = ['All', ...Array.from(new Set(resources?.map((r: any) => r.type) || []))]
+    const types: string[] = ['All', ...Array.from(new Set(resources?.map((r: any) => r.type as string) || []))]
 
     const filteredResources = resources?.filter((resource: any) => {
         const matchesSearch = resource.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
