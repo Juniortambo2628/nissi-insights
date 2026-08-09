@@ -32,6 +32,7 @@ interface Event {
     description: string
     overview: string
     date: string
+    duration_minutes?: number
     location: string
     image: string
     link: string
@@ -49,6 +50,8 @@ export default function EventDetailsClient({ initialData, slug }: EventDetailsCl
     const { data: event, isLoading, isError } = useApi<Event>(slug ? `/events/${slug}` : null, {
         fallbackData: initialData
     })
+
+    const isEventEnded = event ? (new Date(event.date).getTime() + (event.duration_minutes || 60) * 60 * 1000) < new Date() : false
     
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [isRegistered, setIsRegistered] = useState(false)
@@ -197,7 +200,7 @@ export default function EventDetailsClient({ initialData, slug }: EventDetailsCl
                                     </p>
                                     <Button onClick={() => setIsRegistered(false)} variant="outline" className="w-full">Register Another Person</Button>
                                 </div>
-                            ) : event.status === 'past' ? (
+                            ) : isEventEnded ? (
                                 <div className="text-center py-12 relative z-10">
                                     <div className="inline-flex items-center px-3 py-1 bg-slate-500/20 text-slate-400 text-[10px] font-bold uppercase tracking-widest rounded-full mb-4">
                                         Past Event

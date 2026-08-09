@@ -17,6 +17,7 @@ interface Event {
     slug: string
     description: string
     date: string
+    duration_minutes?: number
     location: string
     image: string
     status: 'upcoming' | 'past'
@@ -44,8 +45,14 @@ export default function EventsClient() {
         fetchEvents()
     }, [])
 
-    const upcomingEvents = events.filter(e => e.status === 'upcoming')
-    const pastEvents = events.filter(e => e.status === 'past')
+    const isEventEnded = (event: Event) => {
+        const eventDate = new Date(event.date)
+        const durationMs = (event.duration_minutes || 60) * 60 * 1000
+        return new Date(eventDate.getTime() + durationMs) < new Date()
+    }
+
+    const upcomingEvents = events.filter(e => !isEventEnded(e))
+    const pastEvents = events.filter(e => isEventEnded(e))
 
     return (
         <>
@@ -114,11 +121,13 @@ export default function EventsClient() {
 }
 
 const EventCard = ({ event, isPast = false }: { event: Event, isPast?: boolean }) => {
+    const ended = isPast || (new Date(event.date).getTime() + (event.duration_minutes || 60) * 60 * 1000) < new Date()
+
     return (
         <motion.div 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            className={`group relative flex flex-col h-full bg-secondary/10 border ${isPast ? 'border-border/20 grayscale opacity-60' : 'border-border/50 hover:border-primary/30'} overflow-hidden rounded-2xl transition-all duration-500`}
+            className={`group relative flex flex-col h-full bg-secondary/10 border ${ended ? 'border-border/20 grayscale opacity-60' : 'border-border/50 hover:border-primary/30'} overflow-hidden rounded-2xl transition-all duration-500`}
         >
                 <div className="relative h-64 overflow-hidden">
                 <FallbackImage
@@ -127,7 +136,7 @@ const EventCard = ({ event, isPast = false }: { event: Event, isPast?: boolean }
                     className="transition-transform duration-700 group-hover:scale-110"
                     fallbackText="Event"
                 />
-                {!isPast ? (
+                {!ended ? (
                     <div className="absolute top-4 right-4 px-3 py-1 bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-widest rounded-full">
                         Registration Open
                     </div>
@@ -159,7 +168,7 @@ const EventCard = ({ event, isPast = false }: { event: Event, isPast?: boolean }
                     </div>
                     <Link 
                         href={`/events/${event.slug}`}
-                        className={`p-2 rounded-full ${isPast ? 'bg-secondary/50 text-muted-foreground' : 'bg-primary/10 text-primary hover:bg-primary hover:text-white'} transition-all`}
+                        className={`p-2 rounded-full ${ended ? 'bg-secondary/50 text-muted-foreground' : 'bg-primary/10 text-primary hover:bg-primary hover:text-white'} transition-all`}
                     >
                         <ChevronRight size={20} />
                     </Link>

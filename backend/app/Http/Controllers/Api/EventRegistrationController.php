@@ -40,7 +40,7 @@ class EventRegistrationController extends Controller
         ]);
 
         $event = \App\Models\Event::findOrFail($validated['event_id']);
-        if ($event->status === 'past') {
+        if ($event->isEnded()) {
             return response()->json(['message' => 'Registration is not available for past events.'], 422);
         }
 
