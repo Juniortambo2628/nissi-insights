@@ -106,7 +106,7 @@ export function buildArticleJsonLd(entity: SeoEntity | null, path: string) {
     }
 }
 
-export function buildEventJsonLd(entity: SeoEntity & { date?: string; location?: string | null }, path: string) {
+export function buildEventJsonLd(entity: (SeoEntity & { date?: string; location?: string | null }) | null, path: string) {
     if (!entity) return null
 
     return {
