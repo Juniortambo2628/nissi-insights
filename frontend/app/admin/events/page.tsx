@@ -50,15 +50,16 @@ import FileUploader from '@/components/admin/FileUploader'
 import { FallbackImage } from '@/components/ui/FallbackImage'
 import { getMediaUrl } from '@/lib/utils'
 import { X, FileText, Link as LinkIcon, GripVertical, ExternalLink, Download } from 'lucide-react'
+import { Event, EventDocument } from '@/lib/types'
 
 const AdminEventsPage = () => {
-    const { data: events, isLoading, mutate } = useApi('/events?all=true')
+    const { data: events, isLoading, mutate } = useApi<Event[]>('/events?all=true')
     const { toast } = useToast()
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
-    const [selectedEvent, setSelectedEvent] = useState<any>(null)
+    const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
     const [isSaving, setIsSaving] = useState(false)
-    const [documents, setDocuments] = useState<any[]>([])
+    const [documents, setDocuments] = useState<EventDocument[]>([])
     const [isSavingDocs, setIsSavingDocs] = useState(false)
     const [newDocTitle, setNewDocTitle] = useState('')
     const [newDocType, setNewDocType] = useState<'file' | 'link'>('file')
@@ -123,7 +124,7 @@ const AdminEventsPage = () => {
         })
     }, [events, sortBy])
 
-    const handleOpenModal = (event: any = null) => {
+    const handleOpenModal = (event: Event | null = null) => {
         if (event) {
             setSelectedEvent(event)
             setFormData({
@@ -320,7 +321,7 @@ const AdminEventsPage = () => {
                     </div>
                 ) : viewMode === 'grid' ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {sortedEvents?.map((event: any) => (
+                                {sortedEvents?.map((event) => (
                             <Card key={event.id} className="bg-secondary/10 border-border/50 overflow-hidden group hover:border-primary/30 transition-all">
                                 <div className="relative h-40 overflow-hidden">
                                     <FallbackImage src={event.image} alt={event.title} fallbackText="Event" className="opacity-80 group-hover:scale-105 transition-transform duration-500" />
@@ -377,7 +378,7 @@ const AdminEventsPage = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border/30">
-                                {sortedEvents?.map((event: any) => (
+                        {sortedEvents?.map((event) => (
                                     <tr key={event.id} className="hover:bg-primary/5 transition-colors group">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">

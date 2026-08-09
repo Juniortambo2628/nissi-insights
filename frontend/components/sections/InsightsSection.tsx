@@ -8,9 +8,10 @@ import { ArrowRight, ArrowUpRight, Clock, Tag } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { getMediaUrl } from '@/lib/utils'
+import { Insight } from '@/lib/types'
 
 const InsightsSection = () => {
-    const { data: insights, isLoading, isError } = useApi('/insights')
+    const { data: insights, isLoading, isError } = useApi<Insight[]>('/insights')
 
     if (isLoading) {
         return (

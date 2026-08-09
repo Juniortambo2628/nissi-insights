@@ -8,9 +8,10 @@ import Link from 'next/link'
 import VideoHero from '@/components/VideoHero'
 import { useSettings } from '@/hooks/use-settings'
 import { getMediaUrl } from '@/lib/utils'
+import { Pillar } from '@/lib/types'
 
 export default function PillarsClient() {
-    const { data: pillars, isLoading } = useApi('/pillars')
+    const { data: pillars, isLoading } = useApi<Pillar[]>('/pillars')
     const { getSetting } = useSettings()
 
     const heroImage = getMediaUrl(getSetting('hero_services_media', '/NI-Digital-Assets/financial-technology.jpg'))

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { useSettings } from '@/hooks/use-settings'
 import { categoryVideos as defaultCategoryVideos, serviceCategories } from '@/lib/constants'
+import { Service } from '@/lib/types'
 
 const categories = serviceCategories
 
@@ -15,7 +16,7 @@ const categories = serviceCategories
 const MAX_SERVICES_SHOWN = 7
 
 const ServicesSection = () => {
-    const { data: services, isLoading: servicesLoading, isError: servicesError } = useApi('/services')
+    const { data: services, isLoading: servicesLoading, isError: servicesError } = useApi<Service[]>('/services')
     const { getSetting } = useSettings()
     
     const [activeCategory, setActiveCategory] = useState('All')

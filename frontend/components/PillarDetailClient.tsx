@@ -6,7 +6,7 @@ import VideoHero from '@/components/VideoHero'
 import { motion } from 'framer-motion'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
-import { Pillar } from '@/types/api'
+import { Pillar, SiteSetting } from '@/lib/types'
 import { cn, getMediaUrl } from '@/lib/utils'
 
 interface PillarDetailClientProps {
@@ -15,10 +15,10 @@ interface PillarDetailClientProps {
 }
 
 export default function PillarDetailClient({ initialData, slug }: PillarDetailClientProps) {
-    const { data: pillar, isLoading } = useApi<Pillar>(`/pillars/${slug}`, {
+    const { data: pillar, isLoading } = useApi<Pillar | null>(`/pillars/${slug}`, {
         fallbackData: initialData
     })
-    const { data: settingsByGroup } = useApi('/settings')
+    const { data: settingsByGroup } = useApi<Record<string, SiteSetting[]>>('/settings')
 
     // Helper to get hero media from settings
     const getHeroMedia = () => {

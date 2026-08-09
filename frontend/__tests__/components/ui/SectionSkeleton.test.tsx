@@ -40,7 +40,7 @@ describe('SectionSkeleton', () => {
 
   it('applies custom className', () => {
     const { container } = render(<SectionSkeleton className="custom-class" />)
-    expect(container.firstChild?.className).toContain('custom-class')
+    expect((container.firstChild as Element)?.className).toContain('custom-class')
   })
 
   it('renders correct number of rows in cards variant', () => {

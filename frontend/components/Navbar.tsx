@@ -11,10 +11,11 @@ import { ThemeToggle } from './ThemeToggle'
 import { useApi } from '@/hooks/use-api'
 import { useTheme } from 'next-themes'
 import { useSettings } from '@/hooks/use-settings'
+import { Service } from '@/lib/types'
 
 const Navbar = () => {
     const { theme } = useTheme()
-    const { data: services } = useApi('/services')
+    const { data: services } = useApi<Service[]>('/services')
     const { getSetting, settingsByGroup } = useSettings()
     const [isScrolled, setIsScrolled] = useState(false)
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)

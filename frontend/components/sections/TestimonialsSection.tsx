@@ -4,9 +4,10 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useApi } from '@/hooks/use-api'
 import { Star, ChevronLeft, ChevronRight, Quote } from 'lucide-react'
+import { Testimonial } from '@/lib/types'
 
 const TestimonialsSection = () => {
-    const { data: testimonials, isLoading, isError } = useApi('/testimonials')
+    const { data: testimonials, isLoading, isError } = useApi<Testimonial[]>('/testimonials')
     const [current, setCurrent] = useState(0)
     const [autoplay, setAutoplay] = useState(true)
 

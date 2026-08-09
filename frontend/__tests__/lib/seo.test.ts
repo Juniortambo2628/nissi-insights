@@ -1,4 +1,5 @@
 import { buildCanonical, buildDynamicMetadata, buildArticleJsonLd, buildEventJsonLd } from '@/lib/seo'
+import type { Insight, CaseStudy, Event } from '@/lib/types'
 
 describe('buildCanonical', () => {
   it('builds canonical URL from path', () => {
@@ -104,61 +105,107 @@ describe('buildDynamicMetadata', () => {
 
 describe('buildArticleJsonLd', () => {
   it('returns null for falsy entity', () => {
-    expect(buildArticleJsonLd(null as any, '/test')).toBeNull()
+    expect(buildArticleJsonLd(null, '/test')).toBeNull()
   })
 
   it('builds valid Article structured data', () => {
     const entity = {
+      id: 1,
       title: 'Test Article',
-      description: 'A test article',
+      slug: 'test-article',
+      category: 'finance',
+      excerpt: 'A test article',
+      content: 'Content here',
+      image: null,
+      user_id: 1,
+      is_published: true,
+      published_at: null,
+      tags: [],
+      meta_title: null,
+      meta_description: null,
       created_at: '2025-01-01',
       updated_at: '2025-01-02',
-    }
+    } as Insight
     const result = buildArticleJsonLd(entity, '/test')
     expect(result).not.toBeNull()
-    expect(result['@type']).toBe('Article')
-    expect(result.headline).toBe('Test Article')
-    expect(result.datePublished).toBe('2025-01-01')
-    expect(result.dateModified).toBe('2025-01-02')
-    expect(result.author?.name).toBe('Nissi Insights')
+    expect(result!['@type']).toBe('Article')
+    expect(result!.headline).toBe('Test Article')
+    expect(result!.datePublished).toBe('2025-01-01')
+    expect(result!.dateModified).toBe('2025-01-02')
+    expect(result!.author?.name).toBe('Nissi Insights')
   })
 
   it('includes keywords from tags', () => {
     const entity = {
+      id: 1,
       title: 'Article',
+      slug: 'article',
+      category: 'finance',
       tags: ['finance', ' advisory'],
-    }
+      created_at: '2025-01-01',
+      updated_at: '2025-01-01',
+    } as Insight
     const result = buildArticleJsonLd(entity, '/test')
-    expect(result.keywords).toBe('finance,  advisory')
+    expect(result!.keywords).toBe('finance,  advisory')
   })
 })
 
 describe('buildEventJsonLd', () => {
   it('returns null for falsy entity', () => {
-    expect(buildEventJsonLd(null as any, '/test')).toBeNull()
+    expect(buildEventJsonLd(null, '/test')).toBeNull()
   })
 
   it('builds valid Event structured data', () => {
     const entity = {
+      id: 1,
       title: 'Annual Summit',
+      slug: 'annual-summit',
       description: 'Our yearly event',
+      overview: null,
       date: '2025-06-15',
+      duration_minutes: 60,
+      timezone: 'UTC',
       location: 'Nairobi',
-    }
+      image: null,
+      link: null,
+      status: 'upcoming' as const,
+      is_published: true,
+      tags: [],
+      meta_title: null,
+      meta_description: null,
+      created_at: '2025-01-01',
+      updated_at: '2025-01-01',
+    } as Event
     const result = buildEventJsonLd(entity, '/test')
     expect(result).not.toBeNull()
-    expect(result['@type']).toBe('Event')
-    expect(result.name).toBe('Annual Summit')
-    expect(result.startDate).toBe('2025-06-15')
-    expect(result.location).toEqual({ '@type': 'Place', name: 'Nairobi' })
+    expect(result!['@type']).toBe('Event')
+    expect(result!.name).toBe('Annual Summit')
+    expect(result!.startDate).toBe('2025-06-15')
+    expect(result!.location).toEqual({ '@type': 'Place', name: 'Nairobi' })
   })
 
   it('omits location when not provided', () => {
     const entity = {
+      id: 1,
       title: 'Virtual Event',
+      slug: 'virtual-event',
       description: 'Online',
-    }
+      overview: null,
+      date: '2025-06-15',
+      duration_minutes: 60,
+      timezone: 'UTC',
+      location: '',
+      image: null,
+      link: null,
+      status: 'upcoming' as const,
+      is_published: true,
+      tags: [],
+      meta_title: null,
+      meta_description: null,
+      created_at: '2025-01-01',
+      updated_at: '2025-01-01',
+    } as Event
     const result = buildEventJsonLd(entity, '/test')
-    expect(result.location).toBeUndefined()
+    expect(result!.location).toBeUndefined()
   })
 })

@@ -9,6 +9,7 @@ import { Plus, Pencil, Trash2, Building2, Save, X, ExternalLink } from 'lucide-r
 import { Input } from '@/components/ui/input'
 import api from '@/lib/api'
 import { getMediaUrl } from '@/lib/utils'
+import { Client } from '@/lib/types'
 
 import ImageUploader from '@/components/admin/ImageUploader'
 
@@ -22,7 +23,7 @@ import {
 import { useToast } from '@/hooks/use-toast'
 
 const AdminClientsPage = () => {
-    const { data: clients, mutate, isLoading } = useApi('/clients')
+    const { data: clients, mutate, isLoading } = useApi<Client[]>('/clients')
     const { toast } = useToast()
     const [searchTerm, setSearchTerm] = useState('')
     const [showForm, setShowForm] = useState(false)
@@ -42,7 +43,7 @@ const AdminClientsPage = () => {
         setShowForm(false)
     }
 
-    const handleEdit = (c: any) => {
+    const handleEdit = (c: Client) => {
         setForm({
             name: c.name,
             logo: c.logo || '',
@@ -103,7 +104,7 @@ const AdminClientsPage = () => {
         }
     }
 
-    const filteredClients = clients?.filter((c: any) =>
+    const filteredClients = clients?.filter((c) =>
         c.name?.toLowerCase().includes(searchTerm.toLowerCase())
     )
 
@@ -206,7 +207,7 @@ const AdminClientsPage = () => {
                                 <div className="w-20 h-3 bg-secondary/10 rounded" />
                             </div>
                         ))
-                    ) : filteredClients?.map((client: any) => (
+                    ) : filteredClients?.map((client) => (
                         <Card key={client.id} className="bg-secondary/10 border-border/50 hover:bg-secondary/20 transition-all">
                             <CardContent className="p-5">
                                 <div className="flex items-start justify-between mb-3">

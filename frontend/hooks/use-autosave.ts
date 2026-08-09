@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import api from '@/lib/api'
 
-interface UseAutosaveProps {
-    data: any
+interface UseAutosaveProps<T> {
+    data: T
     onSaveSuccess?: () => void
     endpoint?: string // If provided, will PUT to this endpoint
     localStorageKey?: string // If provided, will save to localStorage
@@ -10,14 +10,14 @@ interface UseAutosaveProps {
     enabled?: boolean
 }
 
-export const useAutosave = ({
+export const useAutosave = <T>({
     data,
     onSaveSuccess,
     endpoint,
     localStorageKey,
     delay = 2000,
     enabled = true
-}: UseAutosaveProps) => {
+}: UseAutosaveProps<T>) => {
     const [isSaving, setIsSaving] = useState(false)
     const [lastSaved, setLastSaved] = useState<Date | null>(null)
     const [error, setError] = useState<string | null>(null)
@@ -46,9 +46,10 @@ export const useAutosave = ({
                 }
                 setLastSaved(new Date())
                 onSaveSuccess?.()
-            } catch (err: any) {
+            } catch (err: unknown) {
                 console.error('Autosave failed:', err)
-                setError(err.response?.data?.message || 'Autosave failed')
+                const message = err instanceof Error ? err.message : 'Autosave failed'
+                setError(message)
             } finally {
                 setIsSaving(false)
             }

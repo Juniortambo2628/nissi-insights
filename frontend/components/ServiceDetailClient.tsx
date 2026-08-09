@@ -9,6 +9,7 @@ import Link from 'next/link'
 import VideoHero from '@/components/VideoHero'
 import DetailErrorState from '@/components/DetailErrorState'
 import { categoryVideos } from '@/lib/constants'
+import type { Service } from '@/lib/types'
 
 const benefits = [
     'Data-driven insights tailored to your market',
@@ -19,17 +20,17 @@ const benefits = [
 ]
 
 interface ServiceDetailClientProps {
-    initialData: any
+    initialData: Service | null
     slug: string
 }
 
 export default function ServiceDetailClient({ initialData, slug }: ServiceDetailClientProps) {
-    const { data: service, isLoading, isError } = useApi(slug ? `/services/${slug}` : null, {
+    const { data: service, isLoading, isError } = useApi<Service | null>(slug ? `/services/${slug}` : null, {
         fallbackData: initialData
     })
-    const { data: allServices } = useApi('/services')
+    const { data: allServices } = useApi<Service[]>('/services')
 
-    const relatedServices = allServices?.filter((s: any) => s.slug !== slug && s.category === service?.category).slice(0, 3)
+    const relatedServices = allServices?.filter((s) => s.slug !== slug && s.category === service?.category).slice(0, 3)
 
     if (isLoading && !service) {
         return (
@@ -121,7 +122,7 @@ export default function ServiceDetailClient({ initialData, slug }: ServiceDetail
                             </Link>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            {relatedServices.map((rs: any) => (
+                            {relatedServices.map((rs) => (
                                 <Link key={rs.id} href={`/services/${rs.slug}`} className="group block bg-card p-8 border border-border/50 hover:border-primary/40 transition-all">
                                     <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors mb-4">{rs.title}</h3>
                                     <p className="text-muted-foreground text-sm line-clamp-2">{rs.description}</p>

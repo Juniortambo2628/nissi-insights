@@ -121,7 +121,7 @@ export default function EventsClient() {
 }
 
 const EventCard = ({ event, isPast = false }: { event: Event, isPast?: boolean }) => {
-    const ended = isPast || (new Date(event.date).getTime() + (event.duration_minutes || 60) * 60 * 1000) < new Date()
+    const ended = isPast || (new Date(event.date).getTime() + (event.duration_minutes || 60) * 60 * 1000) < Date.now()
 
     return (
         <motion.div 

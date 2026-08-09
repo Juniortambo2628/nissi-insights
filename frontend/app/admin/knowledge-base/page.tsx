@@ -40,13 +40,28 @@ import ImageUploader from '@/components/admin/ImageUploader'
 import FileUploader from '@/components/admin/FileUploader'
 import { getMediaUrl } from '@/lib/utils'
 
+interface KnowledgeBaseResource {
+    id: number
+    title: string
+    type: string
+    description: string | null
+    content: string | null
+    file_path: string | null
+    external_link: string | null
+    thumbnail: string | null
+    tags: string[]
+    is_published: boolean
+    created_at: string
+    updated_at: string
+}
+
 
 const AdminKnowledgeBasePage = () => {
-    const { data: resources, isLoading, mutate } = useApi('/resources?all=true')
+    const { data: resources, isLoading, mutate } = useApi<KnowledgeBaseResource[]>('/resources?all=true')
     const { toast } = useToast()
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
-    const [selectedResource, setSelectedResource] = useState<any>(null)
+    const [selectedResource, setSelectedResource] = useState<KnowledgeBaseResource | null>(null)
     const [isSaving, setIsSaving] = useState(false)
     const [tagInput, setTagInput] = useState('')
 
@@ -62,7 +77,7 @@ const AdminKnowledgeBasePage = () => {
         is_published: false
     })
 
-    const handleOpenModal = (resource: any = null) => {
+    const handleOpenModal = (resource: KnowledgeBaseResource | null = null) => {
         if (resource) {
             setSelectedResource(resource)
             let parsedTags = []
@@ -169,7 +184,7 @@ const AdminKnowledgeBasePage = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border/30">
-                                {resources?.map((resource: any) => (
+                                {resources?.map((resource) => (
                                     <tr key={resource.id} className="hover:bg-primary/5 transition-colors group">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">

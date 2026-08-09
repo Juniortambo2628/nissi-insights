@@ -11,6 +11,7 @@ import { readingTime } from '@/lib/reading-time'
 import SocialShare from '@/components/SocialShare'
 import { getMediaUrl } from '@/lib/utils'
 import DetailErrorState from '@/components/DetailErrorState'
+import { Insight } from '@/lib/types'
 
 interface InsightDetailClientProps {
     initialData: any
@@ -21,7 +22,7 @@ export default function InsightDetailClient({ initialData, slug }: InsightDetail
     const { data: insight, isLoading, isError } = useApi(slug ? `/insights/${slug}` : null, {
         fallbackData: initialData
     })
-    const { data: allInsights } = useApi('/insights')
+    const { data: allInsights } = useApi<Insight[]>('/insights')
 
     const relatedInsights = allInsights?.filter((i: any) => i.slug !== slug && i.category === insight?.category).slice(0, 3)
 

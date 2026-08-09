@@ -5,6 +5,7 @@ import { motion, useInView, useScroll, useTransform } from 'framer-motion'
 import Image from 'next/image'
 import { useApi } from '@/hooks/use-api'
 import { useSettings } from '@/hooks/use-settings'
+import { Stat } from '@/lib/types'
 
 function AnimatedCounter({ target, suffix = '' }: { target: string; suffix?: string }) {
     const ref = useRef<HTMLSpanElement>(null)
@@ -40,7 +41,7 @@ function AnimatedCounter({ target, suffix = '' }: { target: string; suffix?: str
 }
 
 const StatsSection = () => {
-    const { data: stats, isLoading: statsLoading } = useApi('/stats')
+    const { data: stats, isLoading: statsLoading } = useApi<Stat[]>('/stats')
     const { getSetting } = useSettings()
     const { scrollY } = useScroll()
     const backgroundY = useTransform(scrollY, [0, 3000], [0, -80])

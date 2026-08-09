@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import type { Insight, CaseStudy, Event, Resource } from './types'
 
 export const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://nissi-insights.com'
 
@@ -73,15 +74,14 @@ export function buildDynamicMetadata(
     }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function buildArticleJsonLd(entity: any | null, path: string) {
+export function buildArticleJsonLd(entity: (Insight | CaseStudy | Resource) | null, path: string) {
     if (!entity) return null
 
     return {
         '@context': 'https://schema.org',
         '@type': 'Article',
         headline: entity.meta_title || entity.title,
-        description: entity.meta_description || entity.description || '',
+        description: entity.meta_description || ('excerpt' in entity ? entity.excerpt : null) || ('description' in entity ? entity.description : null) || '',
         datePublished: entity.created_at,
         dateModified: entity.updated_at || entity.created_at,
         author: {
@@ -103,12 +103,11 @@ export function buildArticleJsonLd(entity: any | null, path: string) {
             '@id': buildCanonical(path),
         },
         ...(entity.image && { image: entity.image }),
-        ...(entity.tags && entity.tags.length > 0 && { keywords: entity.tags.join(', ') }),
+        ...('tags' in entity && entity.tags && entity.tags.length > 0 && { keywords: entity.tags.join(', ') }),
     }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function buildEventJsonLd(entity: any | null, path: string) {
+export function buildEventJsonLd(entity: Event | null, path: string) {
     if (!entity) return null
 
     return {

@@ -1,7 +1,8 @@
 import React from 'react'
 import PillarDetailClient from '@/components/PillarDetailClient'
-import { buildDynamicMetadata, buildArticleJsonLd } from '@/lib/seo'
+import { buildDynamicMetadata } from '@/lib/seo'
 import { fetchEntity } from '@/lib/api'
+import type { Pillar } from '@/lib/types'
 
 interface PageProps {
     params: Promise<{ slug: string }>
@@ -9,7 +10,7 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps) {
     const { slug } = await params
-    const pillar = await fetchEntity(slug, 'pillars')
+    const pillar = await fetchEntity<Pillar>(slug, 'pillars')
 
     return buildDynamicMetadata(pillar, {
         path: `/pillars/${slug}`,
@@ -21,17 +22,10 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function Page({ params }: PageProps) {
     const { slug } = await params
-    const initialData = await fetchEntity(slug, 'pillars')
-    const jsonLd = buildArticleJsonLd(initialData, `/pillars/${slug}`)
+    const initialData = await fetchEntity<Pillar>(slug, 'pillars')
 
     return (
         <>
-            {jsonLd && (
-                <script
-                    type="application/ld+json"
-                    dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-                />
-            )}
             <PillarDetailClient initialData={initialData} slug={slug} />
         </>
     )

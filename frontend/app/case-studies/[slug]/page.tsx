@@ -2,6 +2,7 @@ import React from 'react'
 import CaseStudyDetailClient from '@/components/CaseStudyDetailClient'
 import { buildDynamicMetadata, buildArticleJsonLd } from '@/lib/seo'
 import { fetchEntity } from '@/lib/api'
+import type { CaseStudy } from '@/lib/types'
 
 interface PageProps {
     params: Promise<{ slug: string }>
@@ -9,7 +10,7 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps) {
     const { slug } = await params
-    const caseStudy = await fetchEntity(slug, 'case-studies')
+    const caseStudy = await fetchEntity<CaseStudy>(slug, 'case-studies')
 
     return buildDynamicMetadata(caseStudy, {
         path: `/case-studies/${slug}`,
@@ -21,7 +22,7 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function Page({ params }: PageProps) {
     const { slug } = await params
-    const initialData = await fetchEntity(slug, 'case-studies')
+    const initialData = await fetchEntity<CaseStudy>(slug, 'case-studies')
     const jsonLd = buildArticleJsonLd(initialData, `/case-studies/${slug}`)
 
     return (

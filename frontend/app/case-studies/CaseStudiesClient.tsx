@@ -12,10 +12,11 @@ import { cn, getMediaUrl } from '@/lib/utils'
 import ViewToggle, { ViewMode } from '@/components/ViewToggle'
 import { useSettings } from '@/hooks/use-settings'
 import CategoryFilter from '@/components/CategoryFilter'
+import { CaseStudy } from '@/lib/types'
 
 export default function CaseStudiesClient() {
     const { getSetting } = useSettings()
-    const { data: caseStudies, isLoading } = useApi('/case-studies')
+    const { data: caseStudies, isLoading } = useApi<CaseStudy[]>('/case-studies')
     const [viewMode, setViewMode] = React.useState<ViewMode>('grid')
 
     const heroMedia = getMediaUrl(getSetting('hero_case_studies_media', '/assets/videos/services/all-services-video.mp4'))

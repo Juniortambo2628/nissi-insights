@@ -7,8 +7,18 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Eye, Users, TrendingUp, Globe, Clock, ExternalLink } from 'lucide-react'
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
+interface DashboardAnalytics {
+    total_views: number
+    today_views: number
+    week_views: number
+    unique_visitors: number
+    views_over_time: Array<{ date: string; views: number }>
+    top_pages: Array<{ path: string; views: number }>
+    top_referrers: Array<{ referrer: string; count: number }>
+}
+
 const AdminDashboardPage = () => {
-    const { data: analytics, isLoading } = useApi('/analytics/summary')
+    const { data: analytics, isLoading } = useApi<DashboardAnalytics>('/analytics/summary')
 
     const statCards = [
         { label: 'Total Views', value: analytics?.total_views ?? 0, icon: Eye, color: 'text-blue-400', bg: 'bg-blue-400/10' },
@@ -149,7 +159,7 @@ const AdminDashboardPage = () => {
                             </div>
                         ) : (
                             <div className="space-y-3">
-                                {analytics?.top_referrers?.map((ref: any, i: number) => (
+                                {analytics?.top_referrers?.map((ref, i) => (
                                     <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10">
                                         <div className="flex items-center gap-3">
                                             <Globe size={16} className="text-muted-foreground" />

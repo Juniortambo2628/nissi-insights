@@ -11,10 +11,11 @@ import { cn, getMediaUrl } from '@/lib/utils'
 import ViewToggle, { ViewMode } from '@/components/ViewToggle'
 import { useSettings } from '@/hooks/use-settings'
 import CategoryFilter from '@/components/CategoryFilter'
+import { Insight } from '@/lib/types'
 
 export default function InsightsClient() {
     const { getSetting } = useSettings()
-    const { data: insights, isLoading } = useApi('/insights')
+    const { data: insights, isLoading } = useApi<Insight[]>('/insights')
     const [viewMode, setViewMode] = React.useState<ViewMode>('grid')
 
     const heroMedia = getMediaUrl(getSetting('hero_insights_media', '/assets/videos/services/all-services-video.mp4'))

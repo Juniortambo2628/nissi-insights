@@ -30,12 +30,12 @@ interface Event {
     title: string
     slug: string
     description: string
-    overview: string
+    overview: string | null
     date: string
     duration_minutes?: number
     location: string
-    image: string
-    link: string
+    image: string | null
+    link: string | null
     status: 'upcoming' | 'past'
     documents?: EventDocument[]
 }
@@ -47,11 +47,11 @@ interface EventDetailsClientProps {
 
 export default function EventDetailsClient({ initialData, slug }: EventDetailsClientProps) {
     const { toast } = useToast()
-    const { data: event, isLoading, isError } = useApi<Event>(slug ? `/events/${slug}` : null, {
+    const { data: event, isLoading, isError } = useApi<Event | null>(slug ? `/events/${slug}` : null, {
         fallbackData: initialData
     })
 
-    const isEventEnded = event ? (new Date(event.date).getTime() + (event.duration_minutes || 60) * 60 * 1000) < new Date() : false
+    const isEventEnded = event ? (new Date(event.date).getTime() + (event.duration_minutes || 60) * 60 * 1000) < Date.now() : false
     
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [isRegistered, setIsRegistered] = useState(false)

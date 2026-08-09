@@ -8,9 +8,10 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Plus, Pencil, Trash2, ArrowUpDown, Hash } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import api from '@/lib/api'
+import { Stat } from '@/lib/types'
 
 const AdminStatsPage = () => {
-    const { data: stats, mutate, isLoading } = useApi('/stats')
+    const { data: stats, mutate, isLoading } = useApi<Stat[]>('/stats')
     const [searchTerm, setSearchTerm] = useState('')
     const [showForm, setShowForm] = useState(false)
     const [editingId, setEditingId] = useState<number | null>(null)
@@ -27,7 +28,7 @@ const AdminStatsPage = () => {
         setShowForm(false)
     }
 
-    const handleEdit = (s: any) => {
+    const handleEdit = (s: Stat) => {
         setForm({
             label: s.label,
             value: s.value,
@@ -63,7 +64,7 @@ const AdminStatsPage = () => {
         }
     }
 
-    const filteredStats = stats?.filter((s: any) => 
+    const filteredStats = stats?.filter((s) => 
         s.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
         s.value.toLowerCase().includes(searchTerm.toLowerCase())
     )
@@ -144,7 +145,7 @@ const AdminStatsPage = () => {
                                 </div>
                             </div>
                         ))
-                    ) : filteredStats?.map((stat: any) => (
+                    ) : filteredStats?.map((stat) => (
                         <Card key={stat.id} className="bg-secondary/10 border-border/50 hover:bg-secondary/20 transition-all">
                             <CardContent className="p-6">
                                 <div className="flex items-start justify-between mb-4">

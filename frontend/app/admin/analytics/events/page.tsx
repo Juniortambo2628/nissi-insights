@@ -27,8 +27,17 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { format } from 'date-fns'
 
+interface EventAnalytics {
+    total_events: number
+    total_registrations: number
+    attendance_rate: number
+    registrations_over_time: Array<{ date: string; count: number }>
+    registrations_by_event: Array<{ id: number; title: string; date: string; registrations_count: number }>
+    upcoming_events: Array<{ id: number; title: string; date: string; registrations_count: number }>
+}
+
 const EventAnalyticsPage = () => {
-    const { data: stats, isLoading } = useApi('/analytics/events')
+    const { data: stats, isLoading } = useApi<EventAnalytics>('/analytics/events')
 
     if (isLoading || !stats) {
         return (
@@ -130,7 +139,7 @@ const EventAnalyticsPage = () => {
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-6">
-                            {stats.registrations_by_event.map((event: any, i: number) => (
+                            {stats.registrations_by_event.map((event, i) => (
                                 <div key={event.id} className="flex items-center justify-between">
                                     <div className="flex-1 min-w-0 pr-4">
                                         <div className="flex items-center gap-2">
@@ -169,7 +178,7 @@ const EventAnalyticsPage = () => {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-border/30">
-                                        {stats.upcoming_events.map((event: any) => {
+                                        {stats.upcoming_events.map((event) => {
                                             const capacity = 100 // Example
                                             const percentage = Math.min((event.registrations_count / capacity) * 100, 100)
                                             

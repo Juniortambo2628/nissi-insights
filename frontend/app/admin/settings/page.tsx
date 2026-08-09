@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select"
 import api from '@/lib/api'
 import ImageUploader from '@/components/admin/ImageUploader'
-import { SiteSetting } from '@/types/api'
+import { SiteSetting } from '@/lib/types'
 import { useToast } from '@/hooks/use-toast'
 import { Reorder } from 'framer-motion'
 import { getMediaUrl } from '@/lib/utils'
@@ -42,7 +42,7 @@ const AdminSettingsPage = () => {
                     if (s.key === 'main_nav_links') {
                         try {
                             const parsed = JSON.parse(s.value || '[]')
-                            setNavLinks(parsed.map((l: any, i: number) => ({ 
+                            setNavLinks(parsed.map((l: {id?: string; name: string; href: string}, i: number) => ({ 
                                 ...l, 
                                 id: l.id || `link-${i}-${Math.random().toString(36).substr(2, 9)}` 
                             })))

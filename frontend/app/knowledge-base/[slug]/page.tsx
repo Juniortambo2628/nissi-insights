@@ -2,6 +2,7 @@ import React from 'react'
 import ResourceDetailsClient from '@/components/ResourceDetailsClient'
 import { buildDynamicMetadata, buildArticleJsonLd } from '@/lib/seo'
 import { fetchEntity } from '@/lib/api'
+import type { Resource } from '@/lib/types'
 
 interface PageProps {
     params: Promise<{ slug: string }>
@@ -9,7 +10,7 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps) {
     const { slug } = await params
-    const resource = await fetchEntity(slug, 'resources')
+    const resource = await fetchEntity<Resource>(slug, 'resources')
 
     return buildDynamicMetadata(resource, {
         path: `/knowledge-base/${slug}`,
@@ -21,7 +22,7 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function Page({ params }: PageProps) {
     const { slug } = await params
-    const initialData = await fetchEntity(slug, 'resources')
+    const initialData = await fetchEntity<Resource>(slug, 'resources')
     const jsonLd = buildArticleJsonLd(initialData, `/knowledge-base/${slug}`)
 
     return (

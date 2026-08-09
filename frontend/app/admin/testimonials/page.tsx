@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import ImageUploader from '@/components/admin/ImageUploader'
 import api from '@/lib/api'
 import { getMediaUrl } from '@/lib/utils'
+import { Testimonial } from '@/lib/types'
 
 import { 
   Dialog, 
@@ -21,7 +22,7 @@ import {
 import { useToast } from '@/hooks/use-toast'
 
 const AdminTestimonialsPage = () => {
-    const { data: testimonials, mutate, isLoading } = useApi('/testimonials')
+    const { data: testimonials, mutate, isLoading } = useApi<Testimonial[]>('/testimonials')
     const { toast } = useToast()
     const [searchTerm, setSearchTerm] = useState('')
     const [showForm, setShowForm] = useState(false)
@@ -44,7 +45,7 @@ const AdminTestimonialsPage = () => {
         setShowForm(false)
     }
 
-    const handleEdit = (t: any) => {
+    const handleEdit = (t: Testimonial) => {
         setForm({
             name: t.name || t.client_name || '',
             role: t.role || '',
@@ -108,7 +109,7 @@ const AdminTestimonialsPage = () => {
         }
     }
 
-    const filteredTestimonials = testimonials?.filter((t: any) =>
+    const filteredTestimonials = testimonials?.filter((t) =>
         t.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         t.client_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         t.company?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -235,7 +236,7 @@ const AdminTestimonialsPage = () => {
                                 </div>
                             </div>
                         ))
-                    ) : filteredTestimonials?.map((t: any) => (
+                    ) : filteredTestimonials?.map((t) => (
                         <Card key={t.id} className="bg-secondary/10 border-border/50 hover:bg-secondary/20 transition-all">
                             <CardContent className="p-6">
                                 <div className="flex items-start justify-between mb-4">

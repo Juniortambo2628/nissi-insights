@@ -11,9 +11,14 @@ import VideoHero from '@/components/VideoHero'
 import CategoryFilter from '@/components/CategoryFilter'
 import { useSettings } from '@/hooks/use-settings'
 import Link from 'next/link'
+import type { Resource } from '@/lib/types'
+
+interface KnowledgeBaseResource extends Resource {
+    type?: string
+}
 
 export default function KnowledgeBaseClient() {
-    const { data: resources, isLoading, isError } = useApi('/resources')
+    const { data: resources, isLoading, isError } = useApi<KnowledgeBaseResource[]>('/resources')
     const { getSetting } = useSettings()
     const [searchQuery, setSearchQuery] = useState('')
     const [activeType, setActiveType] = useState('All')

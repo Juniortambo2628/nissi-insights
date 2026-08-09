@@ -3,10 +3,16 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import api from '@/lib/api'
+import type { User } from '@/lib/types'
+
+interface LoginCredentials {
+    email: string
+    password: string
+}
 
 interface AuthContextType {
-    user: any | null
-    login: (credentials: any) => Promise<void>
+    user: User | null
+    login: (credentials: LoginCredentials) => Promise<void>
     logout: () => Promise<void>
     isLoading: boolean
 }
@@ -14,7 +20,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-    const [user, setUser] = useState<any | null>(null)
+    const [user, setUser] = useState<User | null>(null)
     const [isLoading, setIsLoading] = useState(true)
     const router = useRouter()
 
@@ -34,7 +40,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
     }, [])
 
-    const login = async (credentials: any) => {
+    const login = async (credentials: LoginCredentials) => {
         const res = await api.post('/login', credentials)
         const { token, user } = res.data
         localStorage.setItem('auth_token', token)

@@ -30,10 +30,10 @@ const AdminWidgetsPage = () => {
             Object.values(settingsByGroup).flat().forEach((s) => {
                 flat[s.key] = s.value || ''
                 if (s.key === 'chatbot_faq_data') {
-                    try { setFaqData(JSON.parse(s.value || '[]')) } catch (e) {}
+                    try { setFaqData(JSON.parse(s.value || '[]')) } catch (e) { console.warn('Failed to parse chatbot_faq_data:', e) }
                 }
                 if (s.key === 'chatbot_quick_replies') {
-                    try { setQuickReplies(JSON.parse(s.value || '[]')) } catch (e) {}
+                    try { setQuickReplies(JSON.parse(s.value || '[]')) } catch (e) { console.warn('Failed to parse chatbot_quick_replies:', e) }
                 }
             })
             setLocalSettings(flat)

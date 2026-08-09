@@ -10,6 +10,7 @@ import Image from 'next/image'
 import SocialShare from '@/components/SocialShare'
 import { getMediaUrl } from '@/lib/utils'
 import DetailErrorState from '@/components/DetailErrorState'
+import { CaseStudy } from '@/lib/types'
 
 interface CaseStudyDetailClientProps {
     initialData: any
@@ -20,7 +21,7 @@ export default function CaseStudyDetailClient({ initialData, slug }: CaseStudyDe
     const { data: caseStudy, isLoading, isError } = useApi(slug ? `/case-studies/${slug}` : null, {
         fallbackData: initialData
     })
-    const { data: allCaseStudies } = useApi('/case-studies')
+    const { data: allCaseStudies } = useApi<CaseStudy[]>('/case-studies')
 
     const relatedStudies = allCaseStudies?.filter((cs: any) => cs.slug !== slug && cs.category === caseStudy?.category).slice(0, 2)
 

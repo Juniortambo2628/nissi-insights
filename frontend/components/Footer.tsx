@@ -8,6 +8,7 @@ import NewsletterSignup from './NewsletterSignup'
 import { useApi } from '@/hooks/use-api'
 import { useTheme } from 'next-themes'
 import { getMediaUrl } from '@/lib/utils'
+import { Service } from '@/lib/types'
 import EnergyStocks from './sections/EnergyStocks'
 import { useSettings } from '@/hooks/use-settings'
 
@@ -16,7 +17,7 @@ const Footer = () => {
     const [mounted, setMounted] = React.useState(false)
     const { getSetting, settingsByGroup } = useSettings()
 
-    const { data: services } = useApi('/services')
+    const { data: services } = useApi<Service[]>('/services')
 
     const logoWhiteBg = getMediaUrl(getSetting('logo_light', '/logos/nissi-landscape-white.png'))
     const logoBlackBg = getMediaUrl(getSetting('logo_dark', '/logos/nissi-landscape-black.png'))

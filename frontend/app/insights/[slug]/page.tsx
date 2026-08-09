@@ -2,6 +2,7 @@ import React from 'react'
 import InsightDetailClient from '@/components/InsightDetailClient'
 import { buildDynamicMetadata, buildArticleJsonLd } from '@/lib/seo'
 import { fetchEntity } from '@/lib/api'
+import type { Insight } from '@/lib/types'
 
 interface PageProps {
     params: Promise<{ slug: string }>
@@ -9,7 +10,7 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps) {
     const { slug } = await params
-    const insight = await fetchEntity(slug, 'insights')
+    const insight = await fetchEntity<Insight>(slug, 'insights')
 
     return buildDynamicMetadata(insight, {
         path: `/insights/${slug}`,
@@ -21,7 +22,7 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function Page({ params }: PageProps) {
     const { slug } = await params
-    const initialData = await fetchEntity(slug, 'insights')
+    const initialData = await fetchEntity<Insight>(slug, 'insights')
     const jsonLd = buildArticleJsonLd(initialData, `/insights/${slug}`)
 
     return (

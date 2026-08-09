@@ -10,9 +10,10 @@ import { ArrowRight, ArrowUpRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { getMediaUrl } from '@/lib/utils'
+import { CaseStudy } from '@/lib/types'
 
 const CaseStudiesPreview = () => {
-    const { data: caseStudies, isLoading, isError } = useApi('/case-studies')
+    const { data: caseStudies, isLoading, isError } = useApi<CaseStudy[]>('/case-studies')
     const [activeIndex, setActiveIndex] = useState(0)
 
     if (isLoading) return <div className="py-20 text-center text-slate-400">Loading case studies...</div>

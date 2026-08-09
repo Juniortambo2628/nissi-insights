@@ -9,6 +9,7 @@ import { cn, getMediaUrl } from '@/lib/utils'
 import ViewToggle, { ViewMode } from '@/components/ViewToggle'
 import { useSettings } from '@/hooks/use-settings'
 import VideoHero from '@/components/VideoHero'
+import { Service } from '@/lib/types'
 
 const categoryMeta: Record<string, { icon: any; color: string; gradient: string; description: string }> = {
     'Energy Advisory': {
@@ -33,7 +34,7 @@ const categoryMeta: Record<string, { icon: any; color: string; gradient: string;
 
 export default function ServicesClient() {
     const { getSetting } = useSettings()
-    const { data: services, isLoading } = useApi('/services')
+    const { data: services, isLoading } = useApi<Service[]>('/services')
     const [viewMode, setViewMode] = React.useState<ViewMode>('grid')
 
     const heroMedia = getMediaUrl(getSetting('hero_services_media', '/NI-Digital-Assets/financial-technology.jpg'))

@@ -2,6 +2,7 @@ import React from 'react'
 import ServiceDetailClient from '@/components/ServiceDetailClient'
 import { buildDynamicMetadata } from '@/lib/seo'
 import { fetchEntity, appUrl } from '@/lib/api'
+import type { Service } from '@/lib/types'
 
 interface PageProps {
     params: Promise<{ slug: string }>
@@ -9,7 +10,7 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps) {
     const { slug } = await params
-    const service = await fetchEntity(slug, 'services')
+    const service = await fetchEntity<Service>(slug, 'services')
 
     return buildDynamicMetadata(service, {
         path: `/services/${slug}`,
@@ -21,7 +22,7 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function Page({ params }: PageProps) {
     const { slug } = await params
-    const initialData = await fetchEntity(slug, 'services')
+    const initialData = await fetchEntity<Service>(slug, 'services')
 
     const jsonLd = initialData ? {
         '@context': 'https://schema.org',

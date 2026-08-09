@@ -3,9 +3,10 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import { useApi } from '@/hooks/use-api'
+import { Client } from '@/lib/types'
 
 const ClientsSection = () => {
-    const { data: clients, isLoading, isError } = useApi('/clients')
+    const { data: clients, isLoading, isError } = useApi<Client[]>('/clients')
 
     if (isLoading || isError || !clients || clients.length === 0) return null
 
