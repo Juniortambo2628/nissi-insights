@@ -104,7 +104,7 @@ class ContentBroadcastController extends Controller
     }
 
     /**
-     * @return array{0: ?Insight|?Resource, 1: ?string}
+     * @return array{0: ?Insight|?\App\Models\Resource, 1: ?string}
      */
     protected function resolveContent(string $type, int $id): array
     {
@@ -113,7 +113,7 @@ class ContentBroadcastController extends Controller
             : Resource::find($id);
 
         if (! $content) {
-            return [null, ucfirst($type)." not found."];
+            return [null, ucfirst($type).' not found.'];
         }
 
         return [$content, null];

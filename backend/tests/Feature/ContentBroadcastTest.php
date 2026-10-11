@@ -2,7 +2,6 @@
 
 use App\Mail\TemplatedMail;
 use App\Models\EmailContact;
-use App\Models\EmailTemplate;
 use App\Models\Insight;
 use App\Models\Resource;
 use App\Models\Subscriber;
