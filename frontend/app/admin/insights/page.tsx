@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import AdminLayout from '@/components/admin/AdminLayout'
 import { useApi } from '@/hooks/use-api'
 import { Button } from '@/components/ui/button'
-import { Plus, Pencil, Trash2, Search, Calendar, User, ImageIcon, LayoutGrid, List, MoreVertical, ExternalLink } from 'lucide-react'
+import { Plus, Pencil, Trash2, Search, Calendar, User, ImageIcon, LayoutGrid, List, MoreVertical, ExternalLink, Send } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import ImageUploader from '@/components/admin/ImageUploader'
 import api from '@/lib/api'
@@ -280,6 +280,11 @@ const AdminInsightsPage = () => {
                                                     <DropdownMenuItem className="gap-2" asChild>
                                                         <a href={`/insights/${insight.slug}`} target="_blank"><ExternalLink size={14} /> View Live</a>
                                                     </DropdownMenuItem>
+                                                    {insight.is_published && (
+                                                        <DropdownMenuItem className="gap-2" asChild>
+                                                            <a href={`/admin/broadcasts?type=insight&id=${insight.id}`}><Send size={14} /> Email to Contacts</a>
+                                                        </DropdownMenuItem>
+                                                    )}
                                                     <DropdownMenuItem onClick={() => handleDelete(insight.id)} className="gap-2 text-destructive">
                                                         <Trash2 size={14} /> Delete
                                                     </DropdownMenuItem>
@@ -377,6 +382,11 @@ const AdminInsightsPage = () => {
                                                 <td className="p-4 text-right">
                                                     <div className="flex items-center justify-end gap-2">
                                                         <Button variant="ghost" size="sm" onClick={() => handleEdit(insight)}><Pencil size={14} /></Button>
+                                                        {insight.is_published && (
+                                                            <Button variant="ghost" size="sm" asChild title="Email to Contacts">
+                                                                <a href={`/admin/broadcasts?type=insight&id=${insight.id}`}><Send size={14} /></a>
+                                                            </Button>
+                                                        )}
                                                         <Button variant="ghost" size="sm" onClick={() => handleDelete(insight.id)} className="text-destructive"><Trash2 size={14} /></Button>
                                                     </div>
                                                 </td>

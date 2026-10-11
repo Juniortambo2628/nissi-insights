@@ -30,7 +30,8 @@ import {
     Activity,
     Map,
     FileX,
-    HeartPulse
+    HeartPulse,
+    Send
 } from 'lucide-react'
 
 import { cn, getMediaUrl } from '@/lib/utils'
@@ -80,6 +81,7 @@ const AdminSidebar = () => {
         { name: 'Testimonials', href: '/admin/testimonials', icon: Quote },
         { name: 'Clients', href: '/admin/clients', icon: Building2 },
         { name: 'Subscribers', href: '/admin/subscribers', icon: Users },
+        { name: 'Email Campaigns', href: '/admin/broadcasts', icon: Send },
         { name: 'Email', href: '/admin/email', icon: Mail },
         { name: 'Legal', href: '/admin/legal', icon: ShieldCheck },
         { name: 'Content', href: '/admin/content', icon: PenTool },

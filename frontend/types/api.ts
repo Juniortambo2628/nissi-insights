@@ -116,6 +116,23 @@ export interface EmailLog {
   sendable?: unknown;
 }
 
+export interface EmailContact {
+  id: number;
+  email: string;
+  name: string | null;
+  source: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ContentBroadcastResult {
+  message: string;
+  sent: number;
+  failed: number;
+  total: number;
+  errors: string[];
+}
+
 export interface ApiResponse<T> {
   data: T;
   message?: string;

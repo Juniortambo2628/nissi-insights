@@ -5,6 +5,8 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CaseStudyController;
 use App\Http\Controllers\Api\ClientController;
 use App\Http\Controllers\Api\ConsultationRequestController;
+use App\Http\Controllers\Api\ContentBroadcastController;
+use App\Http\Controllers\Api\EmailContactController;
 use App\Http\Controllers\Api\EmailLogController;
 use App\Http\Controllers\Api\EmailTemplateController;
 use App\Http\Controllers\Api\EventController;
@@ -207,4 +209,12 @@ Route::middleware('auth:sanctum')->group(function () {
     // Email Logs
     Route::get('/email-logs', [EmailLogController::class, 'index']);
     Route::get('/email-logs/summary', [EmailLogController::class, 'summary']);
+
+    // Email Contacts (saved recipient lists for campaigns)
+    Route::get('/email-contacts', [EmailContactController::class, 'index']);
+    Route::post('/email-contacts', [EmailContactController::class, 'store']);
+    Route::delete('/email-contacts/{emailContact}', [EmailContactController::class, 'destroy']);
+
+    // Content broadcasts — email a published report/article to contacts
+    Route::post('/content-broadcasts', [ContentBroadcastController::class, 'send']);
 });

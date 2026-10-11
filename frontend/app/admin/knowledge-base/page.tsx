@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState } from 'react'
+import Link from 'next/link'
 import AdminLayout from '@/components/admin/AdminLayout'
 import { useApi } from '@/hooks/use-api'
 import { 
@@ -12,7 +13,8 @@ import {
     FileText,
     CloudUpload,
     Check,
-    X
+    X,
+    Send
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -221,6 +223,11 @@ const AdminKnowledgeBasePage = () => {
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end" className="bg-background border-border">
                                                     <DropdownMenuItem onClick={() => handleOpenModal(resource)} className="gap-2"><Edit2 size={14} /> Edit</DropdownMenuItem>
+                                                    {resource.is_published && (
+                                                        <DropdownMenuItem asChild className="gap-2">
+                                                            <Link href={`/admin/broadcasts?type=resource&id=${resource.id}`}><Send size={14} /> Email to Contacts</Link>
+                                                        </DropdownMenuItem>
+                                                    )}
                                                     <DropdownMenuItem onClick={() => { setSelectedResource(resource); setIsDeleting(true); }} className="gap-2 text-destructive"><Trash2 size={14} /> Delete</DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
