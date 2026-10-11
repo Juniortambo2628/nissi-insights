@@ -93,8 +93,11 @@ jobs:
 
       - name: Deploy to Server
         run: |
-          rsync -avz --delete \
-            -e "ssh -i ~/.ssh/deploy_key -p ${{ env.SERVER_PORT }}" \
+          SSH_OPTS="-i $HOME/.ssh/deploy_key -p ${{ env.SERVER_PORT }}"
+          ssh $SSH_OPTS ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }} \
+            'rm -rf "${{ env.APP_PATH }}/.deploy_new" && mkdir -p "${{ env.APP_PATH }}/.deploy_new"'
+          tar czf - \
+            -C backend \
             --exclude="vendor" \
             --exclude="storage" \
             --exclude="public" \
@@ -105,13 +108,40 @@ jobs:
             --exclude="debug_settings.php" \
             --exclude="init_hero_media.php" \
             --exclude="out.txt" \
-            backend/ ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }}:${{ env.APP_PATH }}/
+            . | ssh $SSH_OPTS ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }} \
+              'tar xzf - -C "${{ env.APP_PATH }}/.deploy_new"'
+
+      - name: Activate Deployed Files
+        run: |
+          ssh -i "$HOME/.ssh/deploy_key" -p ${{ env.SERVER_PORT }} ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }} << 'EOF'
+            APP="${{ env.APP_PATH }}"
+            set -e
+            if [ ! -d "$APP/.deploy_new" ]; then
+              echo "Staged files missing in $APP - aborting."
+              exit 1
+            fi
+            cd "$APP"
+            mkdir -p .deploy_keep
+            for f in vendor storage public tests .env .git debug_settings.php init_hero_media.php out.txt; do
+              if [ -e "$f" ]; then mv "$f" .deploy_keep/; fi
+            done
+            for f in .env.*; do
+              if [ -e "$f" ]; then mv "$f" .deploy_keep/; fi
+            done
+            find "$APP" -mindepth 1 -maxdepth 1 ! -name '.deploy_new' ! -name '.deploy_keep' -exec rm -rf {} +
+            cp -a "$APP/.deploy_new/." "$APP/"
+            rm -rf "$APP/.deploy_new"
+            cp -a "$APP/.deploy_keep/." "$APP/"
+            rm -rf "$APP/.deploy_keep"
+          EOF
 
       - name: Deploy Public Assets
         run: |
-          rsync -avz --delete \
-            -e "ssh -i ~/.ssh/deploy_key -p ${{ env.SERVER_PORT }}" \
-            backend/public/ ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }}:${{ env.PUBLIC_PATH }}/
+          SSH_OPTS="-i $HOME/.ssh/deploy_key -p ${{ env.SERVER_PORT }}"
+          ssh $SSH_OPTS ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }} \
+            'mkdir -p "${{ env.PUBLIC_PATH }}"'
+          tar czf - -C backend/public . | ssh $SSH_OPTS ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }} \
+            'tar xzf - -C "${{ env.PUBLIC_PATH }}"'
 
       - name: Copy Production Entry Point
         run: |
@@ -185,10 +215,15 @@ jobs:
 
       - name: Setup Storage Symlink
         run: |
-          ssh -i ~/.ssh/deploy_key -p ${{ env.SERVER_PORT }} ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }} << 'EOF'
-            cd ${{ env.APP_PATH }}/public
-            if [ ! -L storage ]; then
-              ln -sf ../storage storage
+          ssh -i "$HOME/.ssh/deploy_key" -p ${{ env.SERVER_PORT }} ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }} << 'EOF'
+            APP="${{ env.APP_PATH }}"
+            PUB="${{ env.PUBLIC_PATH }}"
+            mkdir -p "$APP/storage/app/public"
+            if [ ! -e "$PUB/storage" ] && [ ! -L "$PUB/storage" ]; then
+              ln -s "$APP/storage/app/public" "$PUB/storage"
+            fi
+            if [ -d "$APP/public" ] && [ ! -e "$APP/public/storage" ] && [ ! -L "$APP/public/storage" ]; then
+              ln -s ../storage/app/public "$APP/public/storage"
             fi
           EOF
 
