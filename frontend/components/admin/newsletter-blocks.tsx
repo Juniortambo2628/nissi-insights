@@ -1,6 +1,8 @@
 "use client"
 
+import React from 'react'
 import { Node, mergeAttributes } from '@tiptap/core'
+import { NodeViewContent, NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react'
 
 export interface StatItem {
     value: string
@@ -329,6 +331,20 @@ export const NiGridColumn = Node.create({
                 parseHTML: (el: HTMLElement) => parseInt(el.getAttribute('data-columns') || '2', 10),
                 renderHTML: (attrs) => ({ 'data-columns': String(attrs.columns) }),
             },
+            // Width as a percentage of the grid row. Rendered by the node's
+            // renderHTML below (not as a separate attribute style) so it
+            // merges cleanly with the base column styles. renderHTML must
+            // return nothing, otherwise the attr leaks into a legacy
+            // width="62.5" HTML attribute that email clients may treat
+            // as pixels.
+            width: {
+                default: null,
+                parseHTML: (el: HTMLElement) => {
+                    const match = /([\d.]+)%/.exec(el.style?.width || '')
+                    return match ? parseFloat(match[1]) : null
+                },
+                renderHTML: () => ({}),
+            },
         }
     },
 
@@ -338,16 +354,201 @@ export const NiGridColumn = Node.create({
 
     renderHTML({ node, HTMLAttributes }) {
         const columns = Number(node.attrs.columns) || 2
+        const width = Number(node.attrs.width)
+        const widthCss = Number.isFinite(width) && width > 0
+            ? width.toFixed(2)
+            : (100 / columns).toFixed(2)
+
         return [
             'td',
             mergeAttributes(HTMLAttributes, {
                 'data-ni-col': '',
-                style: `width:${(100 / columns).toFixed(2)}%; vertical-align:top; padding:0;`,
+                style: `width:${widthCss}%; vertical-align:top; padding:0;`,
             }),
             0,
         ]
     },
 })
+
+/**
+ * Editor-only node view for grids: renders the same email-safe table as the
+ * static renderHTML, plus drag handles between columns for resizing. Handles
+ * live only in this React view — they never reach getHTML()/the saved email.
+ * Column proportions are committed as `width` % attributes on niGridColumn,
+ * and always written for every column so widths sum to exactly 100.
+ */
+interface GridDragState {
+    index: number
+    startX: number
+    widths: number[]
+}
+
+const GridView = ({ node, editor, getPos }: any) => {
+    const containerRef = React.useRef<HTMLDivElement>(null)
+    const dragRef = React.useRef<GridDragState | null>(null)
+    const [boundaries, setBoundaries] = React.useState<number[]>([])
+
+    const getColumnTds = React.useCallback((): HTMLElement[] => {
+        const row = containerRef.current?.querySelector('table tr')
+        if (!row) return []
+        return Array.from(row.children).filter((el): el is HTMLElement => el.tagName === 'TD')
+    }, [])
+
+    const measure = React.useCallback(() => {
+        const container = containerRef.current
+        const tds = getColumnTds()
+        if (!container || tds.length < 2) {
+            setBoundaries((prev) => (prev.length === 0 ? prev : []))
+            return
+        }
+        const containerLeft = container.getBoundingClientRect().left
+        const xs: number[] = []
+        for (let i = 1; i < tds.length; i++) {
+            const prevRight = tds[i - 1].getBoundingClientRect().right
+            const nextLeft = tds[i].getBoundingClientRect().left
+            xs.push((prevRight + nextLeft) / 2 - containerLeft)
+        }
+        setBoundaries((prev) =>
+            prev.length === xs.length && prev.every((v, i) => Math.abs(v - xs[i]) < 1) ? prev : xs
+        )
+    }, [getColumnTds])
+
+    React.useEffect(() => {
+        measure()
+        const onResize = () => measure()
+        window.addEventListener('resize', onResize)
+        return () => window.removeEventListener('resize', onResize)
+    }, [measure, node])
+
+    const commitWidths = React.useCallback(
+        (percents: number[]) => {
+            const pos = typeof getPos === 'function' ? getPos() : undefined
+            if (pos === undefined) return
+            editor.chain().command(({ tr }: any) => {
+                const grid = tr.doc.nodeAt(pos)
+                if (!grid || grid.type.name !== 'niGrid') return false
+                let i = 0
+                grid.forEach((column: any, offset: number) => {
+                    if (i < percents.length) {
+                        tr.setNodeMarkup(pos + 1 + offset, undefined, {
+                            ...column.attrs,
+                            width: Math.round(percents[i] * 100) / 100,
+                        })
+                    }
+                    i++
+                })
+                return true
+            }).run()
+        },
+        [editor, getPos]
+    )
+
+    const handleMove = React.useCallback(
+        (e: MouseEvent) => {
+            const drag = dragRef.current
+            if (!drag) return
+            const tds = getColumnTds()
+            if (!tds[drag.index - 1] || !tds[drag.index]) return
+
+            const total = drag.widths.reduce((sum, w) => sum + w, 0)
+            const MIN = 60
+            let left = drag.widths[drag.index - 1] + (e.clientX - drag.startX)
+            let right = drag.widths[drag.index] - (e.clientX - drag.startX)
+            if (left < MIN) {
+                right -= MIN - left
+                left = MIN
+            }
+            if (right < MIN) {
+                left -= MIN - right
+                right = MIN
+            }
+
+            tds[drag.index - 1].style.width = `${(left / total) * 100}%`
+            tds[drag.index].style.width = `${(right / total) * 100}%`
+        },
+        [getColumnTds]
+    )
+
+    const handleUp = React.useCallback(() => {
+        window.removeEventListener('mousemove', handleMove)
+        window.removeEventListener('mouseup', handleUp)
+
+        const drag = dragRef.current
+        dragRef.current = null
+        if (!drag) return
+
+        const tds = getColumnTds()
+        if (tds.length < 2) return
+        const widths = tds.map((td) => td.getBoundingClientRect().width)
+        const total = widths.reduce((sum, w) => sum + w, 0)
+        if (total <= 0) return
+
+        tds.forEach((td) => {
+            td.style.width = ''
+        })
+        commitWidths(widths.map((w) => (w / total) * 100))
+    }, [handleMove, getColumnTds, commitWidths])
+
+    React.useEffect(
+        () => () => {
+            window.removeEventListener('mousemove', handleMove)
+            window.removeEventListener('mouseup', handleUp)
+        },
+        [handleMove, handleUp]
+    )
+
+    const startDrag = React.useCallback(
+        (index: number) => (e: React.MouseEvent) => {
+            e.preventDefault()
+            e.stopPropagation()
+            const tds = getColumnTds()
+            if (!tds[index - 1] || !tds[index]) return
+            dragRef.current = {
+                index,
+                startX: e.clientX,
+                widths: tds.map((td) => td.getBoundingClientRect().width),
+            }
+            window.addEventListener('mousemove', handleMove)
+            window.addEventListener('mouseup', handleUp)
+        },
+        [handleMove, handleUp, getColumnTds]
+    )
+
+    const resetWidths = () => {
+        const tds = getColumnTds()
+        if (tds.length < 2) return
+        const even = 100 / tds.length
+        commitWidths(tds.map(() => even))
+    }
+
+    return (
+        <NodeViewWrapper className="ni-grid" style={{ margin: '20px -10px' }}>
+            <div ref={containerRef} style={{ position: 'relative', width: '100%' }}>
+                <table
+                    role="presentation"
+                    width="100%"
+                    cellPadding="0"
+                    cellSpacing="0"
+                    style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '10px 0' }}
+                >
+                    <NodeViewContent as={'tr' as any} />
+                </table>
+                {boundaries.map((x, i) => (
+                    <span
+                        key={i}
+                        className="ni-grid-handle"
+                        contentEditable={false}
+                        data-ni-grid-handle=""
+                        style={{ left: `${x}px` }}
+                        title="Drag to resize columns (double-click to reset)"
+                        onMouseDown={startDrag(i + 1)}
+                        onDoubleClick={resetWidths}
+                    />
+                ))}
+            </div>
+        </NodeViewWrapper>
+    )
+}
 
 export const NiGrid = Node.create({
     name: 'niGrid',
@@ -393,6 +594,10 @@ export const NiGrid = Node.create({
                 ['tr', {}, 0],
             ],
         ]
+    },
+
+    addNodeView() {
+        return ReactNodeViewRenderer(GridView)
     },
 })
 

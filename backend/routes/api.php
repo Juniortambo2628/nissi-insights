@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\EventDocumentController;
 use App\Http\Controllers\Api\EventRegistrationController;
 use App\Http\Controllers\Api\InsightController;
 use App\Http\Controllers\Api\NewsletterController;
+use App\Http\Controllers\Api\NewsletterTemplateController;
 use App\Http\Controllers\Api\PillarController;
 use App\Http\Controllers\Api\RedirectController;
 use App\Http\Controllers\Api\ResourceController;
@@ -159,6 +160,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/newsletters/{newsletter}', [NewsletterController::class, 'show']);
     Route::put('/newsletters/{newsletter}', [NewsletterController::class, 'update']);
     Route::delete('/newsletters/{newsletter}', [NewsletterController::class, 'destroy']);
+    Route::post('/newsletters/{newsletter}/duplicate', [NewsletterController::class, 'duplicate']);
+
+    // Newsletter design templates (admin)
+    Route::get('/newsletter-templates', [NewsletterTemplateController::class, 'index']);
+    Route::post('/newsletter-templates', [NewsletterTemplateController::class, 'store']);
+    Route::delete('/newsletter-templates/{template}', [NewsletterTemplateController::class, 'destroy']);
 
     // Campaigns (admin)
     Route::get('/campaigns', [CampaignController::class, 'index']);
