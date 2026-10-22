@@ -268,14 +268,54 @@ Route::get('/health', function () {
         'email_contacts.unsubscribe_token' => $status['email_contacts'] && ! \Illuminate\Support\Facades\Schema::hasColumn('email_contacts', 'unsubscribe_token'),
     ]);
 
-    // MySQL-only: does campaigns have its foreign keys?
-    $campaignFks = null;
+    // MySQL-only deep diagnostics: engine + table type + FK counts.
+    // Distinguishes the three causes of 'Failed to open the referenced
+    // table': missing (hasTable false), VIEW (type), MyISAM (engine).
+    $details = null;
+    $similarTables = null;
     if (\Illuminate\Support\Facades\DB::connection()->getDriverName() === 'mysql') {
-        $campaignFks = (int) (\Illuminate\Support\Facades\DB::selectOne(
-            'SELECT COUNT(*) AS c FROM information_schema.KEY_COLUMN_USAGE
-             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :t AND REFERENCED_TABLE_NAME IS NOT NULL',
-            ['t' => 'campaigns']
-        )->c ?? 0);
+        $placeholders = implode(',', array_fill(0, count($tables), '?'));
+        $rows = \Illuminate\Support\Facades\DB::select(
+            "SELECT table_name AS name, table_type AS type, engine AS engine
+             FROM information_schema.tables
+             WHERE table_schema = DATABASE() AND table_name IN ($placeholders)",
+            $tables
+        );
+        $details = [];
+        foreach ($rows as $row) {
+            $details[$row->name] = ['type' => $row->type, 'engine' => $row->engine];
+        }
+
+        $fkRows = \Illuminate\Support\Facades\DB::select(
+            "SELECT table_name AS name, COUNT(*) AS fk_count
+             FROM information_schema.KEY_COLUMN_USAGE
+             WHERE table_schema = DATABASE()
+               AND referenced_table_name IS NOT NULL
+               AND table_name IN ($placeholders)
+             GROUP BY table_name",
+            $tables
+        );
+        foreach ($fkRows as $row) {
+            $details[$row->name]['foreign_keys'] = (int) $row->fk_count;
+        }
+        foreach ($tables as $table) {
+            if (! $status[$table]) {
+                $details[$table] = null;
+
+                continue;
+            }
+            $details[$table] += ['type' => null, 'engine' => null, 'foreign_keys' => 0];
+        }
+
+        $similarTables = array_column(
+            \Illuminate\Support\Facades\DB::select(
+                "SELECT table_name AS name FROM information_schema.tables
+                 WHERE table_schema = DATABASE()
+                   AND (table_name LIKE '%user%' OR table_name LIKE 'wp_%' OR table_name LIKE '%subscriber%')
+                 ORDER BY table_name"
+            ),
+            'name'
+        );
     }
 
     return response()->json([
@@ -285,6 +325,7 @@ Route::get('/health', function () {
         'migrations_total_files' => count($files),
         'unrecorded_migrations' => $unrecorded,
         'schema_missing' => $schemaMissing,
-        'campaigns_foreign_keys' => $campaignFks,
+        'table_details' => $details,
+        'similar_tables' => $similarTables,
     ]);
 });
