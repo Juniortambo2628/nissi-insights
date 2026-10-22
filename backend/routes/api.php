@@ -237,3 +237,32 @@ Route::middleware('auth:sanctum')->group(function () {
     // Content broadcasts — email a published report/article to contacts
     Route::post('/content-broadcasts', [ContentBroadcastController::class, 'send']);
 });
+
+// Public health check — reports migration status for diagnostics.
+Route::get('/health', function () {
+    $tables = [
+        'subscribers', 'email_contacts', 'newsletters', 'campaigns',
+        'email_logs', 'email_templates', 'insights', 'resources',
+    ];
+
+    $status = [];
+    foreach ($tables as $table) {
+        $status[$table] = \Illuminate\Support\Facades\Schema::hasTable($table);
+    }
+
+    $migrations = \Illuminate\Support\Facades\DB::table('migrations')
+        ->pluck('migration')
+        ->toArray();
+
+    return response()->json([
+        'status' => 'ok',
+        'tables' => $status,
+        'migrations_count' => count($migrations),
+        'pending_migrations' => array_filter([
+            '2026_10_22_000001_add_opt_out_fields_to_subscribers_table' => ! $status['subscribers'] || ! \Illuminate\Support\Facades\Schema::hasColumn('subscribers', 'unsubscribe_token'),
+            '2026_10_22_000002_create_newsletters_table' => ! $status['newsletters'],
+            '2026_10_22_000003_create_campaigns_table' => ! $status['campaigns'],
+            '2026_10_22_000004_add_opt_out_fields_to_email_contacts_table' => ! $status['email_contacts'] || ! \Illuminate\Support\Facades\Schema::hasColumn('email_contacts', 'unsubscribe_token'),
+        ]),
+    ]);
+});

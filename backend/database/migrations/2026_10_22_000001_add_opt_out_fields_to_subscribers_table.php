@@ -18,12 +18,11 @@ return new class extends Migration
         DB::table('subscribers')
             ->whereNull('unsubscribe_token')
             ->orderBy('id')
-            ->chunkById(200, function ($subscribers) {
-                foreach ($subscribers as $subscriber) {
-                    DB::table('subscribers')
-                        ->where('id', $subscriber->id)
-                        ->update(['unsubscribe_token' => bin2hex(random_bytes(20))]);
-                }
+            ->pluck('id')
+            ->each(function ($id) {
+                DB::table('subscribers')
+                    ->where('id', $id)
+                    ->update(['unsubscribe_token' => bin2hex(random_bytes(20))]);
             });
     }
 

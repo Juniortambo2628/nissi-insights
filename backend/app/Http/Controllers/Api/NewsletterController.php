@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Newsletter;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 
 class NewsletterController extends Controller
@@ -13,6 +14,12 @@ class NewsletterController extends Controller
 
     public function index()
     {
+        if (! Schema::hasTable('newsletters')) {
+            return response()->json([
+                'message' => 'Database migration pending: newsletters table missing. Run php artisan migrate.',
+            ], 503);
+        }
+
         $newsletters = Newsletter::with('user:id,name')
             ->orderByDesc('updated_at')
             ->get();

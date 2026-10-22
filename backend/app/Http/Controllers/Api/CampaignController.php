@@ -11,11 +11,18 @@ use App\Models\Subscriber;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 
 class CampaignController extends Controller
 {
     public function index()
     {
+        if (! Schema::hasTable('campaigns')) {
+            return response()->json([
+                'message' => 'Database migration pending: campaigns table missing. Run php artisan migrate.',
+            ], 503);
+        }
+
         $campaigns = Campaign::with('newsletter:id,title,subject,status')
             ->orderByDesc('created_at')
             ->get();
