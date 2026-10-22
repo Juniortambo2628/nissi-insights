@@ -79,7 +79,7 @@ class NewsletterController extends Controller
             'title' => $validated['title'] ?? null,
             'preheader' => $validated['preheader'] ?? null,
             'content' => isset($validated['content'])
-                ? html_entity_decode($validated['content'], ENT_QUOTES | ENT_HTML5, 'UTF-8')
+                ? html_entity_decode($validated['content'], ENT_NOQUOTES | ENT_HTML5, 'UTF-8')
                 : null,
             'header_image' => $validated['header_image'] ?? null,
             'background_color' => $validated['background_color'] ?? null,
@@ -111,7 +111,7 @@ class NewsletterController extends Controller
         ]);
 
         if (isset($validated['content'])) {
-            $validated['content'] = html_entity_decode($validated['content'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $validated['content'] = html_entity_decode($validated['content'], ENT_NOQUOTES | ENT_HTML5, 'UTF-8');
         }
 
         return $validated;

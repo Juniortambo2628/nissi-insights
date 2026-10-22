@@ -144,3 +144,68 @@ it('rewrites relative upload paths to absolute urls in rendered content', functi
 
     expect($rendered)->toContain(config('app.url').'/api/storage/hero-image.jpg');
 });
+
+it('resolves editor color tokens to the newsletter colors in rendered content', function () {
+    $newsletter = Newsletter::factory()->create([
+        'user_id' => $this->user->id,
+        'background_color' => '#fffbeb',
+        'text_color' => '#451a03',
+        'accent_color' => '#d97706',
+        'content' => '<div style="color:var(--ni-accent,#2563eb); border-color:var(--ni-accent); background:var(--ni-bg,#ffffff);">'
+            .'<p style="color:var(--ni-text,#0f172a)">Body</p></div>',
+    ]);
+
+    $rendered = $newsletter->renderedContent();
+
+    expect($rendered)->not->toContain('var(--ni-accent');
+    expect($rendered)->not->toContain('var(--ni-text');
+    expect($rendered)->not->toContain('var(--ni-bg');
+    expect($rendered)->toContain('#d97706');
+    expect($rendered)->toContain('#451a03');
+    expect($rendered)->toContain('#fffbeb');
+});
+
+it('preserves encoded quotes in saved block attributes', function () {
+    $content = '<div data-ni-stats="" data-items="{&quot;value&quot;:&quot;14&quot;,&quot;label&quot;:&quot;Developments&quot;}"></div>';
+
+    $response = $this->actingAs($this->user)
+        ->postJson('/api/newsletters', [
+            'title' => 'Stats Block',
+            'subject' => 'Stats subject',
+            'content' => $content,
+        ]);
+
+    $response->assertCreated();
+
+    $stored = Newsletter::find($response->json('id'));
+
+    expect($stored->content)->toContain('data-items="{&quot;value&quot;');
+    expect($stored->content)->not->toContain('data-items="{"');
+});
+
+it('renders the branded footer in newsletter emails', function () {
+    $newsletter = Newsletter::factory()->create([
+        'user_id' => $this->user->id,
+        'title' => 'Footer Check',
+        'content' => '<p>Body</p>',
+    ]);
+
+    $response = $this->actingAs($this->user)
+        ->postJson('/api/newsletters/preview', [
+            'newsletter_id' => $newsletter->id,
+        ]);
+
+    $response->assertOk();
+    $html = $response->json('html');
+
+    expect($html)->toContain('NISSI');
+    expect($html)->toContain('INSIGHTS');
+    expect($html)->toContain('Energy &middot; Fintech &middot; International Diplomacy');
+    expect($html)->toContain('Navigating Complexity. Empowering Change.');
+    expect($html)->toContain('Nissi Insights Ltd &middot; 254742668529 G.P.O. Nairobi, Kenya');
+    expect($html)->toContain('+254 717 128 838 &middot; +44 7838 725536');
+    expect($html)->toContain('www.nissi-insights.com');
+    expect($html)->toContain("isn't legal advice");
+    expect($html)->toContain("You're getting this because you signed up for updates from Nissi Insights.");
+    expect($html)->toContain('Unsubscribe');
+});

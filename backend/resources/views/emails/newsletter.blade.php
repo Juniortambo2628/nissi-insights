@@ -35,18 +35,21 @@
                         </td>
                     </tr>
                     <tr>
-                        <td align="center" style="padding:16px 8px 8px; border-top:1px solid rgba(128,128,128,0.25); font-size:12px; line-height:1.6; color:#94a3b8;">
-                            <p style="margin:0 0 8px;">&copy; {{ date('Y') }} {{ \App\Models\SiteSetting::getValue('site_name', config('app.name', 'Nissi Insights')) }}. All rights reserved.</p>
-                            @if($unsubscribeUrl)
-                            <p style="margin:0 0 8px;">
-                                You are receiving this email because you are on our mailing list.<br>
-                                <a href="{{ $unsubscribeUrl }}" style="color:{{ $newsletter->accent_color }}; text-decoration:underline;">Unsubscribe from this list</a>
+                        <td align="center" style="padding:20px 8px 8px; border-top:1px solid rgba(128,128,128,0.25); font-size:12px; line-height:1.7; color:#94a3b8;">
+                            <p style="margin:0 0 4px; font-size:14px; font-weight:700; letter-spacing:0.16em; color:{{ $newsletter->text_color }};">NISSI <span style="color:{{ $newsletter->accent_color }};">|</span> INSIGHTS</p>
+                            <p style="margin:0 0 12px; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:#94a3b8;">Energy &middot; Fintech &middot; International Diplomacy</p>
+                            <p style="margin:0 0 8px; font-size:13px; font-style:italic; color:{{ $newsletter->text_color }};">Navigating Complexity. Empowering Change.</p>
+                            <p style="margin:0;">Nissi Insights Ltd &middot; 254742668529 G.P.O. Nairobi, Kenya</p>
+                            <p style="margin:0 0 6px;">+254 717 128 838 &middot; +44 7838 725536</p>
+                            <p style="margin:0 0 14px;">
+                                <a href="{{ frontend_url() }}" style="color:{{ $newsletter->accent_color }}; text-decoration:none;">www.nissi-insights.com</a>
                             </p>
-                            @endif
-                            <p style="margin:0;">
-                                <a href="{{ frontend_url() }}" style="color:#94a3b8; text-decoration:none; margin:0 6px;">Website</a>
-                                <span style="color:#cbd5e1;">|</span>
-                                <a href="{{ frontend_url('/privacy') }}" style="color:#94a3b8; text-decoration:none; margin:0 6px;">Privacy Policy</a>
+                            <p style="margin:0 0 8px; border-top:1px solid rgba(128,128,128,0.25); padding-top:12px; font-size:11px;">This brief is for general information and isn't legal advice.</p>
+                            <p style="margin:0; font-size:11px;">
+                                You're getting this because you signed up for updates from Nissi Insights.
+                                @if($unsubscribeUrl)
+                                <a href="{{ $unsubscribeUrl }}" style="color:{{ $newsletter->accent_color }}; text-decoration:underline;">Unsubscribe</a>
+                                @endif
                             </p>
                         </td>
                     </tr>
