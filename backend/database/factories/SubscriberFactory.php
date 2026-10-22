@@ -16,6 +16,14 @@ class SubscriberFactory extends Factory
             'name' => fake()->name(),
             'source' => fake()->randomElement(['website', 'newsletter', 'social', 'event']),
             'is_active' => true,
+            'unsubscribed_at' => null,
         ];
+    }
+
+    public function optedOut(): static
+    {
+        return $this->state(fn () => [
+            'unsubscribed_at' => now(),
+        ]);
     }
 }

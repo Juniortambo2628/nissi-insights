@@ -23,6 +23,36 @@ api.interceptors.request.use(
     }
 );
 
+// Clear stale tokens and bounce admins back to login when the API says 401.
+// Without this, an expired/revoked token spams 401s (e.g. /analytics/summary)
+// on every SWR revalidation while the admin page stays open.
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        const status = error?.response?.status;
+        const url: string = error?.config?.url || '';
+        const isAuthAttempt = url.includes('/login') || url.includes('/logout');
+
+        if (
+            status === 401 &&
+            !isAuthAttempt &&
+            typeof window !== 'undefined'
+        ) {
+            localStorage.removeItem('auth_token');
+            delete api.defaults.headers.common['Authorization'];
+
+            if (
+                window.location.pathname.startsWith('/admin') &&
+                !window.location.pathname.startsWith('/admin/login')
+            ) {
+                window.location.href = '/admin/login';
+            }
+        }
+
+        return Promise.reject(error);
+    }
+);
+
 export default api;
 
 export const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://nissi-insights.com';

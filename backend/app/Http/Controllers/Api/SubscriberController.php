@@ -61,4 +61,27 @@ class SubscriberController extends Controller
 
         return response()->json(null, 204);
     }
+
+    /**
+     * Public opt-out endpoint used by the unsubscribe link in newsletter emails.
+     */
+    public function unsubscribe(Request $request)
+    {
+        $validated = $request->validate([
+            'token' => 'required|string|max:64',
+        ]);
+
+        $subscriber = Subscriber::where('unsubscribe_token', $validated['token'])->first();
+
+        if (! $subscriber) {
+            return response()->json(['message' => 'Invalid unsubscribe link.'], 404);
+        }
+
+        $subscriber->markOptedOut();
+
+        return response()->json([
+            'message' => 'You have been unsubscribed from email campaigns.',
+            'email' => $subscriber->email,
+        ]);
+    }
 }

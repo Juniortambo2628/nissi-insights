@@ -31,6 +31,7 @@ import {
     Map,
     FileX,
     HeartPulse,
+    Newspaper,
     Send
 } from 'lucide-react'
 
@@ -81,6 +82,8 @@ const AdminSidebar = () => {
         { name: 'Testimonials', href: '/admin/testimonials', icon: Quote },
         { name: 'Clients', href: '/admin/clients', icon: Building2 },
         { name: 'Subscribers', href: '/admin/subscribers', icon: Users },
+        { name: 'Newsletters', href: '/admin/newsletters', icon: Newspaper },
+        { name: 'Newsletter Campaigns', href: '/admin/campaigns', icon: Send },
         { name: 'Email Campaigns', href: '/admin/broadcasts', icon: Send },
         { name: 'Email', href: '/admin/email', icon: Mail },
         { name: 'Legal', href: '/admin/legal', icon: ShieldCheck },
