@@ -4,7 +4,6 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Str;
 
 return new class extends Migration
 {
@@ -19,12 +18,11 @@ return new class extends Migration
         DB::table('email_contacts')
             ->whereNull('unsubscribe_token')
             ->orderBy('id')
-            ->chunkById(200, function ($contacts) {
-                foreach ($contacts as $contact) {
-                    DB::table('email_contacts')
-                        ->where('id', $contact->id)
-                        ->update(['unsubscribe_token' => Str::random(40)]);
-                }
+            ->pluck('id')
+            ->each(function ($id) {
+                DB::table('email_contacts')
+                    ->where('id', $id)
+                    ->update(['unsubscribe_token' => bin2hex(random_bytes(20))]);
             });
     }
 

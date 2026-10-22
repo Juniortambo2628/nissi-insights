@@ -237,8 +237,15 @@ jobs:
       - name: Run Migrations
         run: |
           ssh -i ~/.ssh/deploy_key -p ${{ env.SERVER_PORT }} ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }} << 'EOF'
+            set -e
             cd ${{ env.APP_PATH }}
-            php artisan migrate --force 2>/dev/null || true
+            PHP_BIN="$(command -v php || echo /opt/cpanel/ea-php83/root/usr/bin/php)"
+            echo "Running migrations with: $PHP_BIN"
+            if ! $PHP_BIN artisan migrate --force; then
+              echo "::error::Migration failed. Check the output above."
+              exit 1
+            fi
+            echo "Migrations completed successfully."
           EOF
 
       - name: Clear Caches
