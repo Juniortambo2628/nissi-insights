@@ -15,6 +15,8 @@ class SubscriberResource extends JsonResource
             'name' => $this->name,
             'source' => $this->source,
             'is_active' => (bool) $this->is_active,
+            'unsubscribed_at' => $this->unsubscribed_at,
+            'is_opted_out' => $this->unsubscribed_at !== null,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

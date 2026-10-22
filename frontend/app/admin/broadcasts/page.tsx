@@ -30,6 +30,7 @@ import {
     CheckCircle2,
     AlertCircle,
     Loader2,
+    UserX,
 } from 'lucide-react'
 import { Insight, EmailContact, Subscriber, ContentBroadcastResult } from '@/types/api'
 import { parseEmailList, countInvalidEmailTokens } from '@/lib/emails'
@@ -91,13 +92,20 @@ const BroadcastContent = () => {
     const invalidTokens = useMemo(() => countInvalidEmailTokens(pastedText), [pastedText])
 
     const activeSubscriberEmails = useMemo(
-        () => (subscribers ?? []).filter((s) => s.is_active).map((s) => s.email.toLowerCase()),
+        () => (subscribers ?? [])
+            .filter((s) => s.is_active && !s.is_opted_out)
+            .map((s) => s.email.toLowerCase()),
         [subscribers]
+    )
+
+    const eligibleContacts = useMemo(
+        () => (contacts ?? []).filter((c) => !c.is_opted_out),
+        [contacts]
     )
 
     const selectedContactEmails = useMemo(
         () => (contacts ?? [])
-            .filter((c) => selectedContactIds.includes(c.id))
+            .filter((c) => selectedContactIds.includes(c.id) && !c.is_opted_out)
             .map((c) => c.email.toLowerCase()),
         [contacts, selectedContactIds]
     )
@@ -329,16 +337,26 @@ const BroadcastContent = () => {
                                     filteredContacts.map((contact) => (
                                         <label
                                             key={contact.id}
-                                            className="flex items-center gap-3 px-3 py-2 text-sm hover:bg-secondary/20 cursor-pointer"
+                                            className={`flex items-center gap-3 px-3 py-2 text-sm ${
+                                                contact.is_opted_out
+                                                    ? 'opacity-60'
+                                                    : 'hover:bg-secondary/20 cursor-pointer'
+                                            }`}
                                         >
                                             <Checkbox
                                                 checked={selectedContactIds.includes(contact.id)}
-                                                onCheckedChange={() => toggleContact(contact.id)}
+                                                onCheckedChange={() => !contact.is_opted_out && toggleContact(contact.id)}
+                                                disabled={contact.is_opted_out}
                                             />
                                             <Mail size={14} className="text-muted-foreground shrink-0" />
                                             <span className="truncate">{contact.email}</span>
                                             {contact.name && (
                                                 <span className="ml-auto text-xs text-muted-foreground shrink-0">{contact.name}</span>
+                                            )}
+                                            {contact.is_opted_out && (
+                                                <span className="flex items-center gap-1 text-[10px] font-bold text-red-500 shrink-0">
+                                                    <UserX size={10} /> Opted out
+                                                </span>
                                             )}
                                         </label>
                                     ))
@@ -354,7 +372,7 @@ const BroadcastContent = () => {
                             />
                             <label htmlFor="to-subscribers" className="text-sm text-foreground flex items-center gap-2">
                                 <Users size={14} className="text-muted-foreground" />
-                                Send to all active subscribers
+                                Send to all eligible subscribers
                                 <span className="text-xs text-muted-foreground">({activeSubscriberEmails.length})</span>
                             </label>
                         </div>
@@ -445,13 +463,14 @@ const BroadcastContent = () => {
                                 <th className="px-6 py-3">Email</th>
                                 <th className="px-6 py-3">Name</th>
                                 <th className="px-6 py-3">Source</th>
+                                <th className="px-6 py-3">Status</th>
                                 <th className="px-6 py-3">Added</th>
                                 <th className="px-6 py-3 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border/30">
                             {contactsLoading ? (
-                                <tr><td colSpan={5} className="px-6 py-10"><div className="h-8 bg-secondary/20 animate-pulse rounded" /></td></tr>
+                                <tr><td colSpan={6} className="px-6 py-10"><div className="h-8 bg-secondary/20 animate-pulse rounded" /></td></tr>
                             ) : filteredContacts.map((contact) => (
                                 <tr key={contact.id} className="hover:bg-primary/5 transition-colors">
                                     <td className="px-6 py-3 text-sm font-medium text-foreground">{contact.email}</td>
@@ -460,6 +479,15 @@ const BroadcastContent = () => {
                                         <span className="text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary px-2 py-0.5 rounded">
                                             {contact.source || 'manual'}
                                         </span>
+                                    </td>
+                                    <td className="px-6 py-3">
+                                        {contact.is_opted_out ? (
+                                            <span className="flex items-center gap-1 text-[10px] font-bold text-red-500">
+                                                <UserX size={10} /> Opted out
+                                            </span>
+                                        ) : (
+                                            <span className="text-[10px] font-bold text-emerald-500">Active</span>
+                                        )}
                                     </td>
                                     <td className="px-6 py-3 text-xs text-muted-foreground">
                                         {new Date(contact.created_at).toLocaleDateString()}
@@ -478,7 +506,7 @@ const BroadcastContent = () => {
                             ))}
                             {!contactsLoading && filteredContacts.length === 0 && (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-12 text-center text-sm text-muted-foreground">
+                                    <td colSpan={6} className="px-6 py-12 text-center text-sm text-muted-foreground">
                                         <FileText size={24} className="mx-auto mb-2 opacity-40" />
                                         {contactSearch ? 'No contacts match your search.' : 'No contacts saved yet. Paste a list above to get started.'}
                                     </td>

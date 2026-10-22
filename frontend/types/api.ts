@@ -71,8 +71,52 @@ export interface Subscriber {
   name: string | null;
   source: string | null;
   is_active: boolean;
+  unsubscribed_at: string | null;
+  is_opted_out: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export interface Newsletter {
+  id: number;
+  user_id: number;
+  title: string;
+  subject: string;
+  preheader: string | null;
+  content: string | null;
+  header_image: string | null;
+  background_color: string;
+  text_color: string;
+  accent_color: string;
+  status: 'draft' | 'sent';
+  sent_at: string | null;
+  user?: User;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Campaign {
+  id: number;
+  user_id: number;
+  newsletter_id: number;
+  newsletter?: Pick<Newsletter, 'id' | 'title' | 'subject' | 'status'>;
+  name: string;
+  subject: string | null;
+  status: 'draft' | 'sending' | 'sent' | 'failed';
+  total_recipients: number;
+  sent_count: number;
+  failed_count: number;
+  sent_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CampaignSendResult {
+  message: string;
+  sent: number;
+  failed: number;
+  total: number;
+  errors: { email: string; error: string }[];
 }
 
 export interface Stat {
@@ -121,6 +165,8 @@ export interface EmailContact {
   email: string;
   name: string | null;
   source: string | null;
+  unsubscribed_at: string | null;
+  is_opted_out: boolean;
   created_at: string;
   updated_at: string;
 }

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AnalyticsController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\CampaignController;
 use App\Http\Controllers\Api\CaseStudyController;
 use App\Http\Controllers\Api\ClientController;
 use App\Http\Controllers\Api\ConsultationRequestController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\EventDocumentController;
 use App\Http\Controllers\Api\EventRegistrationController;
 use App\Http\Controllers\Api\InsightController;
+use App\Http\Controllers\Api\NewsletterController;
 use App\Http\Controllers\Api\PillarController;
 use App\Http\Controllers\Api\RedirectController;
 use App\Http\Controllers\Api\ResourceController;
@@ -76,6 +78,7 @@ Route::get('/search', [SearchController::class, 'index']);
 Route::post('/track', [AnalyticsController::class, 'track']);
 Route::post('/track-404', [AnalyticsController::class, 'track404']);
 Route::post('/subscribe', [SubscriberController::class, 'store']);
+Route::post('/unsubscribe', [SubscriberController::class, 'unsubscribe']);
 Route::post('/consultation-requests', [ConsultationRequestController::class, 'store']);
 Route::get('/storage/{path}', [UploadController::class, 'serve'])->where('path', '.*');
 Route::get('/redirects-public', [RedirectController::class, 'publicList']);
@@ -148,6 +151,22 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/subscribers/{subscriber}', [SubscriberController::class, 'show']);
     Route::put('/subscribers/{subscriber}', [SubscriberController::class, 'update']);
     Route::delete('/subscribers/{subscriber}', [SubscriberController::class, 'destroy']);
+
+    // Newsletters (admin)
+    Route::get('/newsletters', [NewsletterController::class, 'index']);
+    Route::post('/newsletters', [NewsletterController::class, 'store']);
+    Route::post('/newsletters/preview', [NewsletterController::class, 'preview']);
+    Route::get('/newsletters/{newsletter}', [NewsletterController::class, 'show']);
+    Route::put('/newsletters/{newsletter}', [NewsletterController::class, 'update']);
+    Route::delete('/newsletters/{newsletter}', [NewsletterController::class, 'destroy']);
+
+    // Campaigns (admin)
+    Route::get('/campaigns', [CampaignController::class, 'index']);
+    Route::post('/campaigns', [CampaignController::class, 'store']);
+    Route::get('/campaigns/{campaign}', [CampaignController::class, 'show']);
+    Route::put('/campaigns/{campaign}', [CampaignController::class, 'update']);
+    Route::delete('/campaigns/{campaign}', [CampaignController::class, 'destroy']);
+    Route::post('/campaigns/{campaign}/send', [CampaignController::class, 'send']);
 
     // Team Members
     Route::get('/team-members/{teamMember}', [TeamMemberController::class, 'show']);

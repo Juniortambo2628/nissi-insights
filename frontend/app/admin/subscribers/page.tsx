@@ -5,8 +5,9 @@ import AdminLayout from '@/components/admin/AdminLayout'
 import { useApi } from '@/hooks/use-api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Trash2, Search, Mail, Calendar, User, ExternalLink } from 'lucide-react'
+import { Trash2, Search, Mail, Calendar, User, UserX } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import { StatusBadge } from '@/components/admin/StatusBadge'
 import api from '@/lib/api'
 import { Subscriber } from '@/types/api'
 import { useToast } from '@/hooks/use-toast'
@@ -49,8 +50,15 @@ const AdminSubscribersPage = () => {
                         <h1 className="text-3xl font-bold tracking-tight">Newsletter Subscribers</h1>
                         <p className="text-muted-foreground">Manage your mailing list and track subscription sources.</p>
                     </div>
-                    <div className="bg-primary/10 px-4 py-2 rounded-lg border border-primary/20">
-                        <span className="text-sm font-bold text-primary">{subscribers?.length || 0} Total Subscribers</span>
+                    <div className="flex items-center gap-3">
+                        <div className="bg-red-500/10 px-4 py-2 rounded-lg border border-red-500/20">
+                            <span className="text-sm font-bold text-red-500">
+                                {subscribers?.filter((s) => s.is_opted_out).length || 0} Opted Out
+                            </span>
+                        </div>
+                        <div className="bg-primary/10 px-4 py-2 rounded-lg border border-primary/20">
+                            <span className="text-sm font-bold text-primary">{subscribers?.length || 0} Total Subscribers</span>
+                        </div>
                     </div>
                 </div>
 
@@ -82,6 +90,15 @@ const AdminSubscribersPage = () => {
                                     <div>
                                         <div className="flex items-center gap-2">
                                             <h3 className="font-bold text-lg">{sub.email}</h3>
+                                            {sub.is_opted_out ? (
+                                                <StatusBadge variant="danger" icon={<UserX size={10} />}>
+                                                    Opted Out
+                                                </StatusBadge>
+                                            ) : !sub.is_active ? (
+                                                <StatusBadge variant="muted">Inactive</StatusBadge>
+                                            ) : (
+                                                <StatusBadge variant="success">Subscribed</StatusBadge>
+                                            )}
                                             {sub.source && (
                                                 <span className="text-[10px] bg-secondary px-2 py-0.5 rounded text-muted-foreground uppercase tracking-widest font-bold">
                                                     Source: {sub.source}
@@ -96,6 +113,13 @@ const AdminSubscribersPage = () => {
                                                 <Calendar size={14} /> {new Date(sub.created_at).toLocaleDateString()}
                                             </span>
                                         </div>
+                                        {sub.is_opted_out && (
+                                            <div className="text-xs text-red-500/80 mt-1.5">
+                                                Opted out of email campaigns on{' '}
+                                                {sub.unsubscribed_at ? new Date(sub.unsubscribed_at).toLocaleDateString() : 'an earlier date'}
+                                                {' '}— cannot be sent campaigns.
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                                 <Button 

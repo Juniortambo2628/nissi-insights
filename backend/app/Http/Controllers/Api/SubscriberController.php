@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\SubscriberResource;
+use App\Models\EmailContact;
 use App\Models\Subscriber;
 use App\Traits\SendsTemplatedMail;
 use Illuminate\Http\Request;
@@ -60,5 +61,44 @@ class SubscriberController extends Controller
         $subscriber->delete();
 
         return response()->json(null, 204);
+    }
+
+    /**
+     * Public opt-out endpoint used by the unsubscribe link in newsletter emails.
+     * Accepts tokens from both Subscriber and EmailContact records; opting out
+     * marks ALL records with the same email in both tables as opted out.
+     */
+    public function unsubscribe(Request $request)
+    {
+        $validated = $request->validate([
+            'token' => 'required|string|max:64',
+        ]);
+
+        $token = $validated['token'];
+
+        // Look up token in either table.
+        $subscriber = Subscriber::where('unsubscribe_token', $token)->first();
+        $contact = null;
+
+        if ($subscriber) {
+            $email = $subscriber->email;
+        } else {
+            $contact = EmailContact::where('unsubscribe_token', $token)->first();
+
+            if (! $contact) {
+                return response()->json(['message' => 'Invalid unsubscribe link.'], 404);
+            }
+
+            $email = $contact->email;
+        }
+
+        // Opt out every record with this email across both tables.
+        Subscriber::where('email', $email)->optedIn()->get()->each->markOptedOut();
+        EmailContact::where('email', $email)->optedIn()->get()->each->markOptedOut();
+
+        return response()->json([
+            'message' => 'You have been unsubscribed from email campaigns.',
+            'email' => $email,
+        ]);
     }
 }

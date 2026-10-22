@@ -4,17 +4,24 @@ import React from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
-import { 
-    Bold, 
-    Italic, 
-    List, 
-    ListOrdered, 
-    Link as LinkIcon, 
-    Unlink, 
-    Heading1, 
-    Heading2, 
-    Undo, 
-    Redo 
+import Image from '@tiptap/extension-image'
+import imageCompression from 'browser-image-compression'
+import api from '@/lib/api'
+import { getMediaUrl } from '@/lib/utils'
+import { useToast } from '@/hooks/use-toast'
+import {
+    Bold,
+    Italic,
+    List,
+    ListOrdered,
+    Link as LinkIcon,
+    Unlink,
+    Heading1,
+    Heading2,
+    Undo,
+    Redo,
+    Image as ImageIcon,
+    Loader2
 } from 'lucide-react'
 
 interface RichTextEditorProps {
@@ -24,7 +31,7 @@ interface RichTextEditorProps {
     className?: string
 }
 
-const MenuBar = ({ editor }: { editor: any }) => {
+const MenuBar = ({ editor, onImageSelect, isUploading }: { editor: any; onImageSelect: () => void; isUploading: boolean }) => {
     if (!editor) return null
 
     const setLink = () => {
@@ -96,6 +103,14 @@ const MenuBar = ({ editor }: { editor: any }) => {
             >
                 <Unlink size={16} />
             </button>
+            <button
+                onClick={(e) => { e.preventDefault(); if (!isUploading) onImageSelect() }}
+                className="p-2 rounded hover:bg-secondary/80 transition-colors text-muted-foreground"
+                disabled={isUploading}
+                title="Insert Image"
+            >
+                {isUploading ? <Loader2 size={16} className="animate-spin" /> : <ImageIcon size={16} />}
+            </button>
             <div className="flex-1" />
             <button
                 onClick={(e) => { e.preventDefault(); editor.chain().focus().undo().run() }}
@@ -116,6 +131,10 @@ const MenuBar = ({ editor }: { editor: any }) => {
 }
 
 const RichTextEditor = ({ value, onChange, label, className }: RichTextEditorProps) => {
+    const fileInputRef = React.useRef<HTMLInputElement>(null)
+    const [isUploading, setIsUploading] = React.useState(false)
+    const { toast } = useToast()
+
     const editor = useEditor({
         immediatelyRender: false,
         extensions: [
@@ -127,6 +146,12 @@ const RichTextEditor = ({ value, onChange, label, className }: RichTextEditorPro
                 openOnClick: false,
                 HTMLAttributes: {
                     class: 'text-primary hover:underline cursor-pointer',
+                },
+            }),
+            Image.configure({
+                HTMLAttributes: {
+                    class: 'rounded-lg max-w-full h-auto',
+                    style: 'max-width:100%; height:auto; border-radius:8px;',
                 },
             }),
         ],
@@ -143,14 +168,62 @@ const RichTextEditor = ({ value, onChange, label, className }: RichTextEditorPro
         }
     }, [value, editor])
 
+    const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0]
+        event.target.value = ''
+        if (!file || !editor) return
+
+        setIsUploading(true)
+        try {
+            const compressed = await imageCompression(file, {
+                maxSizeMB: 2,
+                maxWidthOrHeight: 1920,
+                useWebWorker: true,
+                fileType: file.type,
+            })
+
+            const formData = new FormData()
+            formData.append('file', compressed, file.name)
+
+            const response = await api.post('/upload', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            })
+
+            editor
+                .chain()
+                .focus()
+                .setImage({ src: getMediaUrl(response.data.path), alt: file.name })
+                .run()
+        } catch (err: any) {
+            toast({
+                variant: 'destructive',
+                title: 'Upload failed',
+                description: err?.response?.data?.message || 'Could not upload image. Please try again.',
+            })
+        } finally {
+            setIsUploading(false)
+        }
+    }
+
     return (
         <div className={`space-y-2 ${className || ''}`}>
             {label && <label className="text-sm font-semibold text-foreground/80">{label}</label>}
+            <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleFileChange}
+            />
             <div className="border border-border/50 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-primary/20 transition-all bg-background/50">
-                <MenuBar editor={editor} />
-                <EditorContent 
-                    editor={editor} 
-                    className="prose prose-sm dark:prose-invert max-w-none p-4 min-h-[200px] focus:outline-none"
+                <MenuBar
+                    editor={editor}
+                    isUploading={isUploading}
+                    onImageSelect={() => fileInputRef.current?.click()}
+                />
+                <EditorContent
+                    editor={editor}
+                    className="prose prose-sm dark:prose-invert max-w-none p-4 min-h-[200px] focus:outline-none prose-img:max-w-full"
                 />
             </div>
         </div>
