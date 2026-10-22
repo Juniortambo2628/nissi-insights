@@ -83,7 +83,7 @@ export function RedirectFormDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-2xl bg-background border-border text-foreground">
+            <DialogContent aria-describedby={undefined} className="max-w-2xl bg-background border-border text-foreground">
                 <DialogHeader>
                     <DialogTitle>{title}</DialogTitle>
                 </DialogHeader>

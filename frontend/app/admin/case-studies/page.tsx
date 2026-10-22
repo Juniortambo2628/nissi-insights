@@ -365,7 +365,7 @@ const AdminCaseStudiesPage = () => {
 
             {/* Form Modal */}
             <Dialog open={isFormOpen} onOpenChange={(open) => !open && setIsFormOpen(false)}>
-                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-background border-border text-foreground">
+                <DialogContent aria-describedby={undefined} className="max-w-4xl max-h-[90vh] overflow-y-auto bg-background border-border text-foreground">
                     <DialogHeader>
                         <DialogTitle>{editingId ? 'Edit' : 'New'} Case Study</DialogTitle>
                     </DialogHeader>
