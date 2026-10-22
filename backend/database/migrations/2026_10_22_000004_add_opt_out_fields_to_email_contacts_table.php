@@ -9,8 +9,15 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Idempotent: columns may already exist if applied manually.
+        if (Schema::hasColumn('email_contacts', 'unsubscribe_token')) {
+            return;
+        }
+
         Schema::table('email_contacts', function (Blueprint $table) {
-            $table->timestamp('unsubscribed_at')->nullable()->after('source');
+            if (! Schema::hasColumn('email_contacts', 'unsubscribed_at')) {
+                $table->timestamp('unsubscribed_at')->nullable()->after('source');
+            }
             $table->string('unsubscribe_token', 64)->nullable()->unique()->after('unsubscribed_at');
         });
 

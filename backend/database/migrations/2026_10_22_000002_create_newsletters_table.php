@@ -8,6 +8,12 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Idempotent: the table may pre-exist if it was created manually on
+        // production (e.g. via phpMyAdmin) without a migrations-table record.
+        if (Schema::hasTable('newsletters')) {
+            return;
+        }
+
         Schema::create('newsletters', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
