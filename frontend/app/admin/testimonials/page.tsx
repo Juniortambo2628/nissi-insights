@@ -131,7 +131,7 @@ const AdminTestimonialsPage = () => {
 
                 {/* Create/Edit Modal */}
                 <Dialog open={showForm} onOpenChange={(open) => !open && resetForm()}>
-                    <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                    <DialogContent aria-describedby={undefined} className="max-w-3xl max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
                             <DialogTitle>{editingId ? 'Edit' : 'New'} Testimonial</DialogTitle>
                         </DialogHeader>

@@ -360,7 +360,7 @@ const AdminNewslettersPage = () => {
 
             {/* Builder Modal */}
             <Dialog open={showForm} onOpenChange={(open) => !open && resetForm()}>
-                <DialogContent className="flex h-[90vh] w-full max-w-4xl flex-col overflow-hidden bg-background border-border text-foreground">
+                <DialogContent aria-describedby={undefined} className="flex h-[90vh] w-full max-w-4xl flex-col overflow-hidden bg-background border-border text-foreground">
                     <DialogHeader className="shrink-0 pr-8">
                         <DialogTitle>{editingId ? 'Edit' : 'New'} Newsletter</DialogTitle>
                     </DialogHeader>

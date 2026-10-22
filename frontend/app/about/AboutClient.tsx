@@ -170,7 +170,7 @@ export default function AboutClient() {
                                                 <Info size={14} /> Read Full Bio
                                             </button>
                                         </DialogTrigger>
-                                        <DialogContent className="sm:max-w-[600px] bg-background p-0 overflow-hidden border-border/50 shadow-2xl">
+                                        <DialogContent aria-describedby={undefined} className="sm:max-w-[600px] bg-background p-0 overflow-hidden border-border/50 shadow-2xl">
                                             <div className="bg-primary/5 p-8 border-b border-border/50">
                                                 <div className="flex items-center gap-6">
                                                     <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-primary/20 shrink-0">

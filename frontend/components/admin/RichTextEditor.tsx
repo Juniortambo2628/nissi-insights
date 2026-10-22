@@ -152,7 +152,7 @@ const ContentPickerDialog = ({ open, onOpenChange, onInsert }: ContentPickerDial
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden bg-background border-border text-foreground flex flex-col">
+            <DialogContent aria-describedby={undefined} className="max-w-2xl max-h-[80vh] overflow-hidden bg-background border-border text-foreground flex flex-col">
                 <DialogHeader>
                     <DialogTitle>Insert Content Reference</DialogTitle>
                 </DialogHeader>

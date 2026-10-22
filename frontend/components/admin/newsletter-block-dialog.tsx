@@ -239,6 +239,7 @@ const BlockAttrsDialog = ({ state, editor, onClose }: BlockAttrsDialogProps) => 
     return (
         <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>
             <DialogContent
+                aria-describedby={undefined}
                 className={`flex w-full max-w-xl flex-col gap-4 bg-background border-border text-foreground ${fixedHeight ? 'h-[78vh] overflow-hidden' : ''}`}
             >
                 <DialogHeader className="shrink-0 pr-8">

@@ -358,7 +358,7 @@ const AdminServicesPage = () => {
 
             {/* Form Modal */}
             <Dialog open={showForm} onOpenChange={(open) => !open && resetForm()}>
-                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-background border-border text-foreground">
+                <DialogContent aria-describedby={undefined} className="max-w-4xl max-h-[90vh] overflow-y-auto bg-background border-border text-foreground">
                     <DialogHeader>
                         <DialogTitle>{editingId ? 'Edit' : 'New'} Service</DialogTitle>
                     </DialogHeader>
