@@ -183,29 +183,136 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 16px;
-  margin-left: -8px;
+  width: 24px;
+  margin-left: -12px;
   cursor: col-resize;
-  z-index: 5;
+  z-index: 6;
   user-select: none;
+  touch-action: none;
 }
 
 .ni-grid-handle::after {
   content: '';
   position: absolute;
   left: 50%;
-  top: 4px;
-  bottom: 4px;
+  top: 6px;
+  bottom: 6px;
   width: 2px;
   margin-left: -1px;
   border-radius: 2px;
   background: var(--ni-accent, #2563eb);
-  opacity: 0.3;
+  opacity: 0.25;
   transition: opacity 0.15s;
 }
 
-.ni-grid-handle:hover::after {
-  opacity: 0.9;
+.ni-grid-handle:hover::after,
+.ni-grid-handle[data-dragging='true']::after {
+  opacity: 0.95;
+}
+
+.ni-grid-active {
+  outline: 1px dashed rgba(59, 130, 246, 0.55);
+  outline-offset: 4px;
+}
+
+/* Floating grid toolbar (positioned above the active grid) */
+.ni-grid-toolbar {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+  z-index: 10;
+  white-space: nowrap;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.ni-grid-toolbar-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #64748b;
+  padding-right: 2px;
+}
+
+.ni-grid-toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding-left: 8px;
+  border-left: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.ni-grid-toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: #475569;
+  cursor: pointer;
+}
+
+.ni-grid-toolbar-btn:hover {
+  background: rgba(148, 163, 184, 0.18);
+  color: #0f172a;
+}
+
+.ni-grid-toolbar-btn-active {
+  background: rgba(37, 99, 235, 0.12);
+  color: #2563eb;
+}
+
+.ni-grid-toolbar-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: system-ui, -apple-system, sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ni-grid-toolbar-chip:hover:not(:disabled) {
+  background: rgba(148, 163, 184, 0.18);
+  color: #0f172a;
+}
+
+.ni-grid-toolbar-chip:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Live width badges shown while dragging a grid divider */
+.ni-grid-badge {
+  position: absolute;
+  top: -26px;
+  transform: translateX(-50%);
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: #0f172a;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: system-ui, -apple-system, sans-serif;
+  z-index: 11;
+  pointer-events: none;
 }
 
 /* Image resize handles from @tiptap/extension-image resize node view */

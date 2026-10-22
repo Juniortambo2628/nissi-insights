@@ -49,6 +49,9 @@ describe('newsletter block nodes', () => {
         expect(html).toContain('data-label="Bulletin"')
         expect(html).toContain('role="presentation"')
         expect(html).toContain('This month in energy')
+        // Default placement: left-aligned, top-aligned.
+        expect(html).toMatch(/text-align:\s*left/)
+        expect(html).toMatch(/vertical-align:\s*top/)
 
         const box: any = json.content![0]
         expect(box.type).toBe('niBox')
@@ -57,6 +60,31 @@ describe('newsletter block nodes', () => {
             (child.content ?? []).map((leaf: any) => leaf.text ?? '').join('')
         ).join('')
         expect(text).toBe('This month in energy')
+    })
+
+    it('round-trips custom box alignment attributes', () => {
+        const { html, json } = roundTrip({
+            type: 'doc',
+            content: [
+                {
+                    type: 'niBox',
+                    attrs: { label: 'Centre panel', align: 'center', valign: 'middle' },
+                    content: [
+                        { type: 'paragraph', content: [{ type: 'text', text: 'Centred content' }] },
+                    ],
+                },
+            ],
+        })
+
+        expect(html).toMatch(/text-align:\s*center/)
+        expect(html).toMatch(/vertical-align:\s*middle/)
+        // The attrs must never leak as HTML attributes.
+        expect(html).not.toContain('align="center"')
+        expect(html).not.toContain('valign="middle"')
+
+        const box: any = json.content![0]
+        expect(box.attrs.align).toBe('center')
+        expect(box.attrs.valign).toBe('middle')
     })
 
     it('round-trips an impact highlight with its bold label ignored', () => {
@@ -137,6 +165,12 @@ describe('newsletter block nodes', () => {
         expect(html.match(/data-ni-col/g)).toHaveLength(2)
         expect(html).toContain('Left column')
         expect(html).toContain('Right column')
+        // Column divider: border-left on every column except the first.
+        // jsdom serializes CSS with a space after the colon.
+        expect(html).toMatch(/border-left:\s*1px solid/)
+        // No legacy grid spacing — dividers sit flush, no negative margins.
+        expect(html).not.toContain('border-spacing:10px')
+        expect(html).not.toMatch(/margin:20px -10px/)
 
         const node: any = json.content![0]
         expect(node.type).toBe('niGrid')
@@ -148,6 +182,25 @@ describe('newsletter block nodes', () => {
         const triple = roundTrip({ type: 'doc', content: [buildBlockContent('grid3')] })
         expect(triple.html.match(/data-ni-col/g)).toHaveLength(3)
         expect(triple.json.content![0].content).toHaveLength(3)
+        // Three columns → two divider rules.
+        expect(triple.html.match(/border-left:\s*1px solid/g)).toHaveLength(2)
+    })
+
+    it('round-trips custom column alignment attributes', () => {
+        const grid = buildBlockContent('grid2')
+        grid.content[0].attrs.align = 'right'
+        grid.content[0].attrs.valign = 'bottom'
+        grid.content[0].content = [{ type: 'paragraph', content: [{ type: 'text', text: 'Aligned' }] }]
+
+        const { html, json } = roundTrip({ type: 'doc', content: [grid] })
+
+        expect(html).toMatch(/text-align:\s*right/)
+        expect(html).toMatch(/vertical-align:\s*bottom/)
+        expect(html).not.toContain('align="right"')
+
+        const node: any = json.content![0]
+        expect(node.content[0].attrs.align).toBe('right')
+        expect(node.content[0].attrs.valign).toBe('bottom')
     })
 
     it('round-trips custom column widths as percent attributes', () => {

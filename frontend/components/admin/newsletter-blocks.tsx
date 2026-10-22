@@ -3,6 +3,14 @@
 import React from 'react'
 import { Node, mergeAttributes } from '@tiptap/core'
 import { NodeViewContent, NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react'
+import {
+    AlignLeft,
+    AlignCenter,
+    AlignRight,
+    AlignVerticalJustifyStart,
+    AlignVerticalJustifyCenter,
+    AlignVerticalJustifyEnd,
+} from 'lucide-react'
 
 export interface StatItem {
     value: string
@@ -104,6 +112,18 @@ export const NiBox = Node.create({
                 parseHTML: (el: HTMLElement) => el.getAttribute('data-label') || DEFAULT_BOX_LABEL,
                 renderHTML: (attrs) => ({ 'data-label': attrs.label }),
             },
+            // Content placement inside the panel (rendered on the td so it
+            // inherits into every child; email-safe table CSS).
+            align: {
+                default: 'left',
+                parseHTML: (el: HTMLElement) => el.querySelector('td')?.style.textAlign || 'left',
+                renderHTML: () => ({}),
+            },
+            valign: {
+                default: 'top',
+                parseHTML: (el: HTMLElement) => el.querySelector('td')?.style.verticalAlign || 'top',
+                renderHTML: () => ({}),
+            },
         }
     },
 
@@ -118,6 +138,9 @@ export const NiBox = Node.create({
     },
 
     renderHTML({ node, HTMLAttributes }) {
+        const align = node.attrs.align || 'left'
+        const valign = node.attrs.valign || 'top'
+
         return [
             'div',
             mergeAttributes(HTMLAttributes, {
@@ -130,7 +153,7 @@ export const NiBox = Node.create({
                 {},
                 [
                     'td',
-                    { style: PANEL_CELL },
+                    { style: `${PANEL_CELL} text-align:${align}; vertical-align:${valign};` },
                     [
                         'div',
                         { 'data-ni-box-label': '', style: LABEL_STYLE },
@@ -345,6 +368,18 @@ export const NiGridColumn = Node.create({
                 },
                 renderHTML: () => ({}),
             },
+            // Content placement inside the column (rendered on the td so it
+            // inherits into every child; email-safe table CSS).
+            align: {
+                default: 'left',
+                parseHTML: (el: HTMLElement) => el.style?.textAlign || 'left',
+                renderHTML: () => ({}),
+            },
+            valign: {
+                default: 'top',
+                parseHTML: (el: HTMLElement) => el.style?.verticalAlign || 'top',
+                renderHTML: () => ({}),
+            },
         }
     },
 
@@ -352,18 +387,59 @@ export const NiGridColumn = Node.create({
         return [{ tag: 'td[data-ni-col]' }]
     },
 
-    renderHTML({ node, HTMLAttributes }) {
+    // `this.editor` comes from TipTap's extension context binding.
+    renderHTML(this: any, { node, HTMLAttributes }: any) {
+        const editor = this?.editor
         const columns = Number(node.attrs.columns) || 2
         const width = Number(node.attrs.width)
         const widthCss = Number.isFinite(width) && width > 0
             ? width.toFixed(2)
             : (100 / columns).toFixed(2)
 
+        // ProseMirror model nodes have no sibling links, so locate this
+        // column inside its parent grid via the editor's document.
+        let index = 0
+        let total = columns
+        if (editor) {
+            editor.state.doc.descendants((ancestor: any) => {
+                if (ancestor.type.name !== 'niGrid') return true
+                let i = 0
+                let found = false
+                ancestor.forEach((child: any) => {
+                    if (child === node) {
+                        index = i
+                        found = true
+                    }
+                    i++
+                })
+                if (found) {
+                    total = ancestor.childCount
+                    return false
+                }
+                return true
+            })
+        }
+
+        // Visible divider between columns plus comfortable gutters: the
+        // border-left sits at the column boundary, with equal padding on
+        // both sides so content never touches the rule.
+        const divider = index > 0 ? `border-left:1px solid ${PANEL_BORDER}; ` : ''
+        const padding = total <= 1
+            ? 'padding:0;'
+            : index === 0
+                ? 'padding:2px 20px 2px 0;'
+                : index === total - 1
+                    ? 'padding:2px 0 2px 20px;'
+                    : 'padding:2px 20px;'
+
+        const align = node.attrs.align || 'left'
+        const valign = node.attrs.valign || 'top'
+
         return [
             'td',
             mergeAttributes(HTMLAttributes, {
                 'data-ni-col': '',
-                style: `width:${widthCss}%; vertical-align:top; padding:0;`,
+                style: `width:${widthCss}%; vertical-align:${valign}; text-align:${align}; ${divider}${padding}`,
             }),
             0,
         ]
@@ -372,8 +448,15 @@ export const NiGridColumn = Node.create({
 
 /**
  * Editor-only node view for grids: renders the same email-safe table as the
- * static renderHTML, plus drag handles between columns for resizing. Handles
- * live only in this React view — they never reach getHTML()/the saved email.
+ * static renderHTML (divider rule + padded columns), plus editor chrome:
+ *
+ * - A floating toolbar (visible while the cursor is inside the grid) with
+ *   alignment controls for the active column, width presets, and
+ *   add/remove column actions.
+ * - Drag handles centered on each column divider with live % badges while
+ *   dragging. Double-click a handle to reset to equal columns.
+ *
+ * All chrome lives only in this React view — it never reaches getHTML().
  * Column proportions are committed as `width` % attributes on niGridColumn,
  * and always written for every column so widths sum to exactly 100.
  */
@@ -383,10 +466,55 @@ interface GridDragState {
     widths: number[]
 }
 
+interface ColumnBadge {
+    x: number
+    pct: number
+}
+
+const GRID_ALIGN_OPTIONS = [
+    { value: 'left', Icon: AlignLeft, title: 'Align content left' },
+    { value: 'center', Icon: AlignCenter, title: 'Centre content' },
+    { value: 'right', Icon: AlignRight, title: 'Align content right' },
+] as const
+
+const GRID_VALIGN_OPTIONS = [
+    { value: 'top', Icon: AlignVerticalJustifyStart, title: 'Content to top' },
+    { value: 'middle', Icon: AlignVerticalJustifyCenter, title: 'Content to middle' },
+    { value: 'bottom', Icon: AlignVerticalJustifyEnd, title: 'Content to bottom' },
+] as const
+
+const gridPresets = (count: number): { label: string; percents: number[] }[] => {
+    if (count === 2) {
+        return [
+            { label: 'Equal', percents: [50, 50] },
+            { label: '60 / 40', percents: [60, 40] },
+            { label: '40 / 60', percents: [40, 60] },
+        ]
+    }
+    if (count === 3) {
+        return [
+            { label: 'Equal', percents: [33.33, 33.33, 33.34] },
+            { label: '40/30/30', percents: [40, 30, 30] },
+            { label: '30/30/40', percents: [30, 30, 40] },
+        ]
+    }
+    const even = 100 / count
+    return [{ label: 'Equal', percents: Array.from({ length: count }, () => even) }]
+}
+
 const GridView = ({ node, editor, getPos }: any) => {
     const containerRef = React.useRef<HTMLDivElement>(null)
     const dragRef = React.useRef<GridDragState | null>(null)
     const [boundaries, setBoundaries] = React.useState<number[]>([])
+    const [isActive, setIsActive] = React.useState(false)
+    const [activeCol, setActiveCol] = React.useState(-1)
+    const [colAttrs, setColAttrs] = React.useState<{ align: string; valign: string }>({
+        align: 'left',
+        valign: 'top',
+    })
+    const [dragBadges, setDragBadges] = React.useState<ColumnBadge[] | null>(null)
+
+    const columnCount: number = node.childCount || Number(node.attrs.columns) || 2
 
     const getColumnTds = React.useCallback((): HTMLElement[] => {
         const row = containerRef.current?.querySelector('table tr')
@@ -404,9 +532,7 @@ const GridView = ({ node, editor, getPos }: any) => {
         const containerLeft = container.getBoundingClientRect().left
         const xs: number[] = []
         for (let i = 1; i < tds.length; i++) {
-            const prevRight = tds[i - 1].getBoundingClientRect().right
-            const nextLeft = tds[i].getBoundingClientRect().left
-            xs.push((prevRight + nextLeft) / 2 - containerLeft)
+            xs.push(tds[i].getBoundingClientRect().left - containerLeft)
         }
         setBoundaries((prev) =>
             prev.length === xs.length && prev.every((v, i) => Math.abs(v - xs[i]) < 1) ? prev : xs
@@ -419,6 +545,39 @@ const GridView = ({ node, editor, getPos }: any) => {
         window.addEventListener('resize', onResize)
         return () => window.removeEventListener('resize', onResize)
     }, [measure, node])
+
+    // Track whether the cursor is inside this grid and which column it is
+    // in, so the toolbar can show contextual controls.
+    React.useEffect(() => {
+        const readActive = () => {
+            const pos = typeof getPos === 'function' ? getPos() : undefined
+            const { from } = editor.state.selection
+            if (pos === undefined || from < pos || from > pos + node.nodeSize) {
+                setIsActive(false)
+                setActiveCol(-1)
+                return
+            }
+            setIsActive(true)
+            const $from = editor.state.doc.resolve(from)
+            for (let d = $from.depth; d > 0; d--) {
+                if ($from.node(d).type.name === 'niGridColumn') {
+                    const column = $from.node(d)
+                    setActiveCol($from.index(d))
+                    setColAttrs({
+                        align: column.attrs.align || 'left',
+                        valign: column.attrs.valign || 'top',
+                    })
+                    return
+                }
+            }
+            setActiveCol(-1)
+        }
+        readActive()
+        editor.on('selectionUpdate', readActive)
+        return () => {
+            editor.off('selectionUpdate', readActive)
+        }
+    }, [editor, node, getPos])
 
     const commitWidths = React.useCallback(
         (percents: number[]) => {
@@ -443,6 +602,95 @@ const GridView = ({ node, editor, getPos }: any) => {
         [editor, getPos]
     )
 
+    const setColumnAttrs = React.useCallback(
+        (patch: Record<string, any>) => {
+            if (activeCol < 0) return
+            const pos = typeof getPos === 'function' ? getPos() : undefined
+            if (pos === undefined) return
+            editor.chain().command(({ tr }: any) => {
+                const grid = tr.doc.nodeAt(pos)
+                if (!grid || grid.type.name !== 'niGrid') return false
+                let i = 0
+                grid.forEach((column: any, offset: number) => {
+                    if (i === activeCol) {
+                        tr.setNodeMarkup(pos + 1 + offset, undefined, { ...column.attrs, ...patch })
+                    }
+                    i++
+                })
+                return true
+            }).run()
+            setColAttrs((prev) => ({ ...prev, ...patch }))
+        },
+        [editor, getPos, activeCol]
+    )
+
+    const addColumn = React.useCallback(() => {
+        const pos = typeof getPos === 'function' ? getPos() : undefined
+        if (pos === undefined) return
+        editor.chain().command(({ tr }: any) => {
+            const grid = tr.doc.nodeAt(pos)
+            if (!grid || grid.type.name !== 'niGrid' || grid.childCount >= 4) return false
+            const count = grid.childCount + 1
+            const column = editor.schema.nodes.niGridColumn.create(
+                { columns: count, width: null, align: 'left', valign: 'top' },
+                editor.schema.nodes.paragraph.create()
+            )
+            tr.insert(pos + 1 + grid.content.size, column)
+            const even = Math.round((100 / count) * 100) / 100
+            const updated = tr.doc.nodeAt(pos)
+            updated.forEach((child: any, offset: number) => {
+                tr.setNodeMarkup(pos + 1 + offset, undefined, {
+                    ...child.attrs,
+                    columns: count,
+                    width: even,
+                })
+            })
+            tr.setNodeMarkup(pos, undefined, { ...updated.attrs, columns: count })
+            return true
+        }).run()
+    }, [editor, getPos])
+
+    const removeColumn = React.useCallback(() => {
+        const pos = typeof getPos === 'function' ? getPos() : undefined
+        if (pos === undefined) return
+        editor.chain().command(({ tr }: any) => {
+            const grid = tr.doc.nodeAt(pos)
+            if (!grid || grid.type.name !== 'niGrid' || grid.childCount <= 1) return false
+            const count = grid.childCount - 1
+            let lastOffset = 0
+            let lastSize = 0
+            grid.forEach((child: any, offset: number) => {
+                lastOffset = offset
+                lastSize = child.nodeSize
+            })
+            tr.delete(pos + 1 + lastOffset, pos + 1 + lastOffset + lastSize)
+            const updated = tr.doc.nodeAt(pos)
+            const widths: number[] = []
+            updated.forEach((child: any) => {
+                widths.push(Number(child.attrs.width) > 0 ? Number(child.attrs.width) : 0)
+            })
+            let percents: number[]
+            if (widths.every((w) => w > 0)) {
+                const total = widths.reduce((sum, w) => sum + w, 0)
+                percents = widths.map((w) => (w / total) * 100)
+            } else {
+                const even = 100 / updated.childCount
+                percents = widths.map(() => even)
+            }
+            let i = 0
+            updated.forEach((child: any, offset: number) => {
+                tr.setNodeMarkup(pos + 1 + offset, undefined, {
+                    ...child.attrs,
+                    columns: count,
+                    width: Math.round(percents[i] * 100) / 100,
+                })
+                i++
+            })
+            tr.setNodeMarkup(pos, undefined, { ...updated.attrs, columns: count })
+            return true
+        }).run()
+    }, [editor, getPos])
+
     const handleMove = React.useCallback(
         (e: MouseEvent) => {
             const drag = dragRef.current
@@ -451,7 +699,7 @@ const GridView = ({ node, editor, getPos }: any) => {
             if (!tds[drag.index - 1] || !tds[drag.index]) return
 
             const total = drag.widths.reduce((sum, w) => sum + w, 0)
-            const MIN = 60
+            const MIN = 80
             let left = drag.widths[drag.index - 1] + (e.clientX - drag.startX)
             let right = drag.widths[drag.index] - (e.clientX - drag.startX)
             if (left < MIN) {
@@ -465,6 +713,23 @@ const GridView = ({ node, editor, getPos }: any) => {
 
             tds[drag.index - 1].style.width = `${(left / total) * 100}%`
             tds[drag.index].style.width = `${(right / total) * 100}%`
+
+            // Live badges above each column showing its current share.
+            const container = containerRef.current
+            if (container) {
+                const containerLeft = container.getBoundingClientRect().left
+                const badges: ColumnBadge[] = tds.map((td, i) => {
+                    const pct =
+                        i === drag.index - 1
+                            ? (left / total) * 100
+                            : i === drag.index
+                                ? (right / total) * 100
+                                : (drag.widths[i] / total) * 100
+                    const rect = td.getBoundingClientRect()
+                    return { x: rect.left - containerLeft + rect.width / 2, pct }
+                })
+                setDragBadges(badges)
+            }
         },
         [getColumnTds]
     )
@@ -475,6 +740,7 @@ const GridView = ({ node, editor, getPos }: any) => {
 
         const drag = dragRef.current
         dragRef.current = null
+        setDragBadges(null)
         if (!drag) return
 
         const tds = getColumnTds()
@@ -515,35 +781,126 @@ const GridView = ({ node, editor, getPos }: any) => {
     )
 
     const resetWidths = () => {
-        const tds = getColumnTds()
-        if (tds.length < 2) return
-        const even = 100 / tds.length
-        commitWidths(tds.map(() => even))
+        const even = 100 / columnCount
+        commitWidths(Array.from({ length: columnCount }, () => even))
     }
 
+    const presets = gridPresets(columnCount)
+
     return (
-        <NodeViewWrapper className="ni-grid" style={{ margin: '20px -10px' }}>
-            <div ref={containerRef} style={{ position: 'relative', width: '100%' }}>
+        <NodeViewWrapper className="ni-grid" style={{ margin: '20px 0' }}>
+            <div
+                ref={containerRef}
+                className={isActive ? 'ni-grid-container ni-grid-active' : 'ni-grid-container'}
+                style={{ position: 'relative', width: '100%' }}
+            >
                 <table
                     role="presentation"
                     width="100%"
                     cellPadding="0"
                     cellSpacing="0"
-                    style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '10px 0' }}
+                    style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0' }}
                 >
                     <NodeViewContent as={'tr' as any} />
                 </table>
+
+                {isActive && (
+                    <div
+                        className="ni-grid-toolbar"
+                        contentEditable={false}
+                        onMouseDown={(e) => e.preventDefault()}
+                    >
+                        <span className="ni-grid-toolbar-label">
+                            {activeCol >= 0 ? `Column ${activeCol + 1}` : 'Columns'}
+                        </span>
+                        <div className="ni-grid-toolbar-group">
+                            {GRID_ALIGN_OPTIONS.map(({ value, Icon, title }) => (
+                                <button
+                                    key={value}
+                                    type="button"
+                                    title={title}
+                                    className={`ni-grid-toolbar-btn${
+                                        colAttrs.align === value ? ' ni-grid-toolbar-btn-active' : ''
+                                    }`}
+                                    onClick={() => setColumnAttrs({ align: value })}
+                                >
+                                    <Icon size={13} />
+                                </button>
+                            ))}
+                        </div>
+                        <div className="ni-grid-toolbar-group">
+                            {GRID_VALIGN_OPTIONS.map(({ value, Icon, title }) => (
+                                <button
+                                    key={value}
+                                    type="button"
+                                    title={title}
+                                    className={`ni-grid-toolbar-btn${
+                                        colAttrs.valign === value ? ' ni-grid-toolbar-btn-active' : ''
+                                    }`}
+                                    onClick={() => setColumnAttrs({ valign: value })}
+                                >
+                                    <Icon size={13} />
+                                </button>
+                            ))}
+                        </div>
+                        <div className="ni-grid-toolbar-group">
+                            {presets.map((preset) => (
+                                <button
+                                    key={preset.label}
+                                    type="button"
+                                    className="ni-grid-toolbar-chip"
+                                    onClick={() => commitWidths(preset.percents)}
+                                >
+                                    {preset.label}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="ni-grid-toolbar-group">
+                            <button
+                                type="button"
+                                className="ni-grid-toolbar-chip"
+                                disabled={columnCount >= 4}
+                                onClick={addColumn}
+                                title="Add a column"
+                            >
+                                + Col
+                            </button>
+                            <button
+                                type="button"
+                                className="ni-grid-toolbar-chip"
+                                disabled={columnCount <= 1}
+                                onClick={removeColumn}
+                                title="Remove the last column"
+                            >
+                                − Col
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {boundaries.map((x, i) => (
                     <span
                         key={i}
                         className="ni-grid-handle"
                         contentEditable={false}
                         data-ni-grid-handle=""
+                        data-dragging={dragRef.current?.index === i + 1 ? 'true' : 'false'}
                         style={{ left: `${x}px` }}
                         title="Drag to resize columns (double-click to reset)"
                         onMouseDown={startDrag(i + 1)}
                         onDoubleClick={resetWidths}
                     />
+                ))}
+
+                {dragBadges?.map((badge, i) => (
+                    <span
+                        key={`badge-${i}`}
+                        className="ni-grid-badge"
+                        contentEditable={false}
+                        style={{ left: `${badge.x}px` }}
+                    >
+                        {Math.round(badge.pct)}%
+                    </span>
                 ))}
             </div>
         </NodeViewWrapper>
@@ -580,7 +937,7 @@ export const NiGrid = Node.create({
             mergeAttributes(HTMLAttributes, {
                 class: 'ni-grid',
                 'data-ni-grid': '',
-                style: 'margin:20px -10px;',
+                style: 'margin:20px 0;',
             }),
             [
                 'table',
@@ -589,7 +946,7 @@ export const NiGrid = Node.create({
                     width: '100%',
                     cellpadding: '0',
                     cellspacing: '0',
-                    style: 'width:100%; border-collapse:separate; border-spacing:10px 0;',
+                    style: 'width:100%; border-collapse:separate; border-spacing:0;',
                 },
                 ['tr', {}, 0],
             ],

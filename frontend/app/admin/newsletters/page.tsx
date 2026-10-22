@@ -93,20 +93,24 @@ const AdminNewslettersPage = () => {
     }
 
     const handleEdit = (newsletter: Newsletter) => {
-        setForm({
-            title: newsletter.title,
-            subject: newsletter.subject,
-            preheader: newsletter.preheader || '',
-            content: newsletter.content || '',
-            header_image: newsletter.header_image || '',
-            background_color: newsletter.background_color,
-            text_color: newsletter.text_color,
-            accent_color: newsletter.accent_color,
+        // Defers the heavy editor mount to a low-priority transition so the
+        // click paints first (INP: the button previously blocked ~200ms).
+        React.startTransition(() => {
+            setForm({
+                title: newsletter.title,
+                subject: newsletter.subject,
+                preheader: newsletter.preheader || '',
+                content: newsletter.content || '',
+                header_image: newsletter.header_image || '',
+                background_color: newsletter.background_color,
+                text_color: newsletter.text_color,
+                accent_color: newsletter.accent_color,
+            })
+            setEditingId(newsletter.id)
+            setPreviewHtml(null)
+            setEditorTab('content')
+            setShowForm(true)
         })
-        setEditingId(newsletter.id)
-        setPreviewHtml(null)
-        setEditorTab('content')
-        setShowForm(true)
     }
 
     const handleSave = async () => {
@@ -259,7 +263,7 @@ const AdminNewslettersPage = () => {
                     </div>
                     <Button
                         className="gap-2 bg-primary hover:bg-primary/90 text-white"
-                        onClick={() => { setForm(EMPTY_FORM); setEditingId(null); setPreviewHtml(null); setEditorTab('content'); setShowForm(true) }}
+                        onClick={() => React.startTransition(() => { setForm(EMPTY_FORM); setEditingId(null); setPreviewHtml(null); setEditorTab('content'); setShowForm(true) })}
                     >
                         <Plus size={18} />
                         Create Newsletter
@@ -351,7 +355,7 @@ const AdminNewslettersPage = () => {
                     <div className="py-20 text-center border-2 border-dashed border-border/50 rounded-xl">
                         <Newspaper size={40} className="mx-auto mb-4 text-muted-foreground/40" />
                         <p className="text-muted-foreground mb-4">No newsletters yet. Build your first one.</p>
-                        <Button onClick={() => { setForm(EMPTY_FORM); setEditingId(null); setShowForm(true) }} className="gap-2">
+                        <Button onClick={() => React.startTransition(() => { setForm(EMPTY_FORM); setEditingId(null); setShowForm(true) })} className="gap-2">
                             <Plus size={16} /> Create Newsletter
                         </Button>
                     </div>
