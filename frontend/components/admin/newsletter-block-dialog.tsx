@@ -234,14 +234,18 @@ const BlockAttrsDialog = ({ state, editor, onClose }: BlockAttrsDialogProps) => 
         }
     }
 
+    const fixedHeight = state.type === 'niStats' || state.type === 'niKeyDates' || state.type === 'niCta'
+
     return (
         <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>
-            <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto bg-background border-border text-foreground">
-                <DialogHeader>
+            <DialogContent
+                className={`flex w-full max-w-xl flex-col gap-4 bg-background border-border text-foreground ${fixedHeight ? 'h-[78vh] overflow-hidden' : ''}`}
+            >
+                <DialogHeader className="shrink-0 pr-8">
                     <DialogTitle>{TITLES[state.type]}</DialogTitle>
                 </DialogHeader>
-                <div className="space-y-4">{renderBody()}</div>
-                <DialogFooter>
+                <div className="min-h-0 flex-1 overflow-y-auto pr-1 space-y-4">{renderBody()}</div>
+                <DialogFooter className="shrink-0">
                     <button
                         onClick={onClose}
                         className="px-4 py-2 rounded-lg text-sm border border-border/50 hover:bg-secondary/20"

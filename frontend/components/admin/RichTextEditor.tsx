@@ -270,7 +270,7 @@ const MenuBar = ({
     }
 
     return (
-        <div className="flex flex-wrap gap-1 p-1 border-b border-border/50 bg-secondary/5 rounded-t-lg">
+        <div className="sticky top-0 z-20 flex flex-wrap gap-1 p-1 border-b border-border/50 bg-background rounded-t-lg">
             <button
                 onClick={(e) => { e.preventDefault(); editor?.chain().focus().toggleBold().run() }}
                 className={`p-2 rounded hover:bg-secondary/80 transition-colors ${editor?.isActive('bold') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}
@@ -691,7 +691,7 @@ const RichTextEditor = ({
                 onChange={handleFileChange}
             />
             <div
-                className="border border-border/50 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-primary/20 transition-all bg-background/50"
+                className="border border-border/50 rounded-lg focus-within:ring-2 focus-within:ring-primary/20 transition-all bg-background/50"
                 style={{
                     '--ni-accent': accentColor || '#2563eb',
                     '--ni-text': textColor || '#0f172a',

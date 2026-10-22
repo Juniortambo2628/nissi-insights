@@ -297,11 +297,12 @@ const AdminNewslettersPage = () => {
 
             {/* Builder Modal */}
             <Dialog open={showForm} onOpenChange={(open) => !open && resetForm()}>
-                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-background border-border text-foreground">
-                    <DialogHeader>
+                <DialogContent className="flex h-[90vh] w-full max-w-4xl flex-col overflow-hidden bg-background border-border text-foreground">
+                    <DialogHeader className="shrink-0 pr-8">
                         <DialogTitle>{editingId ? 'Edit' : 'New'} Newsletter</DialogTitle>
                     </DialogHeader>
 
+                    <div className="min-h-0 flex-1 overflow-y-auto">
                     <Tabs value={editorTab} onValueChange={setEditorTab} className="py-2">
                         <TabsList className="mb-4">
                             <TabsTrigger value="content">Content</TabsTrigger>
@@ -447,8 +448,9 @@ const AdminNewslettersPage = () => {
                             )}
                         </TabsContent>
                     </Tabs>
+                    </div>
 
-                    <DialogFooter className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <DialogFooter className="shrink-0 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-border/50 pt-4">
                         <Button variant="outline" onClick={resetForm} disabled={isSaving}>Cancel</Button>
                         <div className="flex gap-2">
                             <Button
