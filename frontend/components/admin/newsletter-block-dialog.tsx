@@ -10,8 +10,21 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Plus, Trash2 } from 'lucide-react'
 import { DialogNodeType } from './newsletter-blocks'
+
+const ALIGN_OPTIONS = [
+    { value: 'left', label: 'Left' },
+    { value: 'center', label: 'Centre' },
+    { value: 'right', label: 'Right' },
+]
+
+const VALIGN_OPTIONS = [
+    { value: 'top', label: 'Top' },
+    { value: 'middle', label: 'Middle' },
+    { value: 'bottom', label: 'Bottom' },
+]
 
 interface BlockAttrsDialogProps {
     state: { pos: number; type: DialogNodeType } | null
@@ -127,6 +140,57 @@ const BlockAttrsDialog = ({ state, editor, onClose }: BlockAttrsDialogProps) => 
     const renderBody = () => {
         switch (state.type) {
             case 'niBox':
+                return (
+                    <div className="space-y-4">
+                        <div className="space-y-1.5">
+                            <FieldLabel>Label</FieldLabel>
+                            <Input
+                                value={attrs.label ?? ''}
+                                onChange={(e) => set('label', e.target.value)}
+                                className="bg-background border-border text-sm"
+                                placeholder="e.g. Bulletin"
+                            />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                                <FieldLabel>Horizontal</FieldLabel>
+                                <Select
+                                    value={attrs.align ?? 'left'}
+                                    onValueChange={(value) => set('align', value)}
+                                >
+                                    <SelectTrigger className="h-9 bg-background border-border text-sm">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {ALIGN_OPTIONS.map((opt) => (
+                                            <SelectItem key={opt.value} value={opt.value}>
+                                                {opt.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-1.5">
+                                <FieldLabel>Vertical</FieldLabel>
+                                <Select
+                                    value={attrs.valign ?? 'top'}
+                                    onValueChange={(value) => set('valign', value)}
+                                >
+                                    <SelectTrigger className="h-9 bg-background border-border text-sm">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {VALIGN_OPTIONS.map((opt) => (
+                                            <SelectItem key={opt.value} value={opt.value}>
+                                                {opt.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                    </div>
+                )
             case 'niHighlight':
                 return (
                     <div className="space-y-1.5">
