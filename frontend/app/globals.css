@@ -117,3 +117,63 @@
   scrollbar-width: thin;
   scrollbar-color: rgba(59, 130, 246, 0.2) transparent;
 }
+
+/* ---- Rich text / newsletter editor ---- */
+
+/* Data tables (bordered, email-safe) */
+.ni-editor table:not([role='presentation']) {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 16px 0;
+  font-size: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.ni-editor table:not([role='presentation']) td,
+.ni-editor table:not([role='presentation']) th {
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  padding: 8px 10px;
+  vertical-align: top;
+  position: relative;
+  min-width: 40px;
+}
+
+.ni-editor table:not([role='presentation']) th {
+  background: rgba(148, 163, 184, 0.12);
+  font-weight: 600;
+}
+
+/* Cell selection overlay (used by @tiptap/extension-table) */
+.ni-editor .selectedCell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(59, 130, 246, 0.18);
+  pointer-events: none;
+}
+
+/* Divider */
+.ni-editor hr.ni-hr {
+  border: none;
+  border-top: 1px solid rgba(148, 163, 184, 0.5);
+  margin: 22px 0;
+}
+
+/* Newsletter blocks: dblclick-to-edit affordances */
+.ni-editor .ni-stats,
+.ni-editor .ni-keydates,
+.ni-editor .ni-cta {
+  cursor: pointer;
+}
+
+.ni-editor [data-ni-box-label],
+.ni-editor [data-ni-highlight-label] {
+  cursor: pointer;
+}
+
+.ni-editor .ProseMirror-selectednode {
+  outline: 2px solid rgba(59, 130, 246, 0.55);
+  outline-offset: 2px;
+}

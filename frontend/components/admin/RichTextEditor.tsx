@@ -5,7 +5,8 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
-import { Node, mergeAttributes } from '@tiptap/core'
+import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table'
+import TextAlign from '@tiptap/extension-text-align'
 import imageCompression from 'browser-image-compression'
 import api from '@/lib/api'
 import { getMediaUrl } from '@/lib/utils'
@@ -25,6 +26,19 @@ import {
     Loader2,
     Code,
     PenTool,
+    Table as TableIcon,
+    Minus,
+    Square,
+    BarChart3,
+    Highlighter,
+    Columns2,
+    Columns3,
+    CalendarClock,
+    Megaphone,
+    AlignLeft,
+    AlignCenter,
+    AlignRight,
+    ChevronDown,
 } from 'lucide-react'
 import {
     Dialog,
@@ -33,9 +47,25 @@ import {
     DialogTitle,
     DialogFooter,
 } from '@/components/ui/dialog'
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { useApi } from '@/hooks/use-api'
 import { Insight } from '@/types/api'
+import {
+    newsletterBlockExtensions,
+    buildBlockContent,
+    DIALOG_NODE_TYPES,
+    BlockKind,
+    DialogNodeType,
+    ContentReference,
+} from './newsletter-blocks'
+import { BlockAttrsDialog } from './newsletter-block-dialog'
 
 interface KnowledgeBaseItem {
     id: number
@@ -57,116 +87,15 @@ interface ContentRefData {
     url: string
 }
 
-/**
- * Custom TipTap node for embedding a site content reference as a styled card.
- * Renders inline-styled HTML so it works in email clients.
- */
-const ContentReference = Node.create({
-    name: 'contentReference',
-    group: 'block',
-    atom: true,
-    draggable: true,
-
-    addAttributes() {
-        return {
-            refType: { default: 'insight' },
-            refId: { default: 0 },
-            title: { default: '' },
-            excerpt: { default: '' },
-            imageUrl: { default: null },
-            category: { default: '' },
-            url: { default: '' },
-        }
-    },
-
-    parseHTML() {
-        return [{
-            tag: 'div[data-content-ref]',
-            getAttrs: (el) => {
-                if (typeof el === 'string') return null
-                const div = el as HTMLElement
-                return {
-                    refType: div.getAttribute('data-ref-type') || 'insight',
-                    refId: parseInt(div.getAttribute('data-ref-id') || '0', 10),
-                    title: div.getAttribute('data-title') || '',
-                    excerpt: div.getAttribute('data-excerpt') || '',
-                    imageUrl: div.getAttribute('data-image-url') || null,
-                    category: div.getAttribute('data-category') || '',
-                    url: div.getAttribute('data-url') || '',
-                }
-            },
-        }]
-    },
-
-    renderHTML({ HTMLAttributes }) {
-        const { title, excerpt, imageUrl, category, url } = HTMLAttributes
-
-        // Build the text column as nested ProseMirror node structure.
-        const textChildren: any[] = []
-
-        if (category) {
-            textChildren.push([
-                'div',
-                { style: 'font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#64748b; margin-bottom:6px;' },
-                category,
-            ])
-        }
-
-        textChildren.push([
-            'div',
-            { style: 'font-size:17px; font-weight:700; line-height:1.3; margin-bottom:8px;' },
-            title,
-        ])
-
-        if (excerpt) {
-            textChildren.push([
-                'div',
-                { style: 'font-size:14px; line-height:1.6; color:#64748b; margin-bottom:12px;' },
-                excerpt,
-            ])
-        }
-
-        if (url) {
-            textChildren.push([
-                'a',
-                { href: url, style: 'font-size:13px; font-weight:600; text-decoration:none; color:inherit;' },
-                'Read more →',
-            ])
-        }
-
-        const textCell = ['td', { style: 'vertical-align:top;' }, ...textChildren]
-
-        const rowChildren = imageUrl
-            ? [
-                [
-                    'td',
-                    { style: 'padding:0 16px 0 0; vertical-align:top; width:160px;' },
-                    ['img', { src: imageUrl, alt: '', width: '160', style: 'display:block; width:160px; height:auto; border-radius:8px; object-fit:cover;' }],
-                ],
-                textCell,
-            ]
-            : [textCell]
-
-        return [
-            'div',
-            mergeAttributes(HTMLAttributes, {
-                'data-content-ref': '',
-                style: 'border:1px solid rgba(148,163,184,0.3); border-radius:12px; padding:20px; margin:20px 0; background:rgba(15,23,42,0.03);',
-            }),
-            [
-                'table',
-                { role: 'presentation', width: '100%', cellpadding: '0', cellspacing: '0', style: 'width:100%; border-collapse:collapse;' },
-                ['tr', {}, ...rowChildren],
-            ],
-        ]
-    },
-})
-
 interface RichTextEditorProps {
     value: string
     onChange: (value: string) => void
     label?: string
     className?: string
+    /** Resolved live into var(--ni-accent) inside inserted newsletter blocks. */
+    accentColor?: string
+    textColor?: string
+    backgroundColor?: string
 }
 
 interface ContentPickerDialogProps {
@@ -315,6 +244,10 @@ const MenuBar = ({
     onToggleSource,
     isSourceMode,
     onInsertContent,
+    onInsertBlock,
+    onInsertTable,
+    onRunTableAction,
+    onInsertDivider,
 }: {
     editor: any
     onImageSelect: () => void
@@ -322,6 +255,10 @@ const MenuBar = ({
     onToggleSource: () => void
     isSourceMode: boolean
     onInsertContent: () => void
+    onInsertBlock: (kind: BlockKind) => void
+    onInsertTable: () => void
+    onRunTableAction: (action: string) => void
+    onInsertDivider: () => void
 }) => {
     if (!editor && !isSourceMode) return null
 
@@ -386,6 +323,31 @@ const MenuBar = ({
             </button>
             <div className="w-[1px] h-6 bg-border/50 self-center mx-1" />
             <button
+                onClick={(e) => { e.preventDefault(); editor?.chain().focus().setTextAlign('left').run() }}
+                className={`p-2 rounded hover:bg-secondary/80 transition-colors ${editor?.isActive('textAlign', { align: 'left' }) ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}
+                title="Align Left"
+                disabled={isSourceMode}
+            >
+                <AlignLeft size={16} />
+            </button>
+            <button
+                onClick={(e) => { e.preventDefault(); editor?.chain().focus().setTextAlign('center').run() }}
+                className={`p-2 rounded hover:bg-secondary/80 transition-colors ${editor?.isActive('textAlign', { align: 'center' }) ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}
+                title="Align Center"
+                disabled={isSourceMode}
+            >
+                <AlignCenter size={16} />
+            </button>
+            <button
+                onClick={(e) => { e.preventDefault(); editor?.chain().focus().setTextAlign('right').run() }}
+                className={`p-2 rounded hover:bg-secondary/80 transition-colors ${editor?.isActive('textAlign', { align: 'right' }) ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}
+                title="Align Right"
+                disabled={isSourceMode}
+            >
+                <AlignRight size={16} />
+            </button>
+            <div className="w-[1px] h-6 bg-border/50 self-center mx-1" />
+            <button
                 onClick={(e) => { e.preventDefault(); setLink() }}
                 className={`p-2 rounded hover:bg-secondary/80 transition-colors ${editor?.isActive('link') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}
                 title="Link"
@@ -418,6 +380,79 @@ const MenuBar = ({
             >
                 <PenTool size={16} />
             </button>
+            <div className="w-[1px] h-6 bg-border/50 self-center mx-1" />
+            <button
+                onClick={(e) => { e.preventDefault(); onInsertDivider() }}
+                className="p-2 rounded hover:bg-secondary/80 transition-colors text-muted-foreground"
+                disabled={isSourceMode}
+                title="Insert Divider"
+            >
+                <Minus size={16} />
+            </button>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <button
+                        className="flex items-center gap-0.5 p-2 rounded hover:bg-secondary/80 transition-colors text-muted-foreground disabled:opacity-40"
+                        disabled={isSourceMode || !editor}
+                        title="Insert Block"
+                    >
+                        <Square size={16} />
+                        <ChevronDown size={10} />
+                    </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="bg-background border-border text-foreground">
+                    <DropdownMenuItem className="gap-2 cursor-pointer" onSelect={() => onInsertBlock('box')}>
+                        <Square size={14} /> Boxed section
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="gap-2 cursor-pointer" onSelect={() => onInsertBlock('highlight')}>
+                        <Highlighter size={14} /> Impact highlight
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="gap-2 cursor-pointer" onSelect={() => onInsertBlock('stats')}>
+                        <BarChart3 size={14} /> Statistics row
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="gap-2 cursor-pointer" onSelect={() => onInsertBlock('keydates')}>
+                        <CalendarClock size={14} /> Key dates panel
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="gap-2 cursor-pointer" onSelect={() => onInsertBlock('cta')}>
+                        <Megaphone size={14} /> Call to action
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="gap-2 cursor-pointer" onSelect={() => onInsertBlock('grid2')}>
+                        <Columns2 size={14} /> Two columns
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="gap-2 cursor-pointer" onSelect={() => onInsertBlock('grid3')}>
+                        <Columns3 size={14} /> Three columns
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <button
+                        className="flex items-center gap-0.5 p-2 rounded hover:bg-secondary/80 transition-colors text-muted-foreground disabled:opacity-40"
+                        disabled={isSourceMode || !editor}
+                        title={editor?.isActive('table') ? 'Table Options' : 'Insert Table'}
+                    >
+                        <TableIcon size={16} />
+                        <ChevronDown size={10} />
+                    </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="bg-background border-border text-foreground">
+                    {editor?.isActive('table') ? (
+                        <>
+                            <DropdownMenuItem className="cursor-pointer" onSelect={() => onRunTableAction('rowAbove')}>Add row above</DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer" onSelect={() => onRunTableAction('rowBelow')}>Add row below</DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer" onSelect={() => onRunTableAction('colBefore')}>Add column before</DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer" onSelect={() => onRunTableAction('colAfter')}>Add column after</DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="cursor-pointer" onSelect={() => onRunTableAction('deleteRow')}>Delete row</DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer" onSelect={() => onRunTableAction('deleteColumn')}>Delete column</DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer text-destructive" onSelect={() => onRunTableAction('deleteTable')}>Delete table</DropdownMenuItem>
+                        </>
+                    ) : (
+                        <DropdownMenuItem className="cursor-pointer" onSelect={onInsertTable}>Insert 3 × 3 table</DropdownMenuItem>
+                    )}
+                </DropdownMenuContent>
+            </DropdownMenu>
             <div className="flex-1" />
             <button
                 onClick={(e) => { e.preventDefault(); editor?.chain().focus().undo().run() }}
@@ -447,12 +482,21 @@ const MenuBar = ({
     )
 }
 
-const RichTextEditor = ({ value, onChange, label, className }: RichTextEditorProps) => {
+const RichTextEditor = ({
+    value,
+    onChange,
+    label,
+    className,
+    accentColor,
+    textColor,
+    backgroundColor,
+}: RichTextEditorProps) => {
     const fileInputRef = React.useRef<HTMLInputElement>(null)
     const [isUploading, setIsUploading] = React.useState(false)
     const [isSourceMode, setIsSourceMode] = React.useState(false)
     const [sourceText, setSourceText] = React.useState('')
     const [showContentPicker, setShowContentPicker] = React.useState(false)
+    const [dialogState, setDialogState] = React.useState<{ pos: number; type: DialogNodeType } | null>(null)
     const { toast } = useToast()
 
     const editor = useEditor({
@@ -461,6 +505,9 @@ const RichTextEditor = ({ value, onChange, label, className }: RichTextEditorPro
             StarterKit.configure({
                 // @ts-ignore — ensure no duplicate 'link' extension
                 link: false,
+                horizontalRule: {
+                    HTMLAttributes: { class: 'ni-hr' },
+                },
             }),
             Link.configure({
                 openOnClick: false,
@@ -474,9 +521,54 @@ const RichTextEditor = ({ value, onChange, label, className }: RichTextEditorPro
                     style: 'max-width:100%; height:auto; border-radius:8px;',
                 },
             }),
+            Table.configure({
+                resizable: false,
+                allowTableNodeSelection: true,
+                HTMLAttributes: { class: 'ni-table' },
+            }),
+            TableRow.configure({ HTMLAttributes: { class: 'ni-table-row' } }),
+            TableHeader.configure({ HTMLAttributes: { class: 'ni-table-header' } }),
+            TableCell.configure({ HTMLAttributes: { class: 'ni-table-cell' } }),
+            TextAlign.configure({ types: ['heading', 'paragraph'] }),
             ContentReference,
+            ...newsletterBlockExtensions,
         ],
         content: value,
+        editorProps: {
+            handleDoubleClick: (view, _pos, event) => {
+                const target = event.target as HTMLElement | null
+                const onLabel = !!target?.closest('[data-ni-box-label],[data-ni-highlight-label]')
+                const coords = view.posAtCoords({ left: event.clientX, top: event.clientY })
+                if (!coords) return false
+
+                const dialogTypes = DIALOG_NODE_TYPES as readonly string[]
+                let type: string | null = null
+                let pos = -1
+
+                const $from = view.state.doc.resolve(coords.pos)
+                for (let depth = $from.depth; depth > 0; depth--) {
+                    const name = $from.node(depth).type.name
+                    if (dialogTypes.includes(name)) {
+                        type = name
+                        pos = $from.before(depth)
+                        break
+                    }
+                }
+                if (!type && coords.pos > 0) {
+                    const neighbor = view.state.doc.nodeAt(coords.pos - 1)
+                    if (neighbor && dialogTypes.includes(neighbor.type.name)) {
+                        type = neighbor.type.name
+                        pos = coords.pos - 1
+                    }
+                }
+
+                if (!type) return false
+                if ((type === 'niBox' || type === 'niHighlight') && !onLabel) return false
+
+                setDialogState({ pos, type: type as DialogNodeType })
+                return true
+            },
+        },
         onUpdate: ({ editor }) => {
             if (!isSourceMode) {
                 onChange(editor.getHTML())
@@ -522,6 +614,33 @@ const RichTextEditor = ({ value, onChange, label, className }: RichTextEditorPro
                 attrs: data,
             })
             .run()
+    }
+
+    const insertBlock = (kind: BlockKind) => {
+        editor?.chain().focus().insertContent(buildBlockContent(kind)).run()
+    }
+
+    const insertTable = () => {
+        editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
+    }
+
+    const insertDivider = () => {
+        editor?.chain().focus().setHorizontalRule().run()
+    }
+
+    const runTableAction = (action: string) => {
+        if (!editor) return
+        const chain = editor.chain().focus()
+        switch (action) {
+            case 'rowAbove': chain.addRowBefore(); break
+            case 'rowBelow': chain.addRowAfter(); break
+            case 'colBefore': chain.addColumnBefore(); break
+            case 'colAfter': chain.addColumnAfter(); break
+            case 'deleteRow': chain.deleteRow(); break
+            case 'deleteColumn': chain.deleteColumn(); break
+            case 'deleteTable': chain.deleteTable(); break
+        }
+        chain.run()
     }
 
     const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -571,7 +690,14 @@ const RichTextEditor = ({ value, onChange, label, className }: RichTextEditorPro
                 className="hidden"
                 onChange={handleFileChange}
             />
-            <div className="border border-border/50 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-primary/20 transition-all bg-background/50">
+            <div
+                className="border border-border/50 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-primary/20 transition-all bg-background/50"
+                style={{
+                    '--ni-accent': accentColor || '#2563eb',
+                    '--ni-text': textColor || '#0f172a',
+                    '--ni-bg': backgroundColor || '#ffffff',
+                } as React.CSSProperties}
+            >
                 <MenuBar
                     editor={editor}
                     isUploading={isUploading}
@@ -579,6 +705,10 @@ const RichTextEditor = ({ value, onChange, label, className }: RichTextEditorPro
                     onToggleSource={toggleSourceMode}
                     isSourceMode={isSourceMode}
                     onInsertContent={() => setShowContentPicker(true)}
+                    onInsertBlock={insertBlock}
+                    onInsertTable={insertTable}
+                    onRunTableAction={runTableAction}
+                    onInsertDivider={insertDivider}
                 />
                 {isSourceMode ? (
                     <div className="p-0">
@@ -596,7 +726,7 @@ const RichTextEditor = ({ value, onChange, label, className }: RichTextEditorPro
                 ) : (
                     <EditorContent
                         editor={editor}
-                        className="prose prose-sm dark:prose-invert max-w-none p-4 min-h-[200px] focus:outline-none prose-img:max-w-full"
+                        className="ni-editor prose prose-sm dark:prose-invert max-w-none p-4 min-h-[200px] focus:outline-none prose-img:max-w-full"
                     />
                 )}
             </div>
@@ -605,6 +735,12 @@ const RichTextEditor = ({ value, onChange, label, className }: RichTextEditorPro
                 open={showContentPicker}
                 onOpenChange={setShowContentPicker}
                 onInsert={insertContentRef}
+            />
+
+            <BlockAttrsDialog
+                state={dialogState}
+                editor={editor}
+                onClose={() => setDialogState(null)}
             />
         </div>
     )

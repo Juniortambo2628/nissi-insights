@@ -344,6 +344,9 @@ const AdminNewslettersPage = () => {
                                 label="Content"
                                 value={form.content || ''}
                                 onChange={(content) => setForm({ ...form, content })}
+                                accentColor={form.accent_color || undefined}
+                                textColor={form.text_color || undefined}
+                                backgroundColor={form.background_color || undefined}
                                 className="min-h-[300px]"
                             />
 

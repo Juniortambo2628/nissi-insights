@@ -75,14 +75,15 @@ class Newsletter extends Model
 
     /**
      * Newsletter HTML with relative upload paths rewritten to absolute URLs
-     * so images render correctly in email clients.
+     * so images render correctly in email clients, and editor color tokens
+     * (var(--ni-accent,#2563eb) etc.) resolved to the newsletter's colors.
      */
     public function renderedContent(): string
     {
         $content = (string) $this->content;
         $appUrl = config('app.url');
 
-        return preg_replace_callback(
+        $content = preg_replace_callback(
             '#\b(src|href)="([^"]*uploads/[^"]*)"#i',
             function ($matches) use ($appUrl) {
                 $url = $matches[2];
@@ -98,5 +99,30 @@ class Newsletter extends Model
             },
             $content
         ) ?? $content;
+
+        return $this->resolveColorTokens($content);
+    }
+
+    /**
+     * Replace CSS color variables used by inserted blocks with literal
+     * colors, since email clients do not support custom properties.
+     */
+    protected function resolveColorTokens(string $content): string
+    {
+        $tokens = [
+            '--ni-accent' => $this->accent_color ?: '#2563eb',
+            '--ni-text' => $this->text_color ?: '#0f172a',
+            '--ni-bg' => $this->background_color ?: '#ffffff',
+        ];
+
+        $replaced = preg_replace_callback(
+            '/var\(\s*(--ni-accent|--ni-text|--ni-bg)\s*(?:,\s*[^)]*)?\)/',
+            function ($matches) use ($tokens) {
+                return $tokens[$matches[1]] ?? $matches[0];
+            },
+            $content
+        );
+
+        return $replaced ?? $content;
     }
 }
