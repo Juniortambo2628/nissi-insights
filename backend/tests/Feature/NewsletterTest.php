@@ -209,3 +209,47 @@ it('renders the branded footer in newsletter emails', function () {
     expect($html)->toContain("You're getting this because you signed up for updates from Nissi Insights.");
     expect($html)->toContain('Unsubscribe');
 });
+
+it('requires authentication to duplicate a newsletter', function () {
+    $newsletter = Newsletter::factory()->create(['user_id' => $this->user->id]);
+
+    $this->postJson("/api/newsletters/{$newsletter->id}/duplicate")->assertUnauthorized();
+});
+
+it('duplicates a newsletter as an independent draft', function () {
+    $newsletter = Newsletter::factory()->create([
+        'user_id' => $this->user->id,
+        'title' => 'Q3 Briefing',
+        'subject' => 'Q3 subject',
+        'content' => '<p>Original body</p>',
+        'accent_color' => '#d97706',
+        'status' => Newsletter::STATUS_SENT,
+        'sent_at' => now(),
+    ]);
+
+    $response = $this->actingAs($this->user)
+        ->postJson("/api/newsletters/{$newsletter->id}/duplicate");
+
+    $response->assertCreated()
+        ->assertJsonPath('title', 'Copy of Q3 Briefing')
+        ->assertJsonPath('subject', 'Q3 subject')
+        ->assertJsonPath('status', Newsletter::STATUS_DRAFT)
+        ->assertJsonPath('sent_at', null)
+        ->assertJsonPath('user_id', $this->user->id);
+
+    expect($response->json('id'))->not->toBe($newsletter->id);
+
+    $original = $newsletter->fresh();
+    expect($original->title)->toBe('Q3 Briefing')
+        ->and($original->status)->toBe(Newsletter::STATUS_SENT);
+
+    // The copy is fully independent: editing it must not touch the original.
+    $this->actingAs($this->user)
+        ->putJson("/api/newsletters/{$response->json('id')}", [
+            'title' => 'Q3 Briefing (edited copy)',
+            'subject' => 'Changed',
+        ])
+        ->assertOk();
+
+    expect($newsletter->fresh()->title)->toBe('Q3 Briefing');
+});

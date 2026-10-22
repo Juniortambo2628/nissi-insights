@@ -95,6 +95,17 @@ export interface Newsletter {
   updated_at: string;
 }
 
+export interface NewsletterTemplate {
+  id: number;
+  user_id: number;
+  name: string;
+  background_color: string;
+  text_color: string;
+  accent_color: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Campaign {
   id: number;
   user_id: number;

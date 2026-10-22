@@ -7,6 +7,7 @@ import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
 import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table'
 import TextAlign from '@tiptap/extension-text-align'
+import { TextStyle, Color } from '@tiptap/extension-text-style'
 import imageCompression from 'browser-image-compression'
 import api from '@/lib/api'
 import { getMediaUrl } from '@/lib/utils'
@@ -39,6 +40,7 @@ import {
     AlignCenter,
     AlignRight,
     ChevronDown,
+    Baseline,
 } from 'lucide-react'
 import {
     Dialog,
@@ -237,6 +239,8 @@ const ContentPickerDialog = ({ open, onOpenChange, onInsert }: ContentPickerDial
     )
 }
 
+const TEXT_SWATCHES = ['#0f172a', '#dc2626', '#d97706', '#16a34a', '#2563eb', '#7c3aed', '#94a3b8', '#ffffff']
+
 const MenuBar = ({
     editor,
     onImageSelect,
@@ -248,6 +252,7 @@ const MenuBar = ({
     onInsertTable,
     onRunTableAction,
     onInsertDivider,
+    accentColor,
 }: {
     editor: any
     onImageSelect: () => void
@@ -259,6 +264,7 @@ const MenuBar = ({
     onInsertTable: () => void
     onRunTableAction: (action: string) => void
     onInsertDivider: () => void
+    accentColor?: string
 }) => {
     if (!editor && !isSourceMode) return null
 
@@ -268,6 +274,13 @@ const MenuBar = ({
             editor.chain().focus().setLink({ href: url }).run()
         }
     }
+
+    const activeColor: string | undefined = editor?.isActive('textStyle')
+        ? editor.getAttributes('textStyle').color
+        : undefined
+    const swatches = accentColor && !TEXT_SWATCHES.includes(accentColor)
+        ? [accentColor, ...TEXT_SWATCHES]
+        : TEXT_SWATCHES
 
     return (
         <div className="sticky top-0 z-20 flex flex-wrap gap-1 p-1 border-b border-border/50 bg-background rounded-t-lg">
@@ -346,6 +359,58 @@ const MenuBar = ({
             >
                 <AlignRight size={16} />
             </button>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <button
+                        className="relative p-2 rounded hover:bg-secondary/80 transition-colors text-muted-foreground disabled:opacity-40"
+                        disabled={isSourceMode || !editor}
+                        title="Text color"
+                    >
+                        <Baseline size={16} />
+                        {activeColor && (
+                            <span
+                                className="absolute bottom-0.5 left-1/2 h-[3px] w-3.5 -translate-x-1/2 rounded-full border border-black/10"
+                                style={{ backgroundColor: activeColor }}
+                            />
+                        )}
+                    </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-52 p-2 bg-background border-border text-foreground">
+                    <div className="grid grid-cols-5 gap-1.5">
+                        {swatches.map((color) => (
+                            <button
+                                key={color}
+                                type="button"
+                                title={color}
+                                onClick={() => editor?.chain().focus().setColor(color).run()}
+                                className={`h-6 w-6 rounded border transition-transform hover:scale-110 ${
+                                    activeColor?.toLowerCase() === color.toLowerCase()
+                                        ? 'border-primary ring-2 ring-primary/50'
+                                        : 'border-black/10'
+                                }`}
+                                style={{ backgroundColor: color }}
+                            />
+                        ))}
+                    </div>
+                    <div className="flex items-center gap-2 mt-2 pt-2 border-t border-border/40">
+                        <input
+                            type="color"
+                            value={activeColor || accentColor || '#0f172a'}
+                            onChange={(e) => editor?.chain().focus().setColor(e.target.value).run()}
+                            className="h-6 w-8 cursor-pointer rounded border-0 bg-transparent p-0"
+                            aria-label="Custom text color"
+                        />
+                        <span className="text-xs text-muted-foreground">Custom color</span>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => editor?.chain().focus().unsetColor().run()}
+                        className="w-full text-left px-1 py-1.5 mt-1 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors"
+                    >
+                        Reset to default color
+                    </button>
+                </DropdownMenuContent>
+            </DropdownMenu>
             <div className="w-[1px] h-6 bg-border/50 self-center mx-1" />
             <button
                 onClick={(e) => { e.preventDefault(); setLink() }}
@@ -520,6 +585,13 @@ const RichTextEditor = ({
                     class: 'rounded-lg max-w-full h-auto',
                     style: 'max-width:100%; height:auto; border-radius:8px;',
                 },
+                resize: {
+                    enabled: true,
+                    directions: ['bottom-right', 'right', 'bottom'],
+                    minWidth: 80,
+                    minHeight: 60,
+                    alwaysPreserveAspectRatio: true,
+                },
             }),
             Table.configure({
                 resizable: false,
@@ -530,6 +602,8 @@ const RichTextEditor = ({
             TableHeader.configure({ HTMLAttributes: { class: 'ni-table-header' } }),
             TableCell.configure({ HTMLAttributes: { class: 'ni-table-cell' } }),
             TextAlign.configure({ types: ['heading', 'paragraph'] }),
+            TextStyle,
+            Color.configure({ types: ['textStyle'] }),
             ContentReference,
             ...newsletterBlockExtensions,
         ],
@@ -709,6 +783,7 @@ const RichTextEditor = ({
                     onInsertTable={insertTable}
                     onRunTableAction={runTableAction}
                     onInsertDivider={insertDivider}
+                    accentColor={accentColor}
                 />
                 {isSourceMode ? (
                     <div className="p-0">

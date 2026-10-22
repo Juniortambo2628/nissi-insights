@@ -150,6 +150,26 @@ describe('newsletter block nodes', () => {
         expect(triple.json.content![0].content).toHaveLength(3)
     })
 
+    it('round-trips custom column widths as percent attributes', () => {
+        const grid = buildBlockContent('grid2')
+        grid.content[0].attrs.width = 62.5
+        grid.content[1].attrs.width = 37.5
+        grid.content[0].content = [{ type: 'paragraph', content: [{ type: 'text', text: 'Wide column' }] }]
+        grid.content[1].content = [{ type: 'paragraph', content: [{ type: 'text', text: 'Narrow column' }] }]
+
+        const { html, json } = roundTrip({ type: 'doc', content: [grid] })
+
+        expect(html).toMatch(/width:\s*62\.50%/)
+        expect(html).toMatch(/width:\s*37\.50%/)
+        expect(html).not.toContain('width="62.5"')
+        // Handles are node-view-only chrome and must never be serialized.
+        expect(html).not.toContain('ni-grid-handle')
+
+        const node: any = json.content![0]
+        expect(node.content[0].attrs.width).toBeCloseTo(62.5)
+        expect(node.content[1].attrs.width).toBeCloseTo(37.5)
+    })
+
     it('builds insertable blocks with sensible defaults', () => {
         expect(buildBlockContent('box')).toMatchObject({
             type: 'niBox',

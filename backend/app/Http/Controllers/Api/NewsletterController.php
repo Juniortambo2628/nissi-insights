@@ -60,6 +60,24 @@ class NewsletterController extends Controller
         return response()->json(null, 204);
     }
 
+    public function duplicate(Request $request, Newsletter $newsletter)
+    {
+        if (! Schema::hasTable('newsletters')) {
+            return response()->json([
+                'message' => 'Database migration pending: newsletters table missing. Run php artisan migrate.',
+            ], 503);
+        }
+
+        $copy = $newsletter->replicate();
+        $copy->title = mb_substr('Copy of '.$newsletter->title, 0, 255);
+        $copy->status = Newsletter::STATUS_DRAFT;
+        $copy->sent_at = null;
+        $copy->user_id = $request->user()->id;
+        $copy->save();
+
+        return response()->json($copy->load('user:id,name'), 201);
+    }
+
     public function preview(Request $request)
     {
         $validated = $request->validate([

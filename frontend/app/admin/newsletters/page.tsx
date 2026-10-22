@@ -10,7 +10,7 @@ import RichTextEditor from '@/components/admin/RichTextEditor'
 import ImageUploader from '@/components/admin/ImageUploader'
 import CampaignSendDialog from '@/components/admin/CampaignSendDialog'
 import api from '@/lib/api'
-import { Newsletter, Campaign } from '@/types/api'
+import { Newsletter, NewsletterTemplate, Campaign } from '@/types/api'
 import { useToast } from '@/hooks/use-toast'
 import {
     Dialog,
@@ -41,6 +41,8 @@ import {
     Loader2,
     Palette,
     Newspaper,
+    Copy,
+    Save,
 } from 'lucide-react'
 
 const COLOR_PRESETS = [
@@ -71,6 +73,10 @@ const AdminNewslettersPage = () => {
     const [form, setForm] = useState<Partial<Newsletter>>(EMPTY_FORM)
     const [isSaving, setIsSaving] = useState(false)
     const [editorTab, setEditorTab] = useState('content')
+
+    const { data: templates, mutate: mutateTemplates } = useApi<NewsletterTemplate[]>(
+        showForm ? '/newsletter-templates' : null
+    )
 
     const [previewHtml, setPreviewHtml] = useState<string | null>(null)
     const [isPreviewing, setIsPreviewing] = useState(false)
@@ -148,6 +154,60 @@ const AdminNewslettersPage = () => {
         }
     }
 
+    const handleDuplicate = async (id: number) => {
+        try {
+            const res = await api.post(`/newsletters/${id}/duplicate`)
+            toast({ title: 'Duplicated', description: 'A draft copy is open in the editor.' })
+            mutate()
+            handleEdit(res.data)
+        } catch (err: any) {
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: err.response?.data?.message || 'Failed to duplicate newsletter',
+            })
+        }
+    }
+
+    const applyTemplate = (template: NewsletterTemplate) => {
+        setForm((prev) => ({
+            ...prev,
+            background_color: template.background_color,
+            text_color: template.text_color,
+            accent_color: template.accent_color,
+        }))
+    }
+
+    const handleSaveTemplate = async () => {
+        const name = window.prompt('Template name', 'My template')
+        if (!name?.trim()) return
+        try {
+            await api.post('/newsletter-templates', {
+                name: name.trim(),
+                background_color: form.background_color,
+                text_color: form.text_color,
+                accent_color: form.accent_color,
+            })
+            toast({ title: 'Template saved', description: 'Found under "My templates" in the Design tab.' })
+            mutateTemplates()
+        } catch (err: any) {
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: err.response?.data?.message || 'Failed to save template',
+            })
+        }
+    }
+
+    const handleDeleteTemplate = async (id: number) => {
+        try {
+            await api.delete(`/newsletter-templates/${id}`)
+            mutateTemplates()
+        } catch (err: any) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete template' })
+        }
+    }
+
     const handlePreview = async () => {
         if (!editingId && !form.title) {
             toast({ variant: 'destructive', title: 'Nothing to preview', description: 'Add a title first.' })
@@ -222,6 +282,9 @@ const AdminNewslettersPage = () => {
                                         <DropdownMenuContent align="end">
                                             <DropdownMenuItem onClick={() => handleEdit(newsletter)} className="gap-2">
                                                 <Pencil size={14} /> Edit
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => handleDuplicate(newsletter.id)} className="gap-2">
+                                                <Copy size={14} /> Duplicate
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onClick={() => setShareNewsletter(newsletter)} className="gap-2 text-primary">
                                                 <Send size={14} /> Share / Send
@@ -361,7 +424,12 @@ const AdminNewslettersPage = () => {
 
                         <TabsContent value="design" className="space-y-4">
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-muted-foreground">Template Presets</label>
+                                <div className="flex items-center justify-between">
+                                    <label className="text-sm font-medium text-muted-foreground">Template Presets</label>
+                                    <Button variant="outline" size="sm" onClick={handleSaveTemplate} className="h-7 gap-1 px-2 text-xs">
+                                        <Save size={12} /> Save current colors
+                                    </Button>
+                                </div>
                                 <div className="flex flex-wrap gap-2">
                                     {COLOR_PRESETS.map((preset) => (
                                         <button
@@ -377,6 +445,44 @@ const AdminNewslettersPage = () => {
                                         </button>
                                     ))}
                                 </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-muted-foreground">My templates</label>
+                                {templates && templates.length > 0 ? (
+                                    <div className="flex flex-wrap gap-2">
+                                        {templates.map((template) => (
+                                            <div
+                                                key={template.id}
+                                                className="flex items-center rounded-lg border border-border/50 bg-background/50 overflow-hidden hover:border-primary/50 transition-all"
+                                            >
+                                                <button
+                                                    type="button"
+                                                    onClick={() => applyTemplate(template)}
+                                                    className="flex items-center gap-2 px-3 py-2 text-sm"
+                                                    title={`Apply "${template.name}" colors`}
+                                                >
+                                                    <span className="w-4 h-4 rounded-full border border-black/10" style={{ backgroundColor: template.background_color }} />
+                                                    <span className="w-4 h-4 rounded-full border border-black/10" style={{ backgroundColor: template.text_color }} />
+                                                    <span className="w-4 h-4 rounded-full border border-black/10" style={{ backgroundColor: template.accent_color }} />
+                                                    {template.name}
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleDeleteTemplate(template.id)}
+                                                    aria-label={`Delete template ${template.name}`}
+                                                    className="px-2 py-2 text-muted-foreground hover:text-destructive transition-colors"
+                                                >
+                                                    <Trash2 size={12} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-xs text-muted-foreground">
+                                        No saved templates yet. Set your colors below, then click "Save current colors".
+                                    </p>
+                                )}
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
