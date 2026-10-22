@@ -241,6 +241,7 @@ Route::middleware('auth:sanctum')->group(function () {
 // Public health check — reports migration status for diagnostics.
 Route::get('/health', function () {
     $tables = [
+        'users', 'personal_access_tokens', 'site_settings',
         'subscribers', 'email_contacts', 'newsletters', 'campaigns',
         'email_logs', 'email_templates', 'insights', 'resources',
     ];
@@ -250,19 +251,40 @@ Route::get('/health', function () {
         $status[$table] = \Illuminate\Support\Facades\Schema::hasTable($table);
     }
 
-    $migrations = \Illuminate\Support\Facades\DB::table('migrations')
+    $recorded = \Illuminate\Support\Facades\DB::table('migrations')
         ->pluck('migration')
-        ->toArray();
+        ->all();
+
+    $files = collect(\Illuminate\Support\Facades\File::glob(database_path('migrations/*.php')))
+        ->map(fn ($f) => basename($f, '.php'))
+        ->sort()
+        ->values()
+        ->all();
+
+    $unrecorded = array_values(array_diff($files, $recorded));
+
+    $schemaMissing = array_filter([
+        'subscribers.unsubscribe_token' => $status['subscribers'] && ! \Illuminate\Support\Facades\Schema::hasColumn('subscribers', 'unsubscribe_token'),
+        'email_contacts.unsubscribe_token' => $status['email_contacts'] && ! \Illuminate\Support\Facades\Schema::hasColumn('email_contacts', 'unsubscribe_token'),
+    ]);
+
+    // MySQL-only: does campaigns have its foreign keys?
+    $campaignFks = null;
+    if (\Illuminate\Support\Facades\DB::connection()->getDriverName() === 'mysql') {
+        $campaignFks = (int) (\Illuminate\Support\Facades\DB::selectOne(
+            'SELECT COUNT(*) AS c FROM information_schema.KEY_COLUMN_USAGE
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :t AND REFERENCED_TABLE_NAME IS NOT NULL',
+            ['t' => 'campaigns']
+        )->c ?? 0);
+    }
 
     return response()->json([
         'status' => 'ok',
         'tables' => $status,
-        'migrations_count' => count($migrations),
-        'pending_migrations' => array_filter([
-            '2026_10_22_000001_add_opt_out_fields_to_subscribers_table' => ! $status['subscribers'] || ! \Illuminate\Support\Facades\Schema::hasColumn('subscribers', 'unsubscribe_token'),
-            '2026_10_22_000002_create_newsletters_table' => ! $status['newsletters'],
-            '2026_10_22_000003_create_campaigns_table' => ! $status['campaigns'],
-            '2026_10_22_000004_add_opt_out_fields_to_email_contacts_table' => ! $status['email_contacts'] || ! \Illuminate\Support\Facades\Schema::hasColumn('email_contacts', 'unsubscribe_token'),
-        ]),
+        'migrations_recorded' => count($recorded),
+        'migrations_total_files' => count($files),
+        'unrecorded_migrations' => $unrecorded,
+        'schema_missing' => $schemaMissing,
+        'campaigns_foreign_keys' => $campaignFks,
     ]);
 });
