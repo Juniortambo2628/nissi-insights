@@ -179,3 +179,47 @@ it('does not save contacts when save_contacts is false', function () {
 
     $this->assertDatabaseMissing('email_contacts', ['email' => 'private@example.com']);
 });
+
+it('excludes opted-out contacts from broadcasts', function () {
+    $active = EmailContact::factory()->create();
+    $optedOut = EmailContact::factory()->optedOut()->create();
+
+    $insight = Insight::factory()->create();
+
+    $response = $this->actingAs($this->user)->postJson('/api/content-broadcasts', [
+        'content_type' => 'insight',
+        'content_id' => $insight->id,
+        'contact_ids' => [$active->id, $optedOut->id],
+    ]);
+
+    $response->assertOk()
+        ->assertJsonPath('total', 1)
+        ->assertJsonPath('sent', 1);
+
+    Mail::assertSent(TemplatedMail::class, 1);
+    Mail::assertNotSent(TemplatedMail::class, function (TemplatedMail $mail) use ($optedOut) {
+        return $mail->hasTo($optedOut->email);
+    });
+});
+
+it('excludes opted-out subscribers from broadcasts', function () {
+    Subscriber::factory()->create(['email' => 'active@example.com']);
+    Subscriber::factory()->optedOut()->create(['email' => 'opted@example.com']);
+
+    $insight = Insight::factory()->create();
+
+    $response = $this->actingAs($this->user)->postJson('/api/content-broadcasts', [
+        'content_type' => 'insight',
+        'content_id' => $insight->id,
+        'to_subscribers' => true,
+    ]);
+
+    $response->assertOk()
+        ->assertJsonPath('total', 1)
+        ->assertJsonPath('sent', 1);
+
+    Mail::assertSent(TemplatedMail::class, 1);
+    Mail::assertNotSent(TemplatedMail::class, function (TemplatedMail $mail) {
+        return $mail->hasTo('opted@example.com');
+    });
+});

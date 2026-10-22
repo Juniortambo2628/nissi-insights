@@ -19,11 +19,11 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { StatusBadge } from '@/components/admin/StatusBadge'
-import { Loader2, Search, Send, Users, UserX } from 'lucide-react'
+import { Loader2, Search, Send, Users, UserX, Contact } from 'lucide-react'
 import api from '@/lib/api'
 import { useApi } from '@/hooks/use-api'
 import { useToast } from '@/hooks/use-toast'
-import { Campaign, Newsletter, Subscriber, CampaignSendResult } from '@/types/api'
+import { Campaign, Newsletter, Subscriber, EmailContact, CampaignSendResult } from '@/types/api'
 
 interface CampaignSendDialogProps {
     open: boolean
@@ -44,27 +44,42 @@ const CampaignSendDialog = ({
 }: CampaignSendDialogProps) => {
     const { toast } = useToast()
     const { data: subscribers } = useApi<Subscriber[]>(open ? '/subscribers' : null)
+    const { data: contacts } = useApi<EmailContact[]>(open ? '/email-contacts' : null)
 
     const [name, setName] = useState('')
     const [subject, setSubject] = useState('')
     const [newsletterId, setNewsletterId] = useState('')
     const [mode, setMode] = useState<'all' | 'selected'>('all')
-    const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+    const [selectedSubscriberIds, setSelectedSubscriberIds] = useState<Set<number>>(new Set())
+    const [selectedContactIds, setSelectedContactIds] = useState<Set<number>>(new Set())
     const [searchTerm, setSearchTerm] = useState('')
     const [isSending, setIsSending] = useState(false)
 
-    const eligible = useMemo(
+    const eligibleSubscribers = useMemo(
         () => subscribers?.filter((s) => s.is_active && !s.is_opted_out) || [],
         [subscribers]
     )
-    const optedOut = useMemo(
+    const eligibleContacts = useMemo(
+        () => contacts?.filter((c) => !c.is_opted_out) || [],
+        [contacts]
+    )
+    const optedOutSubscribers = useMemo(
         () => subscribers?.filter((s) => s.is_opted_out) || [],
         [subscribers]
     )
+    const optedOutContacts = useMemo(
+        () => contacts?.filter((c) => c.is_opted_out) || [],
+        [contacts]
+    )
+
+    const totalEligible = eligibleSubscribers.length + eligibleContacts.length
+    const totalOptedOut = optedOutSubscribers.length + optedOutContacts.length
+    const totalSelected = selectedSubscriberIds.size + selectedContactIds.size
 
     useEffect(() => {
         if (!open) return
-        setSelectedIds(new Set())
+        setSelectedSubscriberIds(new Set())
+        setSelectedContactIds(new Set())
         setSearchTerm('')
         setMode('all')
 
@@ -84,7 +99,7 @@ const CampaignSendDialog = ({
         }
     }, [open, existingCampaign, preselectedNewsletterId, newsletters])
 
-    const filteredContacts = useMemo(() => {
+    const filteredSubscribers = useMemo(() => {
         if (!subscribers) return []
         const term = searchTerm.toLowerCase()
         return subscribers.filter(
@@ -94,8 +109,27 @@ const CampaignSendDialog = ({
         )
     }, [subscribers, searchTerm])
 
+    const filteredContacts = useMemo(() => {
+        if (!contacts) return []
+        const term = searchTerm.toLowerCase()
+        return contacts.filter(
+            (c) =>
+                c.email.toLowerCase().includes(term) ||
+                (c.name && c.name.toLowerCase().includes(term))
+        )
+    }, [contacts, searchTerm])
+
+    const toggleSubscriber = (id: number) => {
+        setSelectedSubscriberIds((prev) => {
+            const next = new Set(prev)
+            if (next.has(id)) next.delete(id)
+            else next.add(id)
+            return next
+        })
+    }
+
     const toggleContact = (id: number) => {
-        setSelectedIds((prev) => {
+        setSelectedContactIds((prev) => {
             const next = new Set(prev)
             if (next.has(id)) next.delete(id)
             else next.add(id)
@@ -112,8 +146,8 @@ const CampaignSendDialog = ({
             toast({ variant: 'destructive', title: 'Name required', description: 'Give this campaign a name.' })
             return
         }
-        if (mode === 'selected' && selectedIds.size === 0) {
-            toast({ variant: 'destructive', title: 'No recipients', description: 'Select at least one contact.' })
+        if (mode === 'selected' && totalSelected === 0) {
+            toast({ variant: 'destructive', title: 'No recipients', description: 'Select at least one recipient.' })
             return
         }
 
@@ -130,7 +164,15 @@ const CampaignSendDialog = ({
                 campaignId = res.data.id
             }
 
-            const payload = mode === 'selected' ? { subscriber_ids: Array.from(selectedIds) } : {}
+            const payload: Record<string, unknown> = {}
+            if (mode === 'selected') {
+                if (selectedSubscriberIds.size > 0) {
+                    payload.subscriber_ids = Array.from(selectedSubscriberIds)
+                }
+                if (selectedContactIds.size > 0) {
+                    payload.contact_ids = Array.from(selectedContactIds)
+                }
+            }
             const result = await api.post<CampaignSendResult>(`/campaigns/${campaignId}/send`, payload)
 
             toast({
@@ -207,10 +249,10 @@ const CampaignSendDialog = ({
                                 Recipients
                             </div>
                             <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                                <span className="text-emerald-500 font-bold">{eligible.length} active</span>
-                                {optedOut.length > 0 && (
+                                <span className="text-emerald-500 font-bold">{totalEligible} eligible</span>
+                                {totalOptedOut > 0 && (
                                     <span className="flex items-center gap-1 text-red-500 font-bold">
-                                        <UserX size={12} /> {optedOut.length} opted out
+                                        <UserX size={12} /> {totalOptedOut} opted out
                                     </span>
                                 )}
                             </div>
@@ -225,7 +267,7 @@ const CampaignSendDialog = ({
                                         : 'border-border/50 text-muted-foreground hover:bg-secondary/20'
                                 }`}
                             >
-                                Send to all active contacts
+                                Send to all eligible
                             </button>
                             <button
                                 onClick={() => setMode('selected')}
@@ -235,55 +277,100 @@ const CampaignSendDialog = ({
                                         : 'border-border/50 text-muted-foreground hover:bg-secondary/20'
                                 }`}
                             >
-                                Choose contacts{selectedIds.size > 0 ? ` (${selectedIds.size})` : ''}
+                                Choose recipients{totalSelected > 0 ? ` (${totalSelected})` : ''}
                             </button>
                         </div>
 
                         {mode === 'selected' && (
-                            <div className="space-y-2">
+                            <div className="space-y-3">
                                 <div className="relative">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={14} />
                                     <Input
-                                        placeholder="Search contacts..."
+                                        placeholder="Search subscribers and contacts..."
                                         className="pl-9 bg-background border-border text-sm"
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                     />
                                 </div>
-                                <div className="max-h-56 overflow-y-auto border border-border/50 rounded-lg divide-y divide-border/30">
-                                    {filteredContacts.map((sub) => {
-                                        const blocked = sub.is_opted_out || !sub.is_active
-                                        return (
-                                            <label
-                                                key={sub.id}
-                                                className={`flex items-center gap-3 px-3 py-2 text-sm ${
-                                                    blocked ? 'opacity-60' : 'hover:bg-secondary/20 cursor-pointer'
-                                                }`}
-                                            >
-                                                <Checkbox
-                                                    checked={selectedIds.has(sub.id)}
-                                                    onCheckedChange={() => !blocked && toggleContact(sub.id)}
-                                                    disabled={blocked}
-                                                    className="border-border"
-                                                />
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="font-medium truncate text-foreground">{sub.email}</div>
-                                                    {sub.name && <div className="text-xs text-muted-foreground truncate">{sub.name}</div>}
-                                                </div>
-                                                {sub.is_opted_out ? (
-                                                    <StatusBadge variant="danger">Opted out</StatusBadge>
-                                                ) : !sub.is_active ? (
-                                                    <StatusBadge variant="muted">Inactive</StatusBadge>
-                                                ) : null}
-                                            </label>
-                                        )
-                                    })}
-                                    {filteredContacts.length === 0 && (
-                                        <div className="p-4 text-center text-sm text-muted-foreground">No contacts found.</div>
-                                    )}
-                                </div>
+
+                                {filteredSubscribers.length > 0 && (
+                                    <div>
+                                        <div className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1">
+                                            <Users size={12} /> Newsletter Subscribers
+                                        </div>
+                                        <div className="max-h-48 overflow-y-auto border border-border/50 rounded-lg divide-y divide-border/30">
+                                            {filteredSubscribers.map((sub) => {
+                                                const blocked = sub.is_opted_out || !sub.is_active
+                                                return (
+                                                    <label
+                                                        key={`sub-${sub.id}`}
+                                                        className={`flex items-center gap-3 px-3 py-2 text-sm ${
+                                                            blocked ? 'opacity-60' : 'hover:bg-secondary/20 cursor-pointer'
+                                                        }`}
+                                                    >
+                                                        <Checkbox
+                                                            checked={selectedSubscriberIds.has(sub.id)}
+                                                            onCheckedChange={() => !blocked && toggleSubscriber(sub.id)}
+                                                            disabled={blocked}
+                                                            className="border-border"
+                                                        />
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="font-medium truncate text-foreground">{sub.email}</div>
+                                                            {sub.name && <div className="text-xs text-muted-foreground truncate">{sub.name}</div>}
+                                                        </div>
+                                                        {sub.is_opted_out ? (
+                                                            <StatusBadge variant="danger">Opted out</StatusBadge>
+                                                        ) : !sub.is_active ? (
+                                                            <StatusBadge variant="muted">Inactive</StatusBadge>
+                                                        ) : null}
+                                                    </label>
+                                                )
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {filteredContacts.length > 0 && (
+                                    <div>
+                                        <div className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1">
+                                            <Contact size={12} /> Saved Contacts
+                                        </div>
+                                        <div className="max-h-48 overflow-y-auto border border-border/50 rounded-lg divide-y divide-border/30">
+                                            {filteredContacts.map((contact) => {
+                                                const blocked = contact.is_opted_out
+                                                return (
+                                                    <label
+                                                        key={`contact-${contact.id}`}
+                                                        className={`flex items-center gap-3 px-3 py-2 text-sm ${
+                                                            blocked ? 'opacity-60' : 'hover:bg-secondary/20 cursor-pointer'
+                                                        }`}
+                                                    >
+                                                        <Checkbox
+                                                            checked={selectedContactIds.has(contact.id)}
+                                                            onCheckedChange={() => !blocked && toggleContact(contact.id)}
+                                                            disabled={blocked}
+                                                            className="border-border"
+                                                        />
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="font-medium truncate text-foreground">{contact.email}</div>
+                                                            {contact.name && <div className="text-xs text-muted-foreground truncate">{contact.name}</div>}
+                                                        </div>
+                                                        {contact.is_opted_out && (
+                                                            <StatusBadge variant="danger">Opted out</StatusBadge>
+                                                        )}
+                                                    </label>
+                                                )
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {filteredSubscribers.length === 0 && filteredContacts.length === 0 && (
+                                    <div className="p-4 text-center text-sm text-muted-foreground">No recipients found.</div>
+                                )}
+
                                 <p className="text-[11px] text-muted-foreground">
-                                    Opted-out and inactive contacts cannot be selected or emailed.
+                                    Opted-out and inactive recipients cannot be selected or emailed.
                                 </p>
                             </div>
                         )}

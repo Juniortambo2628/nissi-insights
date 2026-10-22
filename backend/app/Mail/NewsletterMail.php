@@ -5,7 +5,6 @@ namespace App\Mail;
 use App\Models\Campaign;
 use App\Models\EmailLog;
 use App\Models\Newsletter;
-use App\Models\Subscriber;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -23,8 +22,9 @@ class NewsletterMail extends Mailable
 
     public function __construct(
         public Newsletter $newsletter,
-        public Subscriber $subscriber,
         public Campaign $campaign,
+        public string $recipientEmail,
+        public ?string $recipientName = null,
         public ?string $unsubscribeUrl = null
     ) {}
 
@@ -34,6 +34,7 @@ class NewsletterMail extends Mailable
 
         return new Envelope(
             subject: html_entity_decode($subject, ENT_QUOTES, 'UTF-8'),
+            to: $this->recipientEmail,
         );
     }
 
@@ -43,8 +44,8 @@ class NewsletterMail extends Mailable
             view: 'emails.newsletter',
             with: [
                 'newsletter' => $this->newsletter,
-                'subscriber' => $this->subscriber,
-                'unsubscribeUrl' => $this->unsubscribeUrl ?? $this->newsletter->unsubscribeUrlFor($this->subscriber),
+                'recipientName' => $this->recipientName,
+                'unsubscribeUrl' => $this->unsubscribeUrl,
                 'contentHtml' => $this->newsletter->renderedContent(),
                 'headerImageUrl' => $this->newsletter->absoluteUrl($this->newsletter->header_image),
             ],
@@ -63,7 +64,7 @@ class NewsletterMail extends Mailable
             text: [
                 'X-Mailer' => 'NissiInsightsMailer/1.0',
                 'X-Priority' => '3',
-                'List-Unsubscribe' => $this->unsubscribeUrl ?? $this->newsletter->unsubscribeUrlFor($this->subscriber),
+                'List-Unsubscribe' => $this->unsubscribeUrl,
                 'List-Unsubscribe-Post' => 'List-Unsubscribe=One-Click',
             ],
         );

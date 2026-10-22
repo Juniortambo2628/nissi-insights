@@ -47,12 +47,14 @@ class ContentBroadcastController extends Controller
         $emails = $this->normalizeEmails($validated['recipients'] ?? []);
 
         if (! empty($validated['contact_ids'])) {
-            $contactEmails = EmailContact::whereIn('id', $validated['contact_ids'])->pluck('email');
+            $contactEmails = EmailContact::whereIn('id', $validated['contact_ids'])
+                ->optedIn()
+                ->pluck('email');
             $emails = $this->mergeEmails($emails, $contactEmails->all());
         }
 
         if ($validated['to_subscribers'] ?? false) {
-            $subscriberEmails = Subscriber::where('is_active', true)->pluck('email');
+            $subscriberEmails = Subscriber::optedIn()->pluck('email');
             $emails = $this->mergeEmails($emails, $subscriberEmails->all());
         }
 

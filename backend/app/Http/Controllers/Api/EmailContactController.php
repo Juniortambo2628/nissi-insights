@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\EmailContactResource;
 use App\Models\EmailContact;
 use Illuminate\Http\Request;
 
@@ -20,7 +21,7 @@ class EmailContactController extends Controller
             });
         }
 
-        return response()->json($query->orderBy('created_at', 'desc')->get());
+        return EmailContactResource::collection($query->orderBy('created_at', 'desc')->get());
     }
 
     public function store(Request $request)
@@ -67,7 +68,7 @@ class EmailContactController extends Controller
             'message' => "Added {$created} contact(s), {$existing} already existed.",
             'created' => $created,
             'existing' => $existing,
-            'contacts' => EmailContact::orderBy('created_at', 'desc')->get(),
+            'contacts' => EmailContactResource::collection(EmailContact::orderBy('created_at', 'desc')->get()),
         ], 201);
     }
 

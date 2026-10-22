@@ -15,6 +15,14 @@ class EmailContactFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'name' => fake()->name(),
             'source' => fake()->randomElement(['manual', 'broadcast', 'import']),
+            'unsubscribed_at' => null,
         ];
+    }
+
+    public function optedOut(): static
+    {
+        return $this->state(fn () => [
+            'unsubscribed_at' => now(),
+        ]);
     }
 }

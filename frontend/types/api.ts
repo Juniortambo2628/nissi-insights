@@ -165,6 +165,8 @@ export interface EmailContact {
   email: string;
   name: string | null;
   source: string | null;
+  unsubscribed_at: string | null;
+  is_opted_out: boolean;
   created_at: string;
   updated_at: string;
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Mail\NewsletterMail;
 use App\Models\Campaign;
+use App\Models\EmailContact;
 use App\Models\Newsletter;
 use App\Models\Subscriber;
 use Illuminate\Http\Request;
@@ -84,43 +85,79 @@ class CampaignController extends Controller
         $validated = $request->validate([
             'subscriber_ids' => 'nullable|array',
             'subscriber_ids.*' => 'integer|exists:subscribers,id',
+            'contact_ids' => 'nullable|array',
+            'contact_ids.*' => 'integer|exists:email_contacts,id',
         ]);
 
-        // optedIn() excludes deactivated and opted-out contacts; opted-out
-        // contacts can never be targeted even if their ids are supplied.
-        $query = Subscriber::query()->optedIn();
+        $recipientsByEmail = [];
 
-        if (! empty($validated['subscriber_ids'])) {
-            $query->whereIn('id', $validated['subscriber_ids']);
+        if (! empty($validated['subscriber_ids']) && ! empty($validated['contact_ids'])) {
+            // Explicit ids from both lists.
+            $subscribers = Subscriber::whereIn('id', $validated['subscriber_ids'])->optedIn()->orderBy('id')->get();
+            $contacts = EmailContact::whereIn('id', $validated['contact_ids'])->optedIn()->orderBy('id')->get();
+        } elseif (! empty($validated['subscriber_ids'])) {
+            $subscribers = Subscriber::whereIn('id', $validated['subscriber_ids'])->optedIn()->orderBy('id')->get();
+            $contacts = collect();
+        } elseif (! empty($validated['contact_ids'])) {
+            $subscribers = collect();
+            $contacts = EmailContact::whereIn('id', $validated['contact_ids'])->optedIn()->orderBy('id')->get();
+        } else {
+            // Send-to-all mode: pull every eligible recipient from both lists.
+            $subscribers = Subscriber::query()->optedIn()->orderBy('id')->get();
+            $contacts = EmailContact::query()->optedIn()->orderBy('id')->get();
         }
 
-        $recipients = $query->orderBy('id')->get();
+        foreach ($subscribers as $sub) {
+            $recipientsByEmail[$sub->email] = [
+                'email' => $sub->email,
+                'name' => $sub->name,
+                'unsubscribe_url' => $sub->unsubscribeUrl(),
+            ];
+        }
 
-        if ($recipients->isEmpty()) {
+        foreach ($contacts as $contact) {
+            if (! isset($recipientsByEmail[$contact->email])) {
+                $recipientsByEmail[$contact->email] = [
+                    'email' => $contact->email,
+                    'name' => $contact->name,
+                    'unsubscribe_url' => $contact->unsubscribeUrl(),
+                ];
+            }
+        }
+
+        $recipients = array_values($recipientsByEmail);
+
+        if (empty($recipients)) {
             return response()->json(['message' => 'No eligible recipients selected.'], 422);
         }
 
         $campaign->update([
             'status' => 'sending',
-            'total_recipients' => $recipients->count(),
+            'total_recipients' => count($recipients),
         ]);
 
         $sent = 0;
         $failed = 0;
         $errors = [];
 
-        foreach ($recipients as $subscriber) {
+        foreach ($recipients as $recipient) {
             try {
-                $mail = new NewsletterMail($campaign->newsletter, $subscriber, $campaign);
-                Mail::to($subscriber->email)->send($mail);
-                $mail->log($subscriber->email, 'sent');
+                $mail = new NewsletterMail(
+                    $campaign->newsletter,
+                    $campaign,
+                    $recipient['email'],
+                    $recipient['name'],
+                    $recipient['unsubscribe_url']
+                );
+                Mail::to($recipient['email'])->send($mail);
+                $mail->log($recipient['email'], 'sent');
                 $sent++;
             } catch (\Exception $e) {
-                Log::error("Newsletter campaign {$campaign->id} failed for {$subscriber->email}: ".$e->getMessage());
-                (new NewsletterMail($campaign->newsletter, $subscriber, $campaign))
-                    ->log($subscriber->email, 'failed', $e->getMessage());
+                Log::error("Newsletter campaign {$campaign->id} failed for {$recipient['email']}: ".$e->getMessage());
+                (new NewsletterMail($campaign->newsletter, $campaign, $recipient['email']))
+                    ->log($recipient['email'], 'failed', $e->getMessage());
                 $failed++;
-                $errors[] = ['email' => $subscriber->email, 'error' => $e->getMessage()];
+                $errors[] = ['email' => $recipient['email'], 'error' => $e->getMessage()];
             }
         }
 
@@ -142,7 +179,7 @@ class CampaignController extends Controller
             'message' => "Campaign \"{$campaign->name}\": {$sent} sent, {$failed} failed.",
             'sent' => $sent,
             'failed' => $failed,
-            'total' => $recipients->count(),
+            'total' => count($recipients),
             'errors' => $errors,
         ]);
     }

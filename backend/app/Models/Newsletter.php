@@ -99,16 +99,4 @@ class Newsletter extends Model
             $content
         ) ?? $content;
     }
-
-    /**
-     * Public-facing unsubscribe URL for a given subscriber.
-     */
-    public function unsubscribeUrlFor(Subscriber $subscriber): ?string
-    {
-        if (! $subscriber->unsubscribe_token) {
-            return null;
-        }
-
-        return frontend_url('/unsubscribe?token='.$subscriber->unsubscribe_token);
-    }
 }
