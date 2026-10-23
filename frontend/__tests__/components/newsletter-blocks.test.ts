@@ -4,9 +4,13 @@ import {
     newsletterBlockExtensions,
     buildBlockContent,
     ContentReference,
+    ImageWithShape,
     DEFAULT_STATS_ITEMS,
     DEFAULT_KEY_DATES,
     DEFAULT_CTA,
+    DEFAULT_NUMBERED_ITEMS,
+    DEFAULT_TITLE,
+    DEFAULT_TITLE_LABEL,
 } from '@/components/admin/newsletter-blocks'
 
 const extensions = [StarterKit, ContentReference, ...newsletterBlockExtensions]
@@ -134,6 +138,90 @@ describe('newsletter block nodes', () => {
         expect(node.attrs.items).toEqual(DEFAULT_KEY_DATES)
     })
 
+    it('round-trips a numbered list with auto-indexed rows', () => {
+        const items = [
+            { text: 'UK. Ofgem opened a market-conduct review.' },
+            { text: 'Kenya. EPRA cut retail tariffs by 4%.' },
+        ]
+        const { html, json } = roundTrip({
+            type: 'doc',
+            content: [{ type: 'niNumberedList', attrs: { items } }],
+        })
+
+        expect(html).toContain('data-ni-numberedlist')
+        expect(html).toContain('UK. Ofgem opened a market-conduct review.')
+        // Numbers are derived from the row index, not stored per row.
+        expect(html).toMatch(/<td[^>]*>\s*1\s*<\/td>/)
+        expect(html).toMatch(/<td[^>]*>\s*2\s*<\/td>/)
+        expect(html).toMatch(/font-size:\s*22px/)
+        // jsdom's cssstyle drops var() colours, so assert the node spec
+        // itself: numerals render in the newsletter accent token.
+        const first = createEditor({
+            type: 'doc',
+            content: [{ type: 'niNumberedList', attrs: { items } }],
+        })
+        const spec = (first.schema.nodes.niNumberedList.spec.toDOM as any)(
+            first.schema.nodes.niNumberedList.create({ items })
+        )
+        first.destroy()
+        expect(JSON.stringify(spec)).toContain('var(--ni-accent,#2563eb)')
+
+        const node: any = json.content![0]
+        expect(node.type).toBe('niNumberedList')
+        expect(node.attrs.items).toEqual(items)
+    })
+
+    it('keeps a numbered list nested inside a boxed section', () => {
+        const { html, json } = roundTrip({
+            type: 'doc',
+            content: [
+                {
+                    type: 'niBox',
+                    attrs: { label: 'Bulletin' },
+                    content: [
+                        { type: 'niNumberedList', attrs: { items: [{ text: 'Point one' }] } },
+                    ],
+                },
+            ],
+        })
+
+        expect(html).toContain('data-ni-box')
+        expect(html).toContain('data-ni-numberedlist')
+        expect(html).toContain('Point one')
+
+        const box: any = json.content![0]
+        expect(box.content[0].type).toBe('niNumberedList')
+    })
+
+    it('round-trips the section title with label and hairline rule', () => {
+        const { html, json } = roundTrip({
+            type: 'doc',
+            content: [{ type: 'niTitle', attrs: { title: 'Kenya', label: '1 update' } }],
+        })
+
+        expect(html).toContain('data-ni-title')
+        expect(html).toContain('data-title="Kenya"')
+        expect(html).toContain('data-label="1 update"')
+        expect(html).toMatch(/border-bottom:\s*1px solid/)
+        expect(html).toMatch(/text-align:\s*right/)
+        // jsdom's cssstyle drops var() colours, so assert the node spec
+        // itself: the title follows the newsletter text colour token.
+        const first = createEditor({
+            type: 'doc',
+            content: [{ type: 'niTitle', attrs: { title: 'Kenya', label: '1 update' } }],
+        })
+        const spec = (first.schema.nodes.niTitle.spec.toDOM as any)(
+            first.schema.nodes.niTitle.create({ title: 'Kenya', label: '1 update' })
+        )
+        first.destroy()
+        expect(JSON.stringify(spec)).toContain('var(--ni-text,#0f172a)')
+
+        const node: any = json.content![0]
+        expect(node.type).toBe('niTitle')
+        expect(node.attrs.title).toBe('Kenya')
+        expect(node.attrs.label).toBe('1 update')
+    })
+
     it('round-trips a CTA card including quotes in its body', () => {
         const attrs = {
             ...DEFAULT_CTA,
@@ -223,6 +311,68 @@ describe('newsletter block nodes', () => {
         expect(node.content[1].attrs.width).toBeCloseTo(37.5)
     })
 
+    it('round-trips image shape and accent frame attributes', () => {
+        const makeEditor = (content: any) =>
+            new Editor({
+                extensions: [StarterKit, ImageWithShape.configure({ resize: false })],
+                content,
+                element: document.createElement('div'),
+            })
+
+        const first = makeEditor({
+            type: 'doc',
+            content: [
+                {
+                    type: 'image',
+                    attrs: { src: 'https://example.com/avatar.png', alt: 'Avatar', shape: 'circle', frame: 'accent' },
+                },
+            ],
+        })
+        const html = first.getHTML()
+        first.destroy()
+
+        expect(html).toMatch(/border-radius:\s*50%/)
+        expect(html).toContain('data-shape="circle"')
+        expect(html).toContain('data-frame="accent"')
+
+        const second = makeEditor(html)
+        const json = second.getJSON()
+        second.destroy()
+
+        const node: any = json.content![0]
+        expect(node.type).toBe('image')
+        expect(node.attrs.shape).toBe('circle')
+        expect(node.attrs.frame).toBe('accent')
+    })
+
+    it('defaults images to a square shape with no frame', () => {
+        const makeEditor = (content: any) =>
+            new Editor({
+                extensions: [StarterKit, ImageWithShape.configure({ resize: false })],
+                content,
+                element: document.createElement('div'),
+            })
+
+        const first = makeEditor({
+            type: 'doc',
+            content: [{ type: 'image', attrs: { src: 'https://example.com/photo.jpg' } }],
+        })
+        const html = first.getHTML()
+        first.destroy()
+
+        expect(html).toMatch(/border-radius:\s*8px/)
+        expect(html).toContain('data-shape="square"')
+        expect(html).toContain('data-frame="none"')
+
+        const second = makeEditor(html)
+        const json = second.getJSON()
+        second.destroy()
+
+        const node: any = json.content![0]
+        expect(node.attrs.shape).toBe('square')
+        expect(node.attrs.frame).toBe('none')
+    })
+
     it('builds insertable blocks with sensible defaults', () => {
         expect(buildBlockContent('box')).toMatchObject({
             type: 'niBox',
@@ -236,6 +386,12 @@ describe('newsletter block nodes', () => {
         })
         expect(buildBlockContent('stats').attrs.items).toHaveLength(DEFAULT_STATS_ITEMS.length)
         expect(buildBlockContent('keydates').attrs.items).toHaveLength(DEFAULT_KEY_DATES.length)
+        expect(buildBlockContent('numberedlist')).toMatchObject({ type: 'niNumberedList' })
+        expect(buildBlockContent('numberedlist').attrs.items).toHaveLength(DEFAULT_NUMBERED_ITEMS.length)
+        expect(buildBlockContent('title')).toMatchObject({
+            type: 'niTitle',
+            attrs: { title: DEFAULT_TITLE, label: DEFAULT_TITLE_LABEL },
+        })
         expect(buildBlockContent('cta').attrs.buttonText).toBe('Talk to us')
         expect(buildBlockContent('grid3').content).toHaveLength(3)
     })

@@ -4,10 +4,9 @@ import React from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
-import Image from '@tiptap/extension-image'
 import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table'
 import TextAlign from '@tiptap/extension-text-align'
-import { TextStyle, Color } from '@tiptap/extension-text-style'
+import { TextStyle, Color, FontSize, LineHeight } from '@tiptap/extension-text-style'
 import imageCompression from 'browser-image-compression'
 import api from '@/lib/api'
 import { getMediaUrl } from '@/lib/utils'
@@ -41,6 +40,10 @@ import {
     AlignRight,
     ChevronDown,
     Baseline,
+    ALargeSmall,
+    Rows3,
+    SlidersHorizontal,
+    Heading3,
 } from 'lucide-react'
 import {
     Dialog,
@@ -66,6 +69,7 @@ import {
     BlockKind,
     DialogNodeType,
     ContentReference,
+    ImageWithShape,
 } from './newsletter-blocks'
 import { BlockAttrsDialog } from './newsletter-block-dialog'
 
@@ -241,6 +245,28 @@ const ContentPickerDialog = ({ open, onOpenChange, onInsert }: ContentPickerDial
 
 const TEXT_SWATCHES = ['#0f172a', '#dc2626', '#d97706', '#16a34a', '#2563eb', '#7c3aed', '#94a3b8', '#ffffff']
 
+const FONT_SIZE_OPTIONS = [
+    { value: null, label: 'Default' },
+    { value: '11px', label: '11px' },
+    { value: '12px', label: '12px' },
+    { value: '14px', label: '14px' },
+    { value: '16px', label: '16px' },
+    { value: '18px', label: '18px' },
+    { value: '20px', label: '20px' },
+    { value: '24px', label: '24px' },
+    { value: '30px', label: '30px' },
+]
+
+const LINE_HEIGHT_OPTIONS = [
+    { value: null, label: 'Default' },
+    { value: '1', label: '100%' },
+    { value: '1.15', label: '115%' },
+    { value: '1.3', label: '130%' },
+    { value: '1.5', label: '150%' },
+    { value: '1.75', label: '175%' },
+    { value: '2', label: '200%' },
+]
+
 const MenuBar = ({
     editor,
     onImageSelect,
@@ -253,6 +279,8 @@ const MenuBar = ({
     onRunTableAction,
     onInsertDivider,
     accentColor,
+    activeBlock,
+    onEditBlock,
 }: {
     editor: any
     onImageSelect: () => void
@@ -265,6 +293,8 @@ const MenuBar = ({
     onRunTableAction: (action: string) => void
     onInsertDivider: () => void
     accentColor?: string
+    activeBlock: { pos: number; type: DialogNodeType } | null
+    onEditBlock: () => void
 }) => {
     if (!editor && !isSourceMode) return null
 
@@ -278,6 +308,8 @@ const MenuBar = ({
     const activeColor: string | undefined = editor?.isActive('textStyle')
         ? editor.getAttributes('textStyle').color
         : undefined
+    const activeFontSize: string | null = editor?.getAttributes('textStyle').fontSize ?? null
+    const activeLineHeight: string | null = editor?.getAttributes('textStyle').lineHeight ?? null
     const swatches = accentColor && !TEXT_SWATCHES.includes(accentColor)
         ? [accentColor, ...TEXT_SWATCHES]
         : TEXT_SWATCHES
@@ -411,6 +443,60 @@ const MenuBar = ({
                     </button>
                 </DropdownMenuContent>
             </DropdownMenu>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <button
+                        className="flex items-center gap-0.5 p-2 rounded hover:bg-secondary/80 transition-colors text-muted-foreground disabled:opacity-40"
+                        disabled={isSourceMode || !editor}
+                        title="Text size"
+                    >
+                        <ALargeSmall size={16} />
+                        <ChevronDown size={10} />
+                    </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-32 bg-background border-border text-foreground">
+                    {FONT_SIZE_OPTIONS.map((opt) => (
+                        <DropdownMenuItem
+                            key={opt.value ?? 'default'}
+                            className="gap-2 cursor-pointer justify-between"
+                            onSelect={() => {
+                                if (opt.value) editor?.chain().focus().setFontSize(opt.value).run()
+                                else editor?.chain().focus().unsetFontSize().run()
+                            }}
+                        >
+                            <span>{opt.label}</span>
+                            {activeFontSize === opt.value && <span className="text-primary">✓</span>}
+                        </DropdownMenuItem>
+                    ))}
+                </DropdownMenuContent>
+            </DropdownMenu>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <button
+                        className="flex items-center gap-0.5 p-2 rounded hover:bg-secondary/80 transition-colors text-muted-foreground disabled:opacity-40"
+                        disabled={isSourceMode || !editor}
+                        title="Line spacing"
+                    >
+                        <Rows3 size={16} />
+                        <ChevronDown size={10} />
+                    </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-32 bg-background border-border text-foreground">
+                    {LINE_HEIGHT_OPTIONS.map((opt) => (
+                        <DropdownMenuItem
+                            key={opt.value ?? 'default'}
+                            className="gap-2 cursor-pointer justify-between"
+                            onSelect={() => {
+                                if (opt.value) editor?.chain().focus().setLineHeight(opt.value).run()
+                                else editor?.chain().focus().unsetLineHeight().run()
+                            }}
+                        >
+                            <span>{opt.label}</span>
+                            {activeLineHeight === opt.value && <span className="text-primary">✓</span>}
+                        </DropdownMenuItem>
+                    ))}
+                </DropdownMenuContent>
+            </DropdownMenu>
             <div className="w-[1px] h-6 bg-border/50 self-center mx-1" />
             <button
                 onClick={(e) => { e.preventDefault(); setLink() }}
@@ -481,6 +567,12 @@ const MenuBar = ({
                     <DropdownMenuItem className="gap-2 cursor-pointer" onSelect={() => onInsertBlock('cta')}>
                         <Megaphone size={14} /> Call to action
                     </DropdownMenuItem>
+                    <DropdownMenuItem className="gap-2 cursor-pointer" onSelect={() => onInsertBlock('title')}>
+                        <Heading3 size={14} /> Section title
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="gap-2 cursor-pointer" onSelect={() => onInsertBlock('numberedlist')}>
+                        <ListOrdered size={14} /> Numbered list
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem className="gap-2 cursor-pointer" onSelect={() => onInsertBlock('grid2')}>
                         <Columns2 size={14} /> Two columns
@@ -490,6 +582,17 @@ const MenuBar = ({
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
+            {activeBlock && (
+                <button
+                    onClick={(e) => { e.preventDefault(); onEditBlock() }}
+                    className="flex items-center gap-1.5 px-2 py-2 rounded hover:bg-secondary/80 transition-colors text-muted-foreground disabled:opacity-40"
+                    disabled={isSourceMode}
+                    title="Edit the selected block"
+                >
+                    <SlidersHorizontal size={16} />
+                    <span className="text-xs font-medium">Edit block</span>
+                </button>
+            )}
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <button
@@ -562,6 +665,7 @@ const RichTextEditor = ({
     const [sourceText, setSourceText] = React.useState('')
     const [showContentPicker, setShowContentPicker] = React.useState(false)
     const [dialogState, setDialogState] = React.useState<{ pos: number; type: DialogNodeType } | null>(null)
+    const [activeBlock, setActiveBlock] = React.useState<{ pos: number; type: DialogNodeType } | null>(null)
     const { toast } = useToast()
 
     const editor = useEditor({
@@ -580,7 +684,7 @@ const RichTextEditor = ({
                     class: 'text-primary hover:underline cursor-pointer',
                 },
             }),
-            Image.configure({
+            ImageWithShape.configure({
                 HTMLAttributes: {
                     class: 'rounded-lg max-w-full h-auto',
                     style: 'max-width:100%; height:auto; border-radius:8px;',
@@ -604,6 +708,8 @@ const RichTextEditor = ({
             TextAlign.configure({ types: ['heading', 'paragraph'] }),
             TextStyle,
             Color.configure({ types: ['textStyle'] }),
+            FontSize,
+            LineHeight,
             ContentReference,
             ...newsletterBlockExtensions,
         ],
@@ -616,23 +722,55 @@ const RichTextEditor = ({
                 if (!coords) return false
 
                 const dialogTypes = DIALOG_NODE_TYPES as readonly string[]
+                const isDialogNode = (n: any) => !!n && dialogTypes.includes(n.type.name)
+
+                // Label clicks always mean "edit the box / highlight", even
+                // when the coordinates resolve to the box's first child.
+                if (onLabel) {
+                    const $label = view.state.doc.resolve(coords.pos)
+                    for (let depth = $label.depth; depth > 0; depth--) {
+                        const name = $label.node(depth).type.name
+                        if (name === 'niBox' || name === 'niHighlight') {
+                            setDialogState({ pos: $label.before(depth), type: name as DialogNodeType })
+                            return true
+                        }
+                    }
+                    const before = coords.pos > 0 ? view.state.doc.nodeAt(coords.pos - 1) : null
+                    if (before && (before.type.name === 'niBox' || before.type.name === 'niHighlight')) {
+                        setDialogState({ pos: coords.pos - 1, type: before.type.name as DialogNodeType })
+                        return true
+                    }
+                    return false
+                }
+
                 let type: string | null = null
                 let pos = -1
 
-                const $from = view.state.doc.resolve(coords.pos)
-                for (let depth = $from.depth; depth > 0; depth--) {
-                    const name = $from.node(depth).type.name
-                    if (dialogTypes.includes(name)) {
-                        type = name
-                        pos = $from.before(depth)
-                        break
-                    }
+                // Leaf / atom nodes (images, stats, key dates…) sit directly at
+                // the click position rather than containing it — check those
+                // first so a block nested inside a boxed section still opens
+                // its own dialog instead of the box's.
+                const nodeHere = view.state.doc.nodeAt(coords.pos)
+                const nodeBefore = coords.pos > 0 ? view.state.doc.nodeAt(coords.pos - 1) : null
+                if (nodeHere && isDialogNode(nodeHere)) {
+                    type = nodeHere.type.name
+                    pos = coords.pos
+                } else if (nodeBefore && isDialogNode(nodeBefore)) {
+                    type = nodeBefore.type.name
+                    pos = coords.pos - 1
                 }
-                if (!type && coords.pos > 0) {
-                    const neighbor = view.state.doc.nodeAt(coords.pos - 1)
-                    if (neighbor && dialogTypes.includes(neighbor.type.name)) {
-                        type = neighbor.type.name
-                        pos = coords.pos - 1
+
+                // Otherwise walk outwards to the innermost dialog node
+                // containing the click position.
+                if (!type) {
+                    const $from = view.state.doc.resolve(coords.pos)
+                    for (let depth = $from.depth; depth > 0; depth--) {
+                        const name = $from.node(depth).type.name
+                        if (dialogTypes.includes(name)) {
+                            type = name
+                            pos = $from.before(depth)
+                            break
+                        }
                     }
                 }
 
@@ -649,6 +787,41 @@ const RichTextEditor = ({
             }
         },
     })
+
+    // Track the innermost dialog-capable node at the selection so the
+    // toolbar can offer an explicit "Edit block" button (statistics items
+    // and other atoms are easy to miss otherwise).
+    React.useEffect(() => {
+        if (!editor) return
+        const computeActiveBlock = () => {
+            const { selection } = editor.state
+            const dialogTypes = DIALOG_NODE_TYPES as readonly string[]
+            const selNode: any = (selection as any).node
+            let type: string | null = null
+            let pos = -1
+
+            if (selNode && dialogTypes.includes(selNode.type.name)) {
+                type = selNode.type.name
+                pos = selection.from
+            } else {
+                const $from = selection.$from
+                for (let depth = $from.depth; depth > 0; depth--) {
+                    const name = $from.node(depth).type.name
+                    if (dialogTypes.includes(name)) {
+                        type = name
+                        pos = $from.before(depth)
+                        break
+                    }
+                }
+            }
+            setActiveBlock(type ? { pos, type: type as DialogNodeType } : null)
+        }
+        computeActiveBlock()
+        editor.on('selectionUpdate', computeActiveBlock)
+        return () => {
+            editor.off('selectionUpdate', computeActiveBlock)
+        }
+    }, [editor])
 
     // Update content if value changes externally (e.g. on load)
     React.useEffect(() => {
@@ -784,6 +957,10 @@ const RichTextEditor = ({
                     onRunTableAction={runTableAction}
                     onInsertDivider={insertDivider}
                     accentColor={accentColor}
+                    activeBlock={activeBlock}
+                    onEditBlock={() => {
+                        if (activeBlock) setDialogState(activeBlock)
+                    }}
                 />
                 {isSourceMode ? (
                     <div className="p-0">

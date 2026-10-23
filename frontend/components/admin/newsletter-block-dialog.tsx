@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Plus, Trash2 } from 'lucide-react'
-import { DialogNodeType } from './newsletter-blocks'
+import { DialogNodeType, IMAGE_SHAPE_OPTIONS, IMAGE_FRAME_OPTIONS } from './newsletter-blocks'
 
 const ALIGN_OPTIONS = [
     { value: 'left', label: 'Left' },
@@ -37,7 +37,10 @@ const TITLES: Record<DialogNodeType, string> = {
     niHighlight: 'Edit Highlight',
     niStats: 'Edit Statistics',
     niKeyDates: 'Edit Key Dates',
+    niNumberedList: 'Edit Numbered List',
+    niTitle: 'Edit Section Title',
     niCta: 'Edit Call to Action',
+    image: 'Edit Image',
 }
 
 const FieldLabel = ({ children }: { children: React.ReactNode }) => (
@@ -246,6 +249,96 @@ const BlockAttrsDialog = ({ state, editor, onClose }: BlockAttrsDialogProps) => 
                         </div>
                     </div>
                 )
+            case 'niNumberedList':
+                return (
+                    <div className="space-y-1.5">
+                        <FieldLabel>Items</FieldLabel>
+                        <ListField
+                            items={attrs.items ?? []}
+                            columns={[
+                                { key: 'text', label: 'Text', width: '1fr', placeholder: 'What appears next to the number' },
+                            ]}
+                            onChange={(items) => set('items', items)}
+                            onAdd={() => set('items', [...(attrs.items ?? []), { text: '' }])}
+                            addLabel="Add item"
+                        />
+                    </div>
+                )
+            case 'niTitle':
+                return (
+                    <div className="space-y-4">
+                        <div className="space-y-1.5">
+                            <FieldLabel>Title</FieldLabel>
+                            <Input
+                                value={attrs.title ?? ''}
+                                onChange={(e) => set('title', e.target.value)}
+                                className="bg-background border-border text-sm"
+                                placeholder="e.g. 🇰🇪 Kenya"
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <FieldLabel>Label (right side)</FieldLabel>
+                            <Input
+                                value={attrs.label ?? ''}
+                                onChange={(e) => set('label', e.target.value)}
+                                className="bg-background border-border text-sm"
+                                placeholder="e.g. 1 update"
+                            />
+                        </div>
+                    </div>
+                )
+            case 'image':
+                return (
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                                <FieldLabel>Shape</FieldLabel>
+                                <Select
+                                    value={attrs.shape ?? 'square'}
+                                    onValueChange={(value) => set('shape', value)}
+                                >
+                                    <SelectTrigger className="h-9 bg-background border-border text-sm">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {IMAGE_SHAPE_OPTIONS.map((opt) => (
+                                            <SelectItem key={opt.value} value={opt.value}>
+                                                {opt.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-1.5">
+                                <FieldLabel>Frame</FieldLabel>
+                                <Select
+                                    value={attrs.frame ?? 'none'}
+                                    onValueChange={(value) => set('frame', value)}
+                                >
+                                    <SelectTrigger className="h-9 bg-background border-border text-sm">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {IMAGE_FRAME_OPTIONS.map((opt) => (
+                                            <SelectItem key={opt.value} value={opt.value}>
+                                                {opt.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                        <div className="space-y-1.5">
+                            <FieldLabel>Alt text</FieldLabel>
+                            <Input
+                                value={attrs.alt ?? ''}
+                                onChange={(e) => set('alt', e.target.value)}
+                                className="bg-background border-border text-sm"
+                                placeholder="Describe the image"
+                            />
+                        </div>
+                    </div>
+                )
             case 'niCta':
                 return (
                     <div className="space-y-3">
@@ -298,7 +391,7 @@ const BlockAttrsDialog = ({ state, editor, onClose }: BlockAttrsDialogProps) => 
         }
     }
 
-    const fixedHeight = state.type === 'niStats' || state.type === 'niKeyDates' || state.type === 'niCta'
+    const fixedHeight = state.type === 'niStats' || state.type === 'niKeyDates' || state.type === 'niNumberedList' || state.type === 'niCta'
 
     return (
         <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>
