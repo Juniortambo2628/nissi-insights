@@ -164,6 +164,8 @@
 /* Newsletter blocks: dblclick-to-edit affordances */
 .ni-editor .ni-stats,
 .ni-editor .ni-keydates,
+.ni-editor .ni-numberedlist,
+.ni-editor .ni-title,
 .ni-editor .ni-cta {
   cursor: pointer;
 }

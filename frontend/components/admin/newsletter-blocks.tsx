@@ -3,6 +3,7 @@
 import React from 'react'
 import { Node, mergeAttributes } from '@tiptap/core'
 import { NodeViewContent, NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react'
+import Image from '@tiptap/extension-image'
 import {
     AlignLeft,
     AlignCenter,
@@ -20,6 +21,10 @@ export interface StatItem {
 export interface KeyDateItem {
     date: string
     flag: string
+    text: string
+}
+
+export interface NumberedItem {
     text: string
 }
 
@@ -61,6 +66,14 @@ export const DEFAULT_CTA: CtaAttrs = {
 export const DEFAULT_BOX_LABEL = 'Bulletin'
 export const DEFAULT_HIGHLIGHT_LABEL = 'Impact'
 
+export const DEFAULT_NUMBERED_ITEMS: NumberedItem[] = [
+    { text: 'First point in the list — keep it to a line or two.' },
+    { text: 'Second point in the list — add as many rows as you need.' },
+]
+
+export const DEFAULT_TITLE = 'Section title'
+export const DEFAULT_TITLE_LABEL = 'This week'
+
 /**
  * Email-safe palette helpers. ACCENT uses a CSS variable with a literal
  * fallback: the editor resolves the variable live (set on the editor
@@ -76,6 +89,106 @@ const MUTED = '#94a3b8'
 
 const PANEL_CELL = `background:${PANEL_BG}; border:1px solid ${PANEL_BORDER}; padding:18px 20px;`
 const LABEL_STYLE = `font-size:11px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:${ACCENT}; margin-bottom:12px;`
+
+/**
+ * Image shape + frame options shared by the attribute dialog and the
+ * editor's image node. The frame ring uses var(--ni-accent) so it follows
+ * the newsletter accent colour live and resolves to a literal colour in
+ * the rendered email.
+ */
+export const IMAGE_SHAPE_OPTIONS = [
+    { value: 'square', label: 'Square' },
+    { value: 'rounded', label: 'Rounded' },
+    { value: 'circle', label: 'Circle' },
+] as const
+
+export const IMAGE_FRAME_OPTIONS = [
+    { value: 'none', label: 'No frame' },
+    { value: 'accent', label: 'Accent ring' },
+] as const
+
+export const imageShapeRadius = (attrs: { shape?: string | null }): string =>
+    attrs.shape === 'circle' ? '50%' : attrs.shape === 'rounded' ? '16px' : '8px'
+
+export const imageShapeStyle = (attrs: { shape?: string | null }): string =>
+    `border-radius: ${imageShapeRadius(attrs)}`
+
+export const imageBorderStyle = (attrs: { frame?: string | null }): string =>
+    attrs.frame === 'accent' ? `3px solid ${ACCENT}` : ''
+
+export const imageFrameStyle = (attrs: { frame?: string | null }): string => {
+    const border = imageBorderStyle(attrs)
+    return border ? `border: ${border}` : ''
+}
+
+/**
+ * The image resize node view applies attributes once at creation, so a
+ * shape/frame change from the dialog has to be re-applied to the live img
+ * element. Only touch the two properties via CSSOM — never the whole
+ * style attribute — so the resize handles' width/height survive.
+ */
+const applyImageShapeStyle = (nodeView: any, attrs: Record<string, any>) => {
+    const root = nodeView?.dom
+    const img = root && (root.tagName === 'IMG' ? root : root.querySelector?.('img'))
+    if (!img) return
+    img.style.setProperty('border-radius', imageShapeRadius(attrs))
+    img.style.setProperty('border', imageBorderStyle(attrs))
+}
+
+/**
+ * Image with shape (square / rounded / circle) and accent-frame attributes.
+ * The data-* mirrors round-trip reliably for the parser; the style
+ * declarations carry the actual visuals (email-safe inline styles).
+ */
+export const ImageWithShape = Image.extend({
+    addAttributes() {
+        return {
+            ...this.parent?.(),
+            shape: {
+                default: 'square',
+                parseHTML: (el: HTMLElement) => {
+                    const data = el.getAttribute('data-shape')
+                    if (data) return data
+                    const raw = el.getAttribute('style') || ''
+                    if (/border-radius:\s*50%/.test(raw)) return 'circle'
+                    if (/border-radius:\s*16px/.test(raw)) return 'rounded'
+                    return 'square'
+                },
+                renderHTML: (attrs) => ({
+                    style: `border-radius: ${imageShapeRadius(attrs)}`,
+                    'data-shape': attrs.shape || 'square',
+                }),
+            },
+            frame: {
+                default: 'none',
+                parseHTML: (el: HTMLElement) =>
+                    el.getAttribute('data-frame') ||
+                    (/var\(--ni-accent/.test(el.getAttribute('style') || '') ? 'accent' : 'none'),
+                renderHTML: (attrs) => {
+                    const border = imageBorderStyle(attrs)
+                    return border
+                        ? { style: `border: ${border}`, 'data-frame': attrs.frame || 'accent' }
+                        : { 'data-frame': attrs.frame || 'none' }
+                },
+            },
+        }
+    },
+    addNodeView() {
+        const parentFactory: any = this.parent?.()
+        if (!parentFactory) return null
+        return (props: any) => {
+            const nodeView = parentFactory(props)
+            if (!nodeView || typeof nodeView.update !== 'function') return nodeView
+            const originalUpdate = nodeView.update.bind(nodeView)
+            nodeView.update = (node: any, decorations: any, innerDecorations: any) => {
+                const result = originalUpdate(node, decorations, innerDecorations)
+                applyImageShapeStyle(nodeView, node.attrs)
+                return result
+            }
+            return nodeView
+        }
+    },
+})
 
 const presentationTable = (...children: any[]): any[] => [
     'table',
@@ -94,6 +207,7 @@ const parseJsonArray = <T,>(raw: string | null | undefined, fallback: T[]): T[] 
 
 const cloneStats = (items: StatItem[]): StatItem[] => items.map((i) => ({ ...i }))
 const cloneDates = (items: KeyDateItem[]): KeyDateItem[] => items.map((i) => ({ ...i }))
+const cloneNumbered = (items: NumberedItem[]): NumberedItem[] => items.map((i) => ({ ...i }))
 
 /**
  * Boxed panel (e.g. "BULLETIN") — editable body content inside an
@@ -334,6 +448,108 @@ export const NiKeyDates = Node.create({
                     ['div', { style: LABEL_STYLE }, node.attrs.title],
                     presentationTable(...rows),
                 ],
+            ]),
+        ]
+    },
+})
+
+/**
+ * Numbered list panel — large accent numerals beside one-line rows
+ * (e.g. inside the Bulletin box). Numbers are derived from the row
+ * index, so reordering rows renumbers automatically. Edited via
+ * double-click dialog.
+ */
+export const NiNumberedList = Node.create({
+    name: 'niNumberedList',
+    group: 'block',
+    atom: true,
+
+    addAttributes() {
+        return {
+            items: {
+                default: () => cloneNumbered(DEFAULT_NUMBERED_ITEMS),
+                parseHTML: (el: HTMLElement) => parseJsonArray<NumberedItem>(el.getAttribute('data-items'), cloneNumbered(DEFAULT_NUMBERED_ITEMS)),
+                renderHTML: (attrs) => ({ 'data-items': JSON.stringify(attrs.items || []) }),
+            },
+        }
+    },
+
+    parseHTML() {
+        return [{ tag: 'div[data-ni-numberedlist]' }]
+    },
+
+    renderHTML({ node, HTMLAttributes }) {
+        const items: NumberedItem[] = node.attrs.items?.length ? node.attrs.items : cloneNumbered(DEFAULT_NUMBERED_ITEMS)
+
+        const rows = items.map((it, i) => [
+            'tr',
+            {},
+            ['td', { style: `width:46px; vertical-align:top; padding:9px 0; font-size:22px; font-weight:700; line-height:1.2; color:${ACCENT};` }, String(i + 1)],
+            ['td', { style: `vertical-align:top; padding:9px 0; font-size:14px; line-height:1.5;` }, String(it.text ?? '')],
+        ])
+
+        return [
+            'div',
+            mergeAttributes(HTMLAttributes, {
+                class: 'ni-numberedlist',
+                'data-ni-numberedlist': '',
+                style: 'margin:14px 0;',
+            }),
+            presentationTable(...rows),
+        ]
+    },
+})
+
+/**
+ * Section title row — bold heading on the left, small uppercase label on
+ * the right, with a hairline rule underneath (e.g. "🇰🇪 Kenya" / "1 UPDATE").
+ * Edited via double-click dialog.
+ */
+export const NiTitle = Node.create({
+    name: 'niTitle',
+    group: 'block',
+    atom: true,
+
+    addAttributes() {
+        return {
+            title: {
+                default: DEFAULT_TITLE,
+                parseHTML: (el: HTMLElement) => el.getAttribute('data-title') || DEFAULT_TITLE,
+                renderHTML: (attrs) => ({ 'data-title': attrs.title }),
+            },
+            label: {
+                default: DEFAULT_TITLE_LABEL,
+                parseHTML: (el: HTMLElement) => el.getAttribute('data-label') || DEFAULT_TITLE_LABEL,
+                renderHTML: (attrs) => ({ 'data-label': attrs.label }),
+            },
+        }
+    },
+
+    parseHTML() {
+        return [{ tag: 'div[data-ni-title]' }]
+    },
+
+    renderHTML({ node, HTMLAttributes }) {
+        const title = String(node.attrs.title ?? '')
+        const label = String(node.attrs.label ?? '')
+        const rule = `border-bottom:1px solid ${HAIRLINE}; padding-bottom:10px;`
+
+        const labelCell: any[] = label
+            ? ['td', { style: `${rule} text-align:right; vertical-align:bottom;` }, ['div', { style: `font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:${MUTED};` }, label]]
+            : ['td', { style: rule }, ['div', {}, '']]
+
+        return [
+            'div',
+            mergeAttributes(HTMLAttributes, {
+                class: 'ni-title',
+                'data-ni-title': '',
+                style: 'margin:26px 0 6px;',
+            }),
+            presentationTable([
+                'tr',
+                {},
+                ['td', { style: `${rule} padding-right:14px;` }, ['div', { style: `font-size:20px; font-weight:700; line-height:1.3; color:var(--ni-text,#0f172a);` }, title]],
+                labelCell,
             ]),
         ]
     },
@@ -1137,14 +1353,14 @@ export const ContentReference = Node.create({
     },
 })
 
-export const newsletterBlockExtensions = [NiBox, NiHighlight, NiStats, NiKeyDates, NiGrid, NiGridColumn, NiCta]
+export const newsletterBlockExtensions = [NiBox, NiHighlight, NiStats, NiKeyDates, NiNumberedList, NiTitle, NiGrid, NiGridColumn, NiCta]
 
-/** Node types whose double-click opens an attribute-editing dialog. */
-export const DIALOG_NODE_TYPES = ['niStats', 'niKeyDates', 'niCta', 'niBox', 'niHighlight'] as const
+/** Node types whose double-click opens an attribute-editing dialog ('image' is the core image node). */
+export const DIALOG_NODE_TYPES = ['niStats', 'niKeyDates', 'niNumberedList', 'niTitle', 'niCta', 'niBox', 'niHighlight', 'image'] as const
 
 export type DialogNodeType = (typeof DIALOG_NODE_TYPES)[number]
 
-export type BlockKind = 'box' | 'highlight' | 'stats' | 'keydates' | 'cta' | 'grid2' | 'grid3'
+export type BlockKind = 'box' | 'highlight' | 'stats' | 'keydates' | 'numberedlist' | 'title' | 'cta' | 'grid2' | 'grid3'
 
 /** Build insertable content for a toolbar block. */
 export const buildBlockContent = (kind: BlockKind): any => {
@@ -1157,6 +1373,10 @@ export const buildBlockContent = (kind: BlockKind): any => {
             return { type: 'niStats', attrs: { items: cloneStats(DEFAULT_STATS_ITEMS) } }
         case 'keydates':
             return { type: 'niKeyDates', attrs: { title: DEFAULT_KEY_DATES_TITLE, items: cloneDates(DEFAULT_KEY_DATES) } }
+        case 'numberedlist':
+            return { type: 'niNumberedList', attrs: { items: cloneNumbered(DEFAULT_NUMBERED_ITEMS) } }
+        case 'title':
+            return { type: 'niTitle', attrs: { title: DEFAULT_TITLE, label: DEFAULT_TITLE_LABEL } }
         case 'cta':
             return { type: 'niCta', attrs: { ...DEFAULT_CTA } }
         case 'grid2':
