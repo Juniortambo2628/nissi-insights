@@ -6,7 +6,7 @@ import { useApi } from '@/hooks/use-api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { StatusBadge } from '@/components/admin/StatusBadge'
-import RichTextEditor from '@/components/admin/RichTextEditor'
+import NewsletterComposer from '@/components/admin/NewsletterComposer'
 import ImageUploader from '@/components/admin/ImageUploader'
 import CampaignSendDialog from '@/components/admin/CampaignSendDialog'
 import NewsletterHistoryDialog from '@/components/admin/NewsletterHistoryDialog'
@@ -484,7 +484,7 @@ const AdminNewslettersPage = () => {
                                 </div>
                             </div>
 
-                            <RichTextEditor
+                            <NewsletterComposer
                                 label="Content"
                                 value={form.content || ''}
                                 onChange={(content) => setForm({ ...form, content })}
