@@ -4,6 +4,8 @@ import React from 'react'
 import { Node, mergeAttributes } from '@tiptap/core'
 import { NodeViewContent, NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react'
 import Image from '@tiptap/extension-image'
+import { toast } from '@/hooks/use-toast'
+import { uploadImageFile, uploadErrorMessage } from '@/lib/upload-image'
 import {
     AlignLeft,
     AlignCenter,
@@ -188,15 +190,100 @@ export const ImageWithShape = Image.extend({
         const parentFactory: any = this.parent?.()
         if (!parentFactory) return null
         return (props: any) => {
-            const nodeView = parentFactory(props)
-            if (!nodeView || typeof nodeView.update !== 'function') return nodeView
-            const originalUpdate = nodeView.update.bind(nodeView)
-            nodeView.update = (node: any, decorations: any, innerDecorations: any) => {
+            const parent = parentFactory(props)
+            if (!parent || typeof parent.update !== 'function') return parent
+
+            // The hover "Replace image" chrome lives inside the child node
+            // view's container (a sibling of its resize handles), so none of
+            // this is ever serialised — getHTML() reads attrs via renderHTML,
+            // not the node-view DOM.
+            const parentDom: HTMLElement = parent.dom
+            let root: HTMLElement = parentDom
+
+            if (parentDom.tagName === 'IMG') {
+                // Bare <img> node view (resize disabled): host the chrome in
+                // a wrapper instead — an <img> can't hold children.
+                const wrapper = document.createElement('span')
+                wrapper.className = 'ni-image-node'
+                wrapper.appendChild(parentDom)
+                root = wrapper
+                try {
+                    Object.defineProperty(parent, 'dom', { value: wrapper, configurable: true, writable: true })
+                } catch {
+                    return { ...parent, dom: wrapper }
+                }
+            } else {
+                parentDom.classList.add('ni-image-node')
+            }
+
+            const overlay = document.createElement('span')
+            overlay.className = 'ni-image-overlay'
+            overlay.setAttribute('contenteditable', 'false')
+
+            const input = document.createElement('input')
+            input.type = 'file'
+            input.accept = 'image/*'
+            input.className = 'hidden'
+
+            const button = document.createElement('button')
+            button.type = 'button'
+            button.className = 'ni-image-replace-btn'
+            button.textContent = 'Replace image'
+
+            overlay.appendChild(input)
+            overlay.appendChild(button)
+            root.appendChild(overlay)
+
+            let busy = false
+            const setBusy = (value: boolean) => {
+                busy = value
+                overlay.classList.toggle('ni-image-overlay-busy', value)
+                button.textContent = value ? 'Uploading…' : 'Replace image'
+                button.disabled = value
+            }
+
+            button.addEventListener('click', () => {
+                if (!busy) input.click()
+            })
+            // Keep clicks on the control from stealing the editor selection.
+            overlay.addEventListener('mousedown', (event) => event.preventDefault())
+            input.addEventListener('change', async () => {
+                const file = input.files?.[0]
+                input.value = ''
+                if (!file) return
+                setBusy(true)
+                try {
+                    const { src, alt } = await uploadImageFile(file)
+                    props.updateAttributes({ src, alt })
+                    toast({ title: 'Image replaced', description: 'The uploaded image is now in use.' })
+                } catch (err: any) {
+                    toast({ variant: 'destructive', title: 'Upload failed', description: uploadErrorMessage(err) })
+                } finally {
+                    setBusy(false)
+                }
+            })
+
+            // Placeholder images (broken URLs) get a padded placeholder box
+            // with the control pinned — error/load don't bubble, so listen
+            // in the capture phase.
+            root.addEventListener('error', (event) => {
+                const target = event.target as HTMLElement | null
+                if (target && target.tagName === 'IMG') root.classList.add('ni-image-node-broken')
+            }, true)
+            root.addEventListener('load', (event) => {
+                const target = event.target as HTMLElement | null
+                if (target && target.tagName === 'IMG') root.classList.remove('ni-image-node-broken')
+            }, true)
+            const img = root.querySelector('img') as HTMLImageElement | null
+            if (img && img.complete && img.naturalWidth === 0) root.classList.add('ni-image-node-broken')
+
+            const originalUpdate = parent.update.bind(parent)
+            parent.update = (node: any, decorations: any, innerDecorations: any) => {
                 const result = originalUpdate(node, decorations, innerDecorations)
-                applyImageShapeStyle(nodeView, node.attrs)
+                applyImageShapeStyle({ dom: parentDom }, node.attrs)
                 return result
             }
-            return nodeView
+            return parent
         }
     },
 })
@@ -222,6 +309,19 @@ const cloneNumbered = (items: NumberedItem[]): NumberedItem[] => items.map((i) =
 const cloneTeam = (items: TeamMember[]): TeamMember[] => items.map((i) => ({ ...i }))
 
 /**
+ * Bulletins open with a country lead ("Kenya. Fuel prices are up…").
+ * Bold the leading "Word." segment at render time only — the stored
+ * item text stays plain, so the dialog and round trips are unaffected.
+ */
+const NUMBERED_LEAD = /^([A-Z][A-Za-z'’()&]{0,14}\.)\s+([\s\S]+)$/
+
+const numberedRowChildren = (text: string): any[] => {
+    const match = NUMBERED_LEAD.exec(text)
+    if (!match) return [text]
+    return [['strong', { style: 'font-weight:700;' }, match[1]], ` ${match[2]}`]
+}
+
+/**
  * Boxed panel (e.g. "BULLETIN") — editable body content inside an
  * inline-styled table that survives email clients. The label is edited
  * via double-click dialog.
@@ -235,7 +335,11 @@ export const NiBox = Node.create({
         return {
             label: {
                 default: DEFAULT_BOX_LABEL,
-                parseHTML: (el: HTMLElement) => el.getAttribute('data-label') || DEFAULT_BOX_LABEL,
+                // hasAttribute (not ||) so an explicit empty label — e.g.
+                // article cards with no header — survives the round trip
+                // instead of falling back to "Bulletin".
+                parseHTML: (el: HTMLElement) =>
+                    el.hasAttribute('data-label') ? el.getAttribute('data-label') : DEFAULT_BOX_LABEL,
                 renderHTML: (attrs) => ({ 'data-label': attrs.label }),
             },
             // Content placement inside the panel (rendered on the td so it
@@ -257,7 +361,17 @@ export const NiBox = Node.create({
         return [
             {
                 tag: 'div[data-ni-box]',
-                contentElement: (el: HTMLElement) => el.querySelector('td') as HTMLElement,
+                // Only the box's own presentation table — an unscoped
+                // querySelector('td') would grab a nested grid column and
+                // silently drop the rest of the card content. Fall back to
+                // the wrapper when hand-written source omits the inner
+                // table (compact form); a null contentElement crashes.
+                contentElement: (el: HTMLElement) => {
+                    const ownTable = Array.from(el.children).find(
+                        (child) => child.tagName === 'TABLE'
+                    ) as HTMLElement | undefined
+                    return (ownTable?.querySelector('td') as HTMLElement) || el
+                },
             },
             { tag: 'div[data-ni-box-label]', ignore: true, priority: 100 },
         ]
@@ -266,6 +380,13 @@ export const NiBox = Node.create({
     renderHTML({ node, HTMLAttributes }) {
         const align = node.attrs.align || 'left'
         const valign = node.attrs.valign || 'top'
+        const inner: any[] = []
+        // Label div only when a label exists: an empty LABEL_STYLE div
+        // would still paint a phantom 12px gap above card content.
+        if (node.attrs.label) {
+            inner.push(['div', { 'data-ni-box-label': '', style: LABEL_STYLE }, node.attrs.label])
+        }
+        inner.push(['div', { style: 'margin:0;' }, 0])
 
         return [
             'div',
@@ -280,12 +401,7 @@ export const NiBox = Node.create({
                 [
                     'td',
                     { style: `${PANEL_CELL} text-align:${align}; vertical-align:${valign};` },
-                    [
-                        'div',
-                        { 'data-ni-box-label': '', style: LABEL_STYLE },
-                        node.attrs.label,
-                    ],
-                    ['div', { style: 'margin:0;' }, 0],
+                    ...inner,
                 ],
             ]),
         ]
@@ -315,7 +431,7 @@ export const NiHighlight = Node.create({
         return [
             {
                 tag: 'div[data-ni-highlight]',
-                contentElement: (el: HTMLElement) => el.querySelector('td') as HTMLElement,
+                contentElement: (el: HTMLElement) => (el.querySelector('td') as HTMLElement) || el,
             },
             { tag: 'strong[data-ni-highlight-label]', ignore: true, priority: 100 },
         ]
@@ -497,7 +613,7 @@ export const NiNumberedList = Node.create({
             'tr',
             {},
             ['td', { style: `width:46px; vertical-align:top; padding:9px 0; font-size:22px; font-weight:700; line-height:1.2; color:${ACCENT};` }, String(i + 1)],
-            ['td', { style: `vertical-align:top; padding:9px 0; font-size:14px; line-height:1.5;` }, String(it.text ?? '')],
+            ['td', { style: `vertical-align:top; padding:9px 0; font-size:14px; line-height:1.5;` }, ...numberedRowChildren(String(it.text ?? ''))],
         ])
 
         return [
@@ -612,7 +728,14 @@ export const NiGridColumn = Node.create({
     },
 
     parseHTML() {
-        return [{ tag: 'td[data-ni-col]' }]
+        return [{
+            tag: 'td[data-ni-col]',
+            // tiptap's TableCell rule (tag 'td', priority 50) is registered
+            // earlier and would otherwise win; PM then findWrapping()s the
+            // cells through [niGridColumn → table → row], collapsing the
+            // grid. Higher priority = checked first.
+            priority: 60,
+        }]
     },
 
     // `this.editor` comes from TipTap's extension context binding.
@@ -1154,7 +1277,7 @@ export const NiGrid = Node.create({
         return [
             {
                 tag: 'div[data-ni-grid]',
-                contentElement: (el: HTMLElement) => el.querySelector('tr') as HTMLElement,
+                contentElement: (el: HTMLElement) => (el.querySelector('tr') as HTMLElement) || el,
             },
         ]
     },
@@ -1267,7 +1390,10 @@ const teamCell = (member: TeamMember, width: string): any[] => {
         children.push(['img', {
             src: String(member.imageUrl),
             alt: String(member.name || ''),
-            style: 'display:block; width:100%; max-width:200px; height:auto; border-radius:8px; margin:0 0 10px;',
+            // Circular avatar with an accent ring, centred above the copy —
+            // matches the issue's note-from-us layout. Square photos give a
+            // perfect circle; keep uploads headshot-cropped.
+            style: 'display:block; width:120px; max-width:100%; height:auto; border-radius:50%; border:2px solid var(--ni-accent,#2563eb); margin:0 auto 10px;',
         }])
     }
     if (member.name) {
@@ -1284,7 +1410,7 @@ const teamCell = (member: TeamMember, width: string): any[] => {
     }
     if (!children.length) children.push(['div', { style: 'min-height:8px;' }, ''])
 
-    return ['td', { width: `${width}%`, style: `width:${width}%; vertical-align:top; padding:0 14px 16px 0;` }, ...children]
+    return ['td', { width: `${width}%`, style: `width:${width}%; vertical-align:top; text-align:center; padding:0 8px 16px 0;` }, ...children]
 }
 
 /**
@@ -1327,7 +1453,7 @@ export const NiTeam = Node.create({
         for (let i = 0; i < items.length; i += columns) {
             const cells = items.slice(i, i + columns).map((member) => teamCell(member, width))
             while (cells.length < columns) {
-                cells.push(['td', { width: `${width}%`, style: `width:${width}%; vertical-align:top; padding:0 14px 16px 0;` }])
+                cells.push(['td', { width: `${width}%`, style: `width:${width}%; vertical-align:top; padding:0 8px 16px 0;` }])
             }
             rows.push(['tr', {}, ...cells])
         }

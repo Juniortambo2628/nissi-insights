@@ -1,4 +1,4 @@
-import { Editor, getHTMLFromFragment, getSchema } from '@tiptap/core'
+import { Editor } from '@tiptap/core'
 import { repairNewsletterHtml } from './newsletter-repair'
 import { newsletterEditorExtensions } from '@/components/admin/newsletter-editor-extensions'
 import { buildBlockContent, BlockKind } from '@/components/admin/newsletter-blocks'
@@ -48,24 +48,32 @@ const createProbe = (content: string): Editor =>
     })
 
 /**
- * Serialize node JSON exactly the way editor.getHTML() does (it calls the
- * same getHTMLFromFragment). Serializing groups this way — instead of
- * through setContent — keeps output node-local: no trailing paragraphs
- * injected, and split → join stays byte-identical to the original.
+ * Serialize node JSON exactly the way editor.getHTML() does — through a
+ * real Editor so the nodes live in its doc. Some block renderers (grid
+ * column dividers/padding) locate themselves via `editor.state.doc`, which
+ * finds nothing for detached fragments; a probe doc keeps their output
+ * byte-identical to the main editor. No trailing paragraphs are injected
+ * (construction, unlike setContent), so split → join stays byte-identical.
  */
-const schema = getSchema(newsletterEditorExtensions)
-
 const serializeNodes = (nodes: any[]): string => {
-    const doc = schema.nodeFromJSON({ type: 'doc', content: nodes })
-    return getHTMLFromFragment(doc.content, schema)
+    const editor = new Editor({
+        extensions: newsletterEditorExtensions,
+        content: { type: 'doc', content: nodes },
+        element: document.createElement('div'),
+    })
+    try {
+        return editor.getHTML()
+    } finally {
+        editor.destroy()
+    }
 }
 
 const labelForNode = (node: any): string => {
     switch (node.type) {
         case 'niBox':
-            return `Box: ${node.attrs?.label || 'Untitled'}`
+            return node.attrs?.label ? `Box: ${node.attrs.label}` : 'Box'
         case 'niHighlight':
-            return `Highlight: ${node.attrs?.label || 'Untitled'}`
+            return node.attrs?.label ? `Highlight: ${node.attrs.label}` : 'Highlight'
         case 'niStats':
             return 'Statistics'
         case 'niKeyDates':

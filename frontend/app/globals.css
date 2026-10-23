@@ -362,3 +362,74 @@
 .ni-editor [data-resize-handle='bottom-left'] { transform: translate(-50%, 50%); }
 .ni-editor [data-resize-handle='top-right'] { transform: translate(50%, -50%); }
 .ni-editor [data-resize-handle='top-left'] { transform: translate(-50%, -50%); }
+
+/* Hover "Replace image" control (editor-only node view chrome) */
+.ni-image-node {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  line-height: 0;
+}
+
+.ni-image-overlay {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: none;
+  z-index: 30;
+  line-height: normal;
+}
+
+.ni-image-node:hover .ni-image-overlay,
+.ni-image-node:focus-within .ni-image-overlay,
+.ni-image-node.ni-image-node-broken .ni-image-overlay,
+.ni-image-node-broken .ni-image-overlay {
+  display: block;
+}
+
+.ni-image-replace-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: system-ui, -apple-system, sans-serif;
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  background: rgba(15, 23, 42, 0.88);
+  color: #f8fafc;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.28);
+}
+
+.ni-image-replace-btn:hover {
+  background: rgba(37, 99, 235, 0.95);
+  border-color: rgba(37, 99, 235, 0.95);
+}
+
+.ni-image-overlay-busy .ni-image-replace-btn {
+  opacity: 0.75;
+  cursor: wait;
+}
+
+/* Broken image (e.g. placeholder URL before its upload): padded stand-in
+   so the hover target stays large and the control is always visible. */
+.ni-image-node-broken {
+  display: block;
+  width: 100%;
+  min-height: 120px;
+  padding: 8px;
+  background: rgba(148, 163, 184, 0.06);
+  border: 1px dashed rgba(148, 163, 184, 0.45);
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+.ni-image-node-broken img {
+  width: 100%;
+  min-height: 104px;
+  object-fit: contain;
+  opacity: 0.65;
+}

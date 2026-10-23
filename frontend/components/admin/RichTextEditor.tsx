@@ -2,9 +2,8 @@
 
 import React from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
-import imageCompression from 'browser-image-compression'
-import api from '@/lib/api'
 import { getMediaUrl } from '@/lib/utils'
+import { uploadImageFile, uploadErrorMessage } from '@/lib/upload-image'
 import { repairNewsletterHtml } from '@/lib/newsletter-repair'
 import { useToast } from '@/hooks/use-toast'
 import {
@@ -887,30 +886,18 @@ const RichTextEditor = ({
 
         setIsUploading(true)
         try {
-            const compressed = await imageCompression(file, {
-                maxSizeMB: 2,
-                maxWidthOrHeight: 1920,
-                useWebWorker: true,
-                fileType: file.type,
-            })
-
-            const formData = new FormData()
-            formData.append('file', compressed, file.name)
-
-            const response = await api.post('/upload', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' },
-            })
+            const { src, alt } = await uploadImageFile(file)
 
             editor
                 .chain()
                 .focus()
-                .setImage({ src: getMediaUrl(response.data.path), alt: file.name })
+                .setImage({ src, alt })
                 .run()
         } catch (err: any) {
             toast({
                 variant: 'destructive',
                 title: 'Upload failed',
-                description: err?.response?.data?.message || 'Could not upload image. Please try again.',
+                description: uploadErrorMessage(err),
             })
         } finally {
             setIsUploading(false)
