@@ -2,11 +2,6 @@
 
 import React from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
-import StarterKit from '@tiptap/starter-kit'
-import Link from '@tiptap/extension-link'
-import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table'
-import TextAlign from '@tiptap/extension-text-align'
-import { TextStyle, Color, FontSize, LineHeight } from '@tiptap/extension-text-style'
 import imageCompression from 'browser-image-compression'
 import api from '@/lib/api'
 import { getMediaUrl } from '@/lib/utils'
@@ -65,14 +60,12 @@ import { Input } from '@/components/ui/input'
 import { useApi } from '@/hooks/use-api'
 import { Insight } from '@/types/api'
 import {
-    newsletterBlockExtensions,
     buildBlockContent,
     DIALOG_NODE_TYPES,
     BlockKind,
     DialogNodeType,
-    ContentReference,
-    ImageWithShape,
 } from './newsletter-blocks'
+import { newsletterEditorExtensions } from './newsletter-editor-extensions'
 import { BlockAttrsDialog } from './newsletter-block-dialog'
 
 interface KnowledgeBaseItem {
@@ -685,49 +678,7 @@ const RichTextEditor = ({
 
     const editor = useEditor({
         immediatelyRender: false,
-        extensions: [
-            StarterKit.configure({
-                // @ts-ignore — ensure no duplicate 'link' extension
-                link: false,
-                horizontalRule: {
-                    HTMLAttributes: { class: 'ni-hr' },
-                },
-            }),
-            Link.configure({
-                openOnClick: false,
-                HTMLAttributes: {
-                    class: 'text-primary hover:underline cursor-pointer',
-                },
-            }),
-            ImageWithShape.configure({
-                HTMLAttributes: {
-                    class: 'rounded-lg max-w-full h-auto',
-                    style: 'max-width:100%; height:auto; border-radius:8px;',
-                },
-                resize: {
-                    enabled: true,
-                    directions: ['bottom-right', 'right', 'bottom'],
-                    minWidth: 80,
-                    minHeight: 60,
-                    alwaysPreserveAspectRatio: true,
-                },
-            }),
-            Table.configure({
-                resizable: false,
-                allowTableNodeSelection: true,
-                HTMLAttributes: { class: 'ni-table' },
-            }),
-            TableRow.configure({ HTMLAttributes: { class: 'ni-table-row' } }),
-            TableHeader.configure({ HTMLAttributes: { class: 'ni-table-header' } }),
-            TableCell.configure({ HTMLAttributes: { class: 'ni-table-cell' } }),
-            TextAlign.configure({ types: ['heading', 'paragraph'] }),
-            TextStyle,
-            Color.configure({ types: ['textStyle'] }),
-            FontSize,
-            LineHeight,
-            ContentReference,
-            ...newsletterBlockExtensions,
-        ],
+        extensions: newsletterEditorExtensions,
         content: value,
         editorProps: {
             // Flatten nested-table / block-in-table structures coming from
