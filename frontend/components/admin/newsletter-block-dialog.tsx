@@ -13,6 +13,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Plus, Trash2 } from 'lucide-react'
 import { DialogNodeType, IMAGE_SHAPE_OPTIONS, IMAGE_FRAME_OPTIONS } from './newsletter-blocks'
+import ImageUploader from './ImageUploader'
+import { getMediaUrl } from '@/lib/utils'
 
 const ALIGN_OPTIONS = [
     { value: 'left', label: 'Left' },
@@ -40,6 +42,7 @@ const TITLES: Record<DialogNodeType, string> = {
     niNumberedList: 'Edit Numbered List',
     niTitle: 'Edit Section Title',
     niCta: 'Edit Call to Action',
+    niTeam: 'Edit Team Members',
     image: 'Edit Image',
 }
 
@@ -388,10 +391,96 @@ const BlockAttrsDialog = ({ state, editor, onClose }: BlockAttrsDialogProps) => 
                         </div>
                     </div>
                 )
+            case 'niTeam':
+                return (
+                    <div className="space-y-4">
+                        <div className="space-y-1.5">
+                            <FieldLabel>Columns per row</FieldLabel>
+                            <Select
+                                value={String(attrs.columns ?? 2)}
+                                onValueChange={(value) => set('columns', parseInt(value, 10))}
+                            >
+                                <SelectTrigger className="h-9 bg-background border-border text-sm">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="1">1 (full width)</SelectItem>
+                                    <SelectItem value="2">2 side by side</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <FieldLabel>Members</FieldLabel>
+                            {(attrs.items ?? []).map((member: any, index: number) => {
+                                const updateRow = (key: string, value: string) =>
+                                    set(
+                                        'items',
+                                        (attrs.items ?? []).map((item: any, i: number) =>
+                                            i === index ? { ...item, [key]: value } : item
+                                        )
+                                    )
+                                return (
+                                    <div key={index} className="flex items-start gap-3 rounded-lg border border-border/50 p-3">
+                                        <div className="w-24 shrink-0">
+                                            <ImageUploader
+                                                value={member.imageUrl || ''}
+                                                onChange={(url) => updateRow('imageUrl', url ? getMediaUrl(url) : '')}
+                                                label="Photo"
+                                                accept={['.jpg', '.jpeg', '.png', '.webp', '.svg', '.gif']}
+                                                maxSizeMB={3}
+                                                className="[&_label]:mb-1 [&_label]:text-[11px]"
+                                            />
+                                        </div>
+                                        <div className="min-w-0 flex-1 space-y-2">
+                                            <Input
+                                                value={member.name ?? ''}
+                                                placeholder="Name"
+                                                onChange={(e) => updateRow('name', e.target.value)}
+                                                className="bg-background border-border text-sm"
+                                            />
+                                            <Input
+                                                value={member.role ?? ''}
+                                                placeholder="Role"
+                                                onChange={(e) => updateRow('role', e.target.value)}
+                                                className="bg-background border-border text-sm"
+                                            />
+                                            <Input
+                                                value={member.email ?? ''}
+                                                placeholder="Email"
+                                                type="email"
+                                                onChange={(e) => updateRow('email', e.target.value)}
+                                                className="bg-background border-border text-sm"
+                                            />
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                set('items', (attrs.items ?? []).filter((_: any, i: number) => i !== index))
+                                            }
+                                            className="p-2 rounded border border-border/50 text-muted-foreground hover:text-destructive hover:border-destructive/40 transition-colors shrink-0"
+                                            title="Remove member"
+                                        >
+                                            <Trash2 size={14} />
+                                        </button>
+                                    </div>
+                                )
+                            })}
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    set('items', [...(attrs.items ?? []), { imageUrl: '', name: '', role: '', email: '' }])
+                                }
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border/50 text-xs font-medium text-muted-foreground hover:bg-secondary/20 transition-colors"
+                            >
+                                <Plus size={13} /> Add member
+                            </button>
+                        </div>
+                    </div>
+                )
         }
     }
 
-    const fixedHeight = state.type === 'niStats' || state.type === 'niKeyDates' || state.type === 'niNumberedList' || state.type === 'niCta'
+    const fixedHeight = state.type === 'niStats' || state.type === 'niKeyDates' || state.type === 'niNumberedList' || state.type === 'niCta' || state.type === 'niTeam'
 
     return (
         <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>

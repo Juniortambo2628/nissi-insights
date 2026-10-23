@@ -242,6 +242,75 @@ describe('newsletter block nodes', () => {
         expect(node.attrs).toMatchObject(attrs)
     })
 
+    it('round-trips team members with photos, roles and mailto links', () => {
+        const items = [
+            { imageUrl: 'https://api.nissi-insights.com/api/storage/team/jane.jpg', name: 'Jane Doe', role: 'Partner', email: 'jane@nissi.co.ke' },
+            { imageUrl: '', name: 'John Smith', role: 'Analyst', email: 'john@nissi.co.ke' },
+        ]
+        const { html, json } = roundTrip({
+            type: 'doc',
+            content: [{ type: 'niTeam', attrs: { items, columns: 2 } }],
+        })
+
+        expect(html).toContain('data-ni-team')
+        expect(html).toContain('role="presentation"')
+        expect(html).toContain('https://api.nissi-insights.com/api/storage/team/jane.jpg')
+        expect(html).toContain('mailto:jane@nissi.co.ke')
+        expect(html).toContain('mailto:john@nissi.co.ke')
+        expect(html).toContain('Jane Doe')
+        expect(html).toContain('Partner')
+        // Plain links only — no editor chrome classes on mailto links.
+        expect(html).not.toContain('cursor-pointer')
+
+        const node: any = json.content![0]
+        expect(node.type).toBe('niTeam')
+        expect(node.attrs.items).toHaveLength(2)
+        expect(node.attrs.items[0]).toMatchObject(items[0])
+        expect(node.attrs.items[1]).toMatchObject(items[1])
+        expect(node.attrs.columns).toBe(2)
+    })
+
+    it('renders one team member per row when columns is 1', () => {
+        const items = [
+            { imageUrl: '', name: 'Jane Doe', role: 'Partner', email: 'jane@nissi.co.ke' },
+            { imageUrl: '', name: 'John Smith', role: 'Analyst', email: 'john@nissi.co.ke' },
+        ]
+        const { html, json } = roundTrip({
+            type: 'doc',
+            content: [{ type: 'niTeam', attrs: { items, columns: 1 } }],
+        })
+
+        // Full-width layout: each member gets its own row.
+        expect(html.match(/<tr/g)).toHaveLength(2)
+
+        const node: any = json.content![0]
+        expect(node.type).toBe('niTeam')
+        expect(node.attrs.columns).toBe(1)
+    })
+
+    it('round-trips a team block nested inside a boxed section', () => {
+        const { html, json } = roundTrip({
+            type: 'doc',
+            content: [
+                {
+                    type: 'niBox',
+                    attrs: { label: 'Team' },
+                    content: [
+                        { type: 'niTeam', attrs: { items: [{ imageUrl: '', name: 'Jane Doe', role: 'Partner', email: 'jane@nissi.co.ke' }], columns: 2 } },
+                    ],
+                },
+            ],
+        })
+
+        expect(html).toContain('data-ni-box')
+        expect(html).toContain('data-ni-team')
+        expect(html).toContain('mailto:jane@nissi.co.ke')
+
+        const box: any = json.content![0]
+        expect(box.type).toBe('niBox')
+        expect(box.content[0].type).toBe('niTeam')
+    })
+
     it('round-trips two and three column grids with column content', () => {
         const grid = buildBlockContent('grid2')
         grid.content[0].content = [{ type: 'paragraph', content: [{ type: 'text', text: 'Left column' }] }]
@@ -393,6 +462,9 @@ describe('newsletter block nodes', () => {
             attrs: { title: DEFAULT_TITLE, label: DEFAULT_TITLE_LABEL },
         })
         expect(buildBlockContent('cta').attrs.buttonText).toBe('Talk to us')
+        expect(buildBlockContent('team')).toMatchObject({ type: 'niTeam' })
+        expect(buildBlockContent('team').attrs.items).toHaveLength(1)
+        expect(buildBlockContent('team').attrs.columns).toBe(2)
         expect(buildBlockContent('grid3').content).toHaveLength(3)
     })
 

@@ -28,6 +28,13 @@ export interface NumberedItem {
     text: string
 }
 
+export interface TeamMember {
+    imageUrl: string
+    name: string
+    role: string
+    email: string
+}
+
 export interface CtaAttrs {
     heading: string
     body: string
@@ -69,6 +76,10 @@ export const DEFAULT_HIGHLIGHT_LABEL = 'Impact'
 export const DEFAULT_NUMBERED_ITEMS: NumberedItem[] = [
     { text: 'First point in the list — keep it to a line or two.' },
     { text: 'Second point in the list — add as many rows as you need.' },
+]
+
+export const DEFAULT_TEAM_ITEMS: TeamMember[] = [
+    { imageUrl: '', name: 'Team member name', role: 'Role', email: 'name@company.com' },
 ]
 
 export const DEFAULT_TITLE = 'Section title'
@@ -208,6 +219,7 @@ const parseJsonArray = <T,>(raw: string | null | undefined, fallback: T[]): T[] 
 const cloneStats = (items: StatItem[]): StatItem[] => items.map((i) => ({ ...i }))
 const cloneDates = (items: KeyDateItem[]): KeyDateItem[] => items.map((i) => ({ ...i }))
 const cloneNumbered = (items: NumberedItem[]): NumberedItem[] => items.map((i) => ({ ...i }))
+const cloneTeam = (items: TeamMember[]): TeamMember[] => items.map((i) => ({ ...i }))
 
 /**
  * Boxed panel (e.g. "BULLETIN") — editable body content inside an
@@ -1248,6 +1260,91 @@ export const NiCta = Node.create({
     },
 })
 
+const teamCell = (member: TeamMember, width: string): any[] => {
+    const children: any[] = []
+
+    if (member.imageUrl) {
+        children.push(['img', {
+            src: String(member.imageUrl),
+            alt: String(member.name || ''),
+            style: 'display:block; width:100%; max-width:200px; height:auto; border-radius:8px; margin:0 0 10px;',
+        }])
+    }
+    if (member.name) {
+        children.push(['div', { style: 'font-size:15px; font-weight:700; line-height:1.3; color:var(--ni-text,#0f172a); margin:0 0 3px;' }, String(member.name)])
+    }
+    if (member.role) {
+        children.push(['div', { style: `font-size:12px; letter-spacing:0.04em; color:${MUTED}; margin:0 0 6px;` }, String(member.role)])
+    }
+    if (member.email) {
+        children.push(['div', { style: 'margin:0;' }, ['a', {
+            href: `mailto:${member.email}`,
+            style: 'font-size:13px; font-weight:600; color:var(--ni-accent,#2563eb); text-decoration:none;',
+        }, String(member.email)]])
+    }
+    if (!children.length) children.push(['div', { style: 'min-height:8px;' }, ''])
+
+    return ['td', { width: `${width}%`, style: `width:${width}%; vertical-align:top; padding:0 14px 16px 0;` }, ...children]
+}
+
+/**
+ * Team members block — photo above name / role / email, one or two per
+ * row, rendered as an email-safe presentation table inside a data-ni
+ * wrapper (same div-parsing pattern as the other blocks). Rows are edited
+ * in a dialog (photo upload, name, role, email) — no table editing needed,
+ * which removes the old nested-table workaround for team sections.
+ */
+export const NiTeam = Node.create({
+    name: 'niTeam',
+    group: 'block',
+    atom: true,
+
+    addAttributes() {
+        return {
+            items: {
+                default: () => cloneTeam(DEFAULT_TEAM_ITEMS),
+                parseHTML: (el: HTMLElement) => parseJsonArray<TeamMember>(el.getAttribute('data-items'), cloneTeam(DEFAULT_TEAM_ITEMS)),
+                renderHTML: (attrs) => ({ 'data-items': JSON.stringify(attrs.items || []) }),
+            },
+            columns: {
+                default: 2,
+                parseHTML: (el: HTMLElement) => parseInt(el.getAttribute('data-columns') || '2', 10),
+                renderHTML: (attrs) => ({ 'data-columns': String(attrs.columns ?? 2) }),
+            },
+        }
+    },
+
+    parseHTML() {
+        return [{ tag: 'div[data-ni-team]' }]
+    },
+
+    renderHTML({ node, HTMLAttributes }) {
+        const items: TeamMember[] = node.attrs.items?.length ? node.attrs.items : cloneTeam(DEFAULT_TEAM_ITEMS)
+        const columns = node.attrs.columns === 1 ? 1 : 2
+        const width = (100 / columns).toFixed(2)
+
+        const rows: any[] = []
+        for (let i = 0; i < items.length; i += columns) {
+            const cells = items.slice(i, i + columns).map((member) => teamCell(member, width))
+            while (cells.length < columns) {
+                cells.push(['td', { width: `${width}%`, style: `width:${width}%; vertical-align:top; padding:0 14px 16px 0;` }])
+            }
+            rows.push(['tr', {}, ...cells])
+        }
+        if (!rows.length) rows.push(['tr', {}, ['td', { style: 'padding:0;' }]])
+
+        return [
+            'div',
+            mergeAttributes(HTMLAttributes, {
+                class: 'ni-team',
+                'data-ni-team': '',
+                style: 'margin:24px 0;',
+            }),
+            presentationTable(...rows),
+        ]
+    },
+})
+
 /**
  * Content reference card (insight / resource). Lives here so it can be
  * tested alongside the other custom nodes. Registered separately from
@@ -1353,14 +1450,14 @@ export const ContentReference = Node.create({
     },
 })
 
-export const newsletterBlockExtensions = [NiBox, NiHighlight, NiStats, NiKeyDates, NiNumberedList, NiTitle, NiGrid, NiGridColumn, NiCta]
+export const newsletterBlockExtensions = [NiBox, NiHighlight, NiStats, NiKeyDates, NiNumberedList, NiTitle, NiGrid, NiGridColumn, NiCta, NiTeam]
 
 /** Node types whose double-click opens an attribute-editing dialog ('image' is the core image node). */
-export const DIALOG_NODE_TYPES = ['niStats', 'niKeyDates', 'niNumberedList', 'niTitle', 'niCta', 'niBox', 'niHighlight', 'image'] as const
+export const DIALOG_NODE_TYPES = ['niStats', 'niKeyDates', 'niNumberedList', 'niTitle', 'niCta', 'niBox', 'niHighlight', 'niTeam', 'image'] as const
 
 export type DialogNodeType = (typeof DIALOG_NODE_TYPES)[number]
 
-export type BlockKind = 'box' | 'highlight' | 'stats' | 'keydates' | 'numberedlist' | 'title' | 'cta' | 'grid2' | 'grid3'
+export type BlockKind = 'box' | 'highlight' | 'stats' | 'keydates' | 'numberedlist' | 'title' | 'cta' | 'team' | 'grid2' | 'grid3'
 
 /** Build insertable content for a toolbar block. */
 export const buildBlockContent = (kind: BlockKind): any => {
@@ -1379,6 +1476,8 @@ export const buildBlockContent = (kind: BlockKind): any => {
             return { type: 'niTitle', attrs: { title: DEFAULT_TITLE, label: DEFAULT_TITLE_LABEL } }
         case 'cta':
             return { type: 'niCta', attrs: { ...DEFAULT_CTA } }
+        case 'team':
+            return { type: 'niTeam', attrs: { items: cloneTeam(DEFAULT_TEAM_ITEMS), columns: 2 } }
         case 'grid2':
         case 'grid3': {
             const columns = kind === 'grid2' ? 2 : 3
