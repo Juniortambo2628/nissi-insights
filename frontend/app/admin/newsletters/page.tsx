@@ -10,6 +10,8 @@ import NewsletterComposer from '@/components/admin/NewsletterComposer'
 import ImageUploader from '@/components/admin/ImageUploader'
 import CampaignSendDialog from '@/components/admin/CampaignSendDialog'
 import NewsletterHistoryDialog from '@/components/admin/NewsletterHistoryDialog'
+import NewsletterImportDialog, { ImportMode } from '@/components/admin/NewsletterImportDialog'
+import { ImportedNewsletter } from '@/lib/newsletter-import'
 import api from '@/lib/api'
 import { Newsletter, NewsletterTemplate, Campaign } from '@/types/api'
 import { useToast } from '@/hooks/use-toast'
@@ -49,6 +51,7 @@ import {
     Copy,
     Save,
     History,
+    FileUp,
 } from 'lucide-react'
 
 const COLOR_PRESETS = [
@@ -81,6 +84,9 @@ const AdminNewslettersPage = () => {
     const [editorTab, setEditorTab] = useState('content')
     const [baseline, setBaseline] = useState(() => serializeNewsletterForm(EMPTY_FORM))
     const [historyOpen, setHistoryOpen] = useState(false)
+    const [importOpen, setImportOpen] = useState(false)
+    const [importFile, setImportFile] = useState<File | null>(null)
+    const [importDragging, setImportDragging] = useState(false)
 
     const autosave = useNewsletterAutosave({
         enabled: showForm,
@@ -248,6 +254,32 @@ const AdminNewslettersPage = () => {
             })
         }
     }
+
+    const openImport = (file: File | null = null) => {
+        setImportFile(file)
+        setImportOpen(true)
+    }
+
+    // Title / subject / preheader are only filled when still blank, so an
+    // import never overwrites what the editor already typed.
+    const handleImport = (result: ImportedNewsletter, mode: ImportMode) => {
+        setForm((prev) => ({
+            ...prev,
+            content: mode === 'append' && prev.content ? `${prev.content}${result.html}` : result.html,
+            title: prev.title?.trim() ? prev.title : result.title,
+            subject: prev.subject?.trim() ? prev.subject : result.subject,
+            preheader: prev.preheader?.trim() ? prev.preheader : result.preheader,
+        }))
+        setEditorTab('content')
+        toast({
+            title: 'Newsletter imported',
+            description: result.imageCount
+                ? 'Now click "Upload image" on each dashed image box to add the photos.'
+                : 'Review the sections below, then preview and save.',
+        })
+    }
+
+    const hasContent = !!form.content?.replace(/<p><\/p>/g, '').trim()
 
     const applyTemplate = (template: NewsletterTemplate) => {
         setForm((prev) => ({
@@ -484,6 +516,37 @@ const AdminNewslettersPage = () => {
                                 </div>
                             </div>
 
+                            {hasContent ? (
+                                <div className="flex justify-end">
+                                    <Button variant="outline" size="sm" className="gap-1.5" onClick={() => openImport()}>
+                                        <FileUp size={14} /> Import from Claude (HTML file)
+                                    </Button>
+                                </div>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={() => openImport()}
+                                    onDragOver={(e) => { e.preventDefault(); setImportDragging(true) }}
+                                    onDragLeave={() => setImportDragging(false)}
+                                    onDrop={(e) => {
+                                        e.preventDefault()
+                                        setImportDragging(false)
+                                        openImport(e.dataTransfer.files?.[0] ?? null)
+                                    }}
+                                    className={`flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed px-6 py-8 text-center transition-colors ${
+                                        importDragging
+                                            ? 'border-primary bg-primary/5'
+                                            : 'border-primary/40 bg-primary/[0.03] hover:border-primary hover:bg-primary/5'
+                                    }`}
+                                >
+                                    <FileUp size={30} className="text-primary" />
+                                    <span className="text-base font-semibold text-foreground">Have a newsletter from Claude?</span>
+                                    <span className="text-sm text-muted-foreground">
+                                        Drop the .html file here, or click to upload it. Or start writing in the editor below.
+                                    </span>
+                                </button>
+                            )}
+
                             <NewsletterComposer
                                 label="Content"
                                 value={form.content || ''}
@@ -692,6 +755,17 @@ const AdminNewslettersPage = () => {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            <NewsletterImportDialog
+                open={importOpen}
+                onOpenChange={(open) => {
+                    setImportOpen(open)
+                    if (!open) setImportFile(null)
+                }}
+                initialFile={importFile}
+                hasExistingContent={hasContent}
+                onImport={handleImport}
+            />
 
             {/* Version history */}
             <NewsletterHistoryDialog
