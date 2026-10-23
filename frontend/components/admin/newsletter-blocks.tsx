@@ -149,6 +149,93 @@ const applyImageShapeStyle = (nodeView: any, attrs: Record<string, any>) => {
 }
 
 /**
+ * Editor-only hover control for an image host element: a "Replace image"
+ * button on hover and, when the image fails to load (a placeholder URL
+ * from an imported newsletter) or there is none yet, a large dashed
+ * placeholder with a centred "Upload image" button and the image's
+ * description. None of this is serialised — getHTML() reads node attrs
+ * via renderHTML, never the node-view DOM.
+ */
+export const attachImageUploadControl = (
+    root: HTMLElement,
+    upload: (file: File) => Promise<void>,
+    options: { empty?: boolean } = {},
+) => {
+    const overlay = document.createElement('span')
+    overlay.className = 'ni-image-overlay'
+    overlay.setAttribute('contenteditable', 'false')
+
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = 'image/*'
+    input.className = 'hidden'
+
+    const button = document.createElement('button')
+    button.type = 'button'
+    button.className = 'ni-image-replace-btn'
+
+    const label = document.createElement('span')
+    label.className = 'ni-image-placeholder-label'
+
+    overlay.appendChild(input)
+    overlay.appendChild(button)
+    overlay.appendChild(label)
+    root.appendChild(overlay)
+
+    let busy = false
+    const idleText = () =>
+        root.classList.contains('ni-image-node-broken') ? 'Upload image' : 'Replace image'
+    const setBusy = (value: boolean) => {
+        busy = value
+        overlay.classList.toggle('ni-image-overlay-busy', value)
+        button.textContent = value ? 'Uploading…' : idleText()
+        button.disabled = value
+    }
+    const setBroken = (value: boolean) => {
+        root.classList.toggle('ni-image-node-broken', value)
+        if (!busy) button.textContent = idleText()
+    }
+
+    button.addEventListener('click', () => {
+        if (!busy) input.click()
+    })
+    // Keep clicks on the control from stealing the editor selection.
+    overlay.addEventListener('mousedown', (event) => event.preventDefault())
+    input.addEventListener('change', async () => {
+        const file = input.files?.[0]
+        input.value = ''
+        if (!file) return
+        setBusy(true)
+        try {
+            await upload(file)
+            toast({ title: 'Image uploaded', description: 'The new image is now in use.' })
+        } catch (err: any) {
+            toast({ variant: 'destructive', title: 'Upload failed', description: uploadErrorMessage(err) })
+        } finally {
+            setBusy(false)
+        }
+    })
+
+    // error/load don't bubble, so listen in the capture phase.
+    root.addEventListener('error', (event) => {
+        const target = event.target as HTMLElement | null
+        if (target && target.tagName === 'IMG') setBroken(true)
+    }, true)
+    root.addEventListener('load', (event) => {
+        const target = event.target as HTMLElement | null
+        if (target && target.tagName === 'IMG') setBroken(false)
+    }, true)
+    const img = root.querySelector('img') as HTMLImageElement | null
+    setBroken(!!options.empty || (!!img && (!img.getAttribute('src') || (img.complete && img.naturalWidth === 0))))
+
+    return {
+        setLabel: (text: string) => {
+            label.textContent = text
+        },
+    }
+}
+
+/**
  * Image with shape (square / rounded / circle) and accent-frame attributes.
  * The data-* mirrors round-trip reliably for the parser; the style
  * declarations carry the actual visuals (email-safe inline styles).
@@ -216,71 +303,20 @@ export const ImageWithShape = Image.extend({
                 parentDom.classList.add('ni-image-node')
             }
 
-            const overlay = document.createElement('span')
-            overlay.className = 'ni-image-overlay'
-            overlay.setAttribute('contenteditable', 'false')
-
-            const input = document.createElement('input')
-            input.type = 'file'
-            input.accept = 'image/*'
-            input.className = 'hidden'
-
-            const button = document.createElement('button')
-            button.type = 'button'
-            button.className = 'ni-image-replace-btn'
-            button.textContent = 'Replace image'
-
-            overlay.appendChild(input)
-            overlay.appendChild(button)
-            root.appendChild(overlay)
-
-            let busy = false
-            const setBusy = (value: boolean) => {
-                busy = value
-                overlay.classList.toggle('ni-image-overlay-busy', value)
-                button.textContent = value ? 'Uploading…' : 'Replace image'
-                button.disabled = value
-            }
-
-            button.addEventListener('click', () => {
-                if (!busy) input.click()
+            const control = attachImageUploadControl(root, async (file) => {
+                const { src, alt } = await uploadImageFile(file)
+                // Keep a descriptive alt from the imported HTML over the
+                // uploaded file name.
+                const currentAlt = props.node?.attrs?.alt
+                props.updateAttributes({ src, alt: currentAlt || alt })
             })
-            // Keep clicks on the control from stealing the editor selection.
-            overlay.addEventListener('mousedown', (event) => event.preventDefault())
-            input.addEventListener('change', async () => {
-                const file = input.files?.[0]
-                input.value = ''
-                if (!file) return
-                setBusy(true)
-                try {
-                    const { src, alt } = await uploadImageFile(file)
-                    props.updateAttributes({ src, alt })
-                    toast({ title: 'Image replaced', description: 'The uploaded image is now in use.' })
-                } catch (err: any) {
-                    toast({ variant: 'destructive', title: 'Upload failed', description: uploadErrorMessage(err) })
-                } finally {
-                    setBusy(false)
-                }
-            })
-
-            // Placeholder images (broken URLs) get a padded placeholder box
-            // with the control pinned — error/load don't bubble, so listen
-            // in the capture phase.
-            root.addEventListener('error', (event) => {
-                const target = event.target as HTMLElement | null
-                if (target && target.tagName === 'IMG') root.classList.add('ni-image-node-broken')
-            }, true)
-            root.addEventListener('load', (event) => {
-                const target = event.target as HTMLElement | null
-                if (target && target.tagName === 'IMG') root.classList.remove('ni-image-node-broken')
-            }, true)
-            const img = root.querySelector('img') as HTMLImageElement | null
-            if (img && img.complete && img.naturalWidth === 0) root.classList.add('ni-image-node-broken')
+            control.setLabel(props.node?.attrs?.alt || '')
 
             const originalUpdate = parent.update.bind(parent)
             parent.update = (node: any, decorations: any, innerDecorations: any) => {
                 const result = originalUpdate(node, decorations, innerDecorations)
                 applyImageShapeStyle({ dom: parentDom }, node.attrs)
+                control.setLabel(node.attrs?.alt || '')
                 return result
             }
             return parent
@@ -1383,7 +1419,7 @@ export const NiCta = Node.create({
     },
 })
 
-const teamCell = (member: TeamMember, width: string): any[] => {
+const teamCell = (member: TeamMember, width: string, index?: number): any[] => {
     const children: any[] = []
 
     if (member.imageUrl) {
@@ -1410,7 +1446,55 @@ const teamCell = (member: TeamMember, width: string): any[] => {
     }
     if (!children.length) children.push(['div', { style: 'min-height:8px;' }, ''])
 
-    return ['td', { width: `${width}%`, style: `width:${width}%; vertical-align:top; text-align:center; padding:0 8px 16px 0;` }, ...children]
+    const attrs: Record<string, string> = { width: `${width}%`, style: `width:${width}%; vertical-align:top; text-align:center; padding:0 8px 16px 0;` }
+    // Editor-only marker so the node view can find each member's cell.
+    if (index !== undefined) attrs['data-team-index'] = String(index)
+    return ['td', attrs, ...children]
+}
+
+/** Shared by renderHTML (email output) and the editor node view. */
+const teamSpec = (node: any, HTMLAttributes: Record<string, any>, editorView = false): [string, ...any[]] => {
+    const items: TeamMember[] = node.attrs.items?.length ? node.attrs.items : cloneTeam(DEFAULT_TEAM_ITEMS)
+    const columns = node.attrs.columns === 1 ? 1 : 2
+    const width = (100 / columns).toFixed(2)
+
+    const rows: any[] = []
+    for (let i = 0; i < items.length; i += columns) {
+        const cells = items.slice(i, i + columns).map((member, offset) =>
+            teamCell(member, width, editorView ? i + offset : undefined))
+        while (cells.length < columns) {
+            cells.push(['td', { width: `${width}%`, style: `width:${width}%; vertical-align:top; padding:0 8px 16px 0;` }])
+        }
+        rows.push(['tr', {}, ...cells])
+    }
+    if (!rows.length) rows.push(['tr', {}, ['td', { style: 'padding:0;' }]])
+
+    return [
+        'div',
+        mergeAttributes(HTMLAttributes, {
+            class: 'ni-team',
+            'data-ni-team': '',
+            style: 'margin:24px 0;',
+        }),
+        presentationTable(...rows),
+    ]
+}
+
+/** Minimal DOM builder for the array specs renderHTML returns (no holes). */
+const renderDomSpec = (spec: any): HTMLElement | Text => {
+    if (typeof spec === 'string') return document.createTextNode(spec)
+    const [tag, maybeAttrs, ...rest] = spec
+    const el = document.createElement(tag)
+    let children = rest
+    if (maybeAttrs && typeof maybeAttrs === 'object' && !Array.isArray(maybeAttrs)) {
+        for (const [key, value] of Object.entries(maybeAttrs)) {
+            if (value !== null && value !== undefined) el.setAttribute(key, String(value))
+        }
+    } else if (maybeAttrs !== undefined) {
+        children = [maybeAttrs, ...rest]
+    }
+    children.forEach((child: any) => el.appendChild(renderDomSpec(child)))
+    return el
 }
 
 /**
@@ -1445,29 +1529,56 @@ export const NiTeam = Node.create({
     },
 
     renderHTML({ node, HTMLAttributes }) {
-        const items: TeamMember[] = node.attrs.items?.length ? node.attrs.items : cloneTeam(DEFAULT_TEAM_ITEMS)
-        const columns = node.attrs.columns === 1 ? 1 : 2
-        const width = (100 / columns).toFixed(2)
+        return teamSpec(node, HTMLAttributes)
+    },
 
-        const rows: any[] = []
-        for (let i = 0; i < items.length; i += columns) {
-            const cells = items.slice(i, i + columns).map((member) => teamCell(member, width))
-            while (cells.length < columns) {
-                cells.push(['td', { width: `${width}%`, style: `width:${width}%; vertical-align:top; padding:0 8px 16px 0;` }])
+    // Same markup as the email, plus a hover upload control on every
+    // photo — and a large placeholder for members without one — so team
+    // photos are replaced in place like any other image.
+    addNodeView() {
+        return ({ node, HTMLAttributes, getPos, editor }: any) => {
+            const dom = renderDomSpec(teamSpec(node, HTMLAttributes, true)) as HTMLElement
+
+            dom.querySelectorAll<HTMLElement>('td[data-team-index]').forEach((cell) => {
+                const index = Number(cell.getAttribute('data-team-index'))
+                const member: TeamMember | undefined = node.attrs.items?.[index]
+                const host = document.createElement('span')
+                host.className = 'ni-image-node ni-team-photo'
+                const img = cell.querySelector('img')
+                if (img) {
+                    cell.insertBefore(host, img)
+                    host.appendChild(img)
+                } else {
+                    cell.insertBefore(host, cell.firstChild)
+                }
+
+                const control = attachImageUploadControl(host, async (file) => {
+                    const { src } = await uploadImageFile(file)
+                    let pos: number | null = null
+                    try {
+                        pos = typeof getPos === 'function' ? getPos() : null
+                    } catch {
+                        // View was re-created mid-upload; fall through.
+                    }
+                    const current = typeof pos === 'number' ? editor.state.doc.nodeAt(pos) : null
+                    if (!current || current.type.name !== 'niTeam') return
+                    const items = cloneTeam(current.attrs.items || [])
+                    if (!items[index]) return
+                    items[index] = { ...items[index], imageUrl: src }
+                    editor.view.dispatch(editor.state.tr.setNodeMarkup(pos, undefined, { ...current.attrs, items }))
+                }, { empty: !img })
+                control.setLabel(member?.name ? `Photo of ${member.name}` : 'Team photo')
+            })
+
+            return {
+                dom,
+                // Our own class toggles (broken / busy) are not content.
+                ignoreMutation: () => true,
+                stopEvent: (event: Event) => !!(event.target as HTMLElement | null)?.closest?.('.ni-image-overlay'),
+                // Re-render from scratch on any attribute change.
+                update: () => false,
             }
-            rows.push(['tr', {}, ...cells])
         }
-        if (!rows.length) rows.push(['tr', {}, ['td', { style: 'padding:0;' }]])
-
-        return [
-            'div',
-            mergeAttributes(HTMLAttributes, {
-                class: 'ni-team',
-                'data-ni-team': '',
-                style: 'margin:24px 0;',
-            }),
-            presentationTable(...rows),
-        ]
     },
 })
 

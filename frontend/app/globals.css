@@ -373,8 +373,8 @@
 
 .ni-image-overlay {
   position: absolute;
-  top: 6px;
-  right: 6px;
+  top: 8px;
+  right: 8px;
   display: none;
   z-index: 30;
   line-height: normal;
@@ -382,7 +382,6 @@
 
 .ni-image-node:hover .ni-image-overlay,
 .ni-image-node:focus-within .ni-image-overlay,
-.ni-image-node.ni-image-node-broken .ni-image-overlay,
 .ni-image-node-broken .ni-image-overlay {
   display: block;
 }
@@ -390,18 +389,24 @@
 .ni-image-replace-btn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: 11px;
+  gap: 6px;
+  font-size: 13px;
   font-weight: 600;
   font-family: system-ui, -apple-system, sans-serif;
-  padding: 4px 9px;
+  padding: 7px 14px;
   border-radius: 999px;
   border: 1px solid rgba(148, 163, 184, 0.5);
   background: rgba(15, 23, 42, 0.88);
   color: #f8fafc;
   cursor: pointer;
   white-space: nowrap;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.28);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.ni-image-replace-btn::before {
+  content: '\2191';
+  font-size: 14px;
+  line-height: 1;
 }
 
 .ni-image-replace-btn:hover {
@@ -414,22 +419,89 @@
   cursor: wait;
 }
 
-/* Broken image (e.g. placeholder URL before its upload): padded stand-in
-   so the hover target stays large and the control is always visible. */
+.ni-image-placeholder-label {
+  display: none;
+}
+
+/* Placeholder (image that failed to load, e.g. a placeholder URL from an
+   imported newsletter, or a team member without a photo): a large dashed
+   box with the upload button centred and always visible, plus the image
+   description so editors know which photo goes where. */
 .ni-image-node-broken {
-  display: block;
-  width: 100%;
-  min-height: 120px;
-  padding: 8px;
-  background: rgba(148, 163, 184, 0.06);
-  border: 1px dashed rgba(148, 163, 184, 0.45);
-  border-radius: 8px;
+  display: flex;
+  width: 100% !important;
+  min-height: 220px;
+  background: rgba(37, 99, 235, 0.05);
+  border: 2px dashed rgba(37, 99, 235, 0.45);
+  border-radius: 12px;
   box-sizing: border-box;
 }
 
+.ni-image-node-broken:hover {
+  background: rgba(37, 99, 235, 0.1);
+  border-color: rgba(37, 99, 235, 0.8);
+}
+
 .ni-image-node-broken img {
-  width: 100%;
-  min-height: 104px;
-  object-fit: contain;
-  opacity: 0.65;
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  opacity: 0;
+}
+
+.ni-image-node-broken .ni-image-overlay {
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px;
+  text-align: center;
+}
+
+.ni-image-node-broken .ni-image-replace-btn {
+  font-size: 14px;
+  padding: 10px 20px;
+  background: rgba(37, 99, 235, 0.95);
+  border-color: rgba(37, 99, 235, 0.95);
+}
+
+.ni-image-node-broken .ni-image-placeholder-label {
+  display: block;
+  max-width: 100%;
+  font-size: 12px;
+  line-height: 1.4;
+  font-family: system-ui, -apple-system, sans-serif;
+  color: #64748b;
+  overflow-wrap: anywhere;
+}
+
+/* Team photos: centred circular slot above the member's name. */
+.ni-team-photo {
+  display: block;
+  width: 140px;
+  margin: 0 auto 10px;
+}
+
+.ni-team-photo.ni-image-node-broken {
+  width: 160px !important;
+  min-height: 160px;
+  border-radius: 50%;
+}
+
+.ni-team-photo.ni-image-node-broken .ni-image-replace-btn {
+  font-size: 12px;
+  padding: 8px 12px;
+}
+
+.ni-team-photo .ni-image-overlay {
+  right: 50%;
+  transform: translateX(50%);
+}
+
+.ni-team-photo.ni-image-node-broken .ni-image-overlay {
+  right: 0;
+  transform: none;
 }
