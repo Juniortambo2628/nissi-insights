@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Schema;
 
 class Newsletter extends Model
 {
@@ -12,6 +13,19 @@ class Newsletter extends Model
     public const STATUS_DRAFT = 'draft';
 
     public const STATUS_SENT = 'sent';
+
+    public const MAX_REVISIONS = 20;
+
+    public const REVISION_FIELDS = [
+        'title',
+        'subject',
+        'preheader',
+        'content',
+        'header_image',
+        'background_color',
+        'text_color',
+        'accent_color',
+    ];
 
     protected $fillable = [
         'user_id',
@@ -39,6 +53,61 @@ class Newsletter extends Model
     public function campaigns()
     {
         return $this->hasMany(Campaign::class);
+    }
+
+    public function revisions()
+    {
+        return $this->hasMany(NewsletterRevision::class);
+    }
+
+    protected static function booted(): void
+    {
+        static::deleting(function (Newsletter $newsletter) {
+            if (Schema::hasTable('newsletter_revisions')) {
+                $newsletter->revisions()->delete();
+            }
+        });
+    }
+
+    public function recordRevision(?string $source, ?int $userId): ?NewsletterRevision
+    {
+        $allowed = [
+            NewsletterRevision::SOURCE_MANUAL,
+            NewsletterRevision::SOURCE_AUTOSAVE,
+            NewsletterRevision::SOURCE_RESTORE,
+        ];
+
+        if (! in_array($source, $allowed, true) || ! Schema::hasTable('newsletter_revisions')) {
+            return null;
+        }
+
+        $payload = $this->only(self::REVISION_FIELDS);
+        $latest = $this->revisions()->orderByDesc('id')->first();
+
+        if ($latest && $latest->payload == $payload) {
+            return null;
+        }
+
+        if ($source === NewsletterRevision::SOURCE_AUTOSAVE
+            && $latest
+            && $latest->created_at->gt(now()->subMinutes(5))) {
+            return null;
+        }
+
+        $revision = $this->revisions()->create([
+            'user_id' => $userId,
+            'source' => $source,
+            'payload' => $payload,
+        ]);
+
+        $allIds = $this->revisions()->orderByDesc('id')->pluck('id');
+        $expiredIds = $allIds->slice(self::MAX_REVISIONS);
+
+        if ($expiredIds->isNotEmpty()) {
+            NewsletterRevision::whereIn('id', $expiredIds)->delete();
+        }
+
+        return $revision;
     }
 
     public function scopeDraft($query)

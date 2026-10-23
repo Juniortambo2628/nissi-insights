@@ -95,6 +95,16 @@ export interface Newsletter {
   updated_at: string;
 }
 
+export interface NewsletterRevision {
+  id: number;
+  source: 'manual' | 'autosave' | 'restore';
+  title: string | null;
+  subject: string | null;
+  excerpt: string;
+  user: { id: number; name: string } | null;
+  created_at: string;
+}
+
 export interface NewsletterTemplate {
   id: number;
   user_id: number;
