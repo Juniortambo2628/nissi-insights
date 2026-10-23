@@ -10,6 +10,7 @@ import { TextStyle, Color, FontSize, LineHeight } from '@tiptap/extension-text-s
 import imageCompression from 'browser-image-compression'
 import api from '@/lib/api'
 import { getMediaUrl } from '@/lib/utils'
+import { repairNewsletterHtml } from '@/lib/newsletter-repair'
 import { useToast } from '@/hooks/use-toast'
 import {
     Bold,
@@ -44,6 +45,7 @@ import {
     Rows3,
     SlidersHorizontal,
     Heading3,
+    Users,
 } from 'lucide-react'
 import {
     Dialog,
@@ -573,6 +575,9 @@ const MenuBar = ({
                     <DropdownMenuItem className="gap-2 cursor-pointer" onSelect={() => onInsertBlock('numberedlist')}>
                         <ListOrdered size={14} /> Numbered list
                     </DropdownMenuItem>
+                    <DropdownMenuItem className="gap-2 cursor-pointer" onSelect={() => onInsertBlock('team')}>
+                        <Users size={14} /> Team members
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem className="gap-2 cursor-pointer" onSelect={() => onInsertBlock('grid2')}>
                         <Columns2 size={14} /> Two columns
@@ -668,6 +673,16 @@ const RichTextEditor = ({
     const [activeBlock, setActiveBlock] = React.useState<{ pos: number; type: DialogNodeType } | null>(null)
     const { toast } = useToast()
 
+    // Last HTML this component handed to onChange. The value-sync effect
+    // skips values equal to it (our own echo — already clean, so typing
+    // never re-parses) and repairs everything that arrives from outside
+    // (load, restore, duplicate, source mode).
+    const lastEmitRef = React.useRef<string | null>(null)
+    const emit = (html: string) => {
+        lastEmitRef.current = html
+        onChange(html)
+    }
+
     const editor = useEditor({
         immediatelyRender: false,
         extensions: [
@@ -715,6 +730,9 @@ const RichTextEditor = ({
         ],
         content: value,
         editorProps: {
+            // Flatten nested-table / block-in-table structures coming from
+            // pasted email or Word HTML before they ever land in the doc.
+            transformPastedHTML: (html: string) => repairNewsletterHtml(html),
             handleDoubleClick: (view, _pos, event) => {
                 const target = event.target as HTMLElement | null
                 const onLabel = !!target?.closest('[data-ni-box-label],[data-ni-highlight-label]')
@@ -783,7 +801,7 @@ const RichTextEditor = ({
         },
         onUpdate: ({ editor }) => {
             if (!isSourceMode) {
-                onChange(editor.getHTML())
+                emit(editor.getHTML())
             }
         },
     })
@@ -823,9 +841,21 @@ const RichTextEditor = ({
         }
     }, [editor])
 
-    // Update content if value changes externally (e.g. on load)
+    // Update content if value changes externally (e.g. on load). Values
+    // that contain nested tables or blocks trapped in tables are repaired
+    // first — the repair is idempotent, so echoing the fixed HTML back
+    // through onChange converges without a loop.
     React.useEffect(() => {
-        if (editor && value !== editor.getHTML() && !isSourceMode) {
+        if (!editor || isSourceMode) return
+        // Our own echo: the editor already holds this exact content.
+        if (value === lastEmitRef.current) return
+        const repaired = repairNewsletterHtml(value)
+        if (repaired !== value) {
+            emit(repaired)
+            editor.commands.setContent(repaired)
+            return
+        }
+        if (value !== editor.getHTML()) {
             editor.commands.setContent(value)
         }
     }, [value, editor])
@@ -837,10 +867,11 @@ const RichTextEditor = ({
             setSourceText(html)
             setIsSourceMode(true)
         } else {
-            // Switching back to visual mode: parse the HTML
+            // Switching back to visual mode: parse the HTML (repairing any
+            // nested tables typed into source mode on the way out).
             if (editor) {
-                editor.commands.setContent(sourceText)
-                onChange(editor.getHTML())
+                editor.commands.setContent(repairNewsletterHtml(sourceText))
+                emit(editor.getHTML())
             }
             setIsSourceMode(false)
         }
@@ -848,7 +879,7 @@ const RichTextEditor = ({
 
     const handleSourceChange = (text: string) => {
         setSourceText(text)
-        onChange(text)
+        emit(text)
     }
 
     const insertContentRef = (data: ContentRefData) => {
@@ -868,7 +899,15 @@ const RichTextEditor = ({
     }
 
     const insertTable = () => {
-        editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
+        if (!editor) return
+        // Guard: never insert a table inside another table — that is how
+        // newsletters ended up as stacked nested tables. Use a box or a
+        // two-column layout for structure instead.
+        const { $from } = editor.state.selection
+        for (let depth = $from.depth; depth > 0; depth--) {
+            if ($from.node(depth).type.name === 'table') return
+        }
+        editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
     }
 
     const insertDivider = () => {
