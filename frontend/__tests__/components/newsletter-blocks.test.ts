@@ -66,6 +66,43 @@ describe('newsletter block nodes', () => {
         expect(text).toBe('This month in energy')
     })
 
+    it('keeps an explicit empty box label instead of falling back to Bulletin', () => {
+        const { html, json } = roundTrip({
+            type: 'doc',
+            content: [
+                {
+                    type: 'niBox',
+                    attrs: { label: '' },
+                    content: [
+                        { type: 'paragraph', content: [{ type: 'text', text: 'Card content' }] },
+                    ],
+                },
+            ],
+        })
+
+        expect(html).toContain('data-label=""')
+        expect(html).not.toContain('data-ni-box-label')
+        expect((json.content![0] as any).attrs.label).toBe('')
+    })
+
+    it('parses compact box and highlight wrappers without the inner table', () => {
+        const editor = createEditor(
+            '<div data-ni-box data-label="Panel"><p>Boxed body</p></div>' +
+            '<div data-ni-highlight data-label="Impact">Inline callout</div>'
+        )
+        const json = editor.getJSON()
+        editor.destroy()
+
+        const box: any = json.content![0]
+        expect(box.type).toBe('niBox')
+        expect(box.attrs.label).toBe('Panel')
+        expect(box.content[0].type).toBe('paragraph')
+
+        const highlight: any = json.content![1]
+        expect(highlight.type).toBe('niHighlight')
+        expect(highlight.attrs.label).toBe('Impact')
+    })
+
     it('round-trips custom box alignment attributes', () => {
         const { html, json } = roundTrip({
             type: 'doc',
@@ -149,7 +186,9 @@ describe('newsletter block nodes', () => {
         })
 
         expect(html).toContain('data-ni-numberedlist')
-        expect(html).toContain('UK. Ofgem opened a market-conduct review.')
+        // The leading "UK." renders bold — stored item text stays plain.
+        expect(html).toMatch(/<strong[^>]*>UK\.<\/strong>/)
+        expect(html).toContain('Ofgem opened a market-conduct review.')
         // Numbers are derived from the row index, not stored per row.
         expect(html).toMatch(/<td[^>]*>\s*1\s*<\/td>/)
         expect(html).toMatch(/<td[^>]*>\s*2\s*<\/td>/)

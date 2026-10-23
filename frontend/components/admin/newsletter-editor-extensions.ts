@@ -3,7 +3,34 @@ import Link from '@tiptap/extension-link'
 import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table'
 import TextAlign from '@tiptap/extension-text-align'
 import { TextStyle, Color, FontSize, LineHeight } from '@tiptap/extension-text-style'
+import { Extension } from '@tiptap/core'
 import { newsletterBlockExtensions, ContentReference, ImageWithShape } from './newsletter-blocks'
+
+/**
+ * Preserve the raw style attribute on block nodes. Newsletter content is
+ * written with per-element inline styles (eyebrows, serif headings, hairline
+ * dividers, accent bars) — without this the editor would silently strip them
+ * on the first parse → serialise cycle. Stored raw (no CSSOM read) so values
+ * like var(--ni-accent,…) survive; serialisation normalises them through the
+ * DOM as usual.
+ */
+const BlockStyles = Extension.create({
+    name: 'niBlockStyles',
+    addGlobalAttributes() {
+        return [
+            {
+                types: ['paragraph', 'heading', 'horizontalRule'],
+                attributes: {
+                    style: {
+                        default: null,
+                        parseHTML: (el: HTMLElement) => el.getAttribute('style') || null,
+                        renderHTML: (attrs) => (attrs.style ? { style: attrs.style } : {}),
+                    },
+                },
+            },
+        ]
+    },
+})
 
 /**
  * The exact extension list the newsletter editor runs with. Shared by the
@@ -47,6 +74,7 @@ export const newsletterEditorExtensions = [
     TableHeader.configure({ HTMLAttributes: { class: 'ni-table-header' } }),
     TableCell.configure({ HTMLAttributes: { class: 'ni-table-cell' } }),
     TextAlign.configure({ types: ['heading', 'paragraph'] }),
+    BlockStyles,
     TextStyle,
     Color.configure({ types: ['textStyle'] }),
     FontSize,
