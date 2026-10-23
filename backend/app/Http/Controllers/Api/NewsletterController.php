@@ -36,6 +36,8 @@ class NewsletterController extends Controller
 
         $newsletter = Newsletter::create($validated);
 
+        $newsletter->recordRevision($this->snapshotSource($request), $request->user()->id);
+
         return response()->json($newsletter, 201);
     }
 
@@ -49,6 +51,8 @@ class NewsletterController extends Controller
         $validated = $this->validateNewsletter($request);
 
         $newsletter->update($validated);
+
+        $newsletter->recordRevision($this->snapshotSource($request), $request->user()->id);
 
         return response()->json($newsletter->load('user:id,name'));
     }
@@ -133,5 +137,12 @@ class NewsletterController extends Controller
         }
 
         return $validated;
+    }
+
+    protected function snapshotSource(Request $request): string
+    {
+        $source = $request->input('snapshot');
+
+        return in_array($source, ['manual', 'autosave'], true) ? $source : 'manual';
     }
 }

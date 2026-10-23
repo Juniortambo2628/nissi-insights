@@ -15,11 +15,13 @@ use App\Http\Controllers\Api\EventDocumentController;
 use App\Http\Controllers\Api\EventRegistrationController;
 use App\Http\Controllers\Api\InsightController;
 use App\Http\Controllers\Api\NewsletterController;
+use App\Http\Controllers\Api\NewsletterRevisionController;
 use App\Http\Controllers\Api\NewsletterTemplateController;
 use App\Http\Controllers\Api\PillarController;
 use App\Http\Controllers\Api\RedirectController;
 use App\Http\Controllers\Api\ResourceController;
 use App\Http\Controllers\Api\RsvpController;
+use App\Http\Controllers\Api\SavedBlockController;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\Api\SiteSettingController;
@@ -161,11 +163,18 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/newsletters/{newsletter}', [NewsletterController::class, 'update']);
     Route::delete('/newsletters/{newsletter}', [NewsletterController::class, 'destroy']);
     Route::post('/newsletters/{newsletter}/duplicate', [NewsletterController::class, 'duplicate']);
+    Route::get('/newsletters/{newsletter}/revisions', [NewsletterRevisionController::class, 'index']);
+    Route::post('/newsletters/{newsletter}/revisions/{revision}/restore', [NewsletterRevisionController::class, 'restore']);
 
     // Newsletter design templates (admin)
     Route::get('/newsletter-templates', [NewsletterTemplateController::class, 'index']);
     Route::post('/newsletter-templates', [NewsletterTemplateController::class, 'store']);
     Route::delete('/newsletter-templates/{template}', [NewsletterTemplateController::class, 'destroy']);
+
+    // Saved content blocks (admin) — reusable styled blocks for the editor
+    Route::get('/saved-blocks', [SavedBlockController::class, 'index']);
+    Route::post('/saved-blocks', [SavedBlockController::class, 'store']);
+    Route::delete('/saved-blocks/{block}', [SavedBlockController::class, 'destroy']);
 
     // Campaigns (admin)
     Route::get('/campaigns', [CampaignController::class, 'index']);

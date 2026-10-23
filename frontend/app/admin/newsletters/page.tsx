@@ -9,9 +9,14 @@ import { StatusBadge } from '@/components/admin/StatusBadge'
 import RichTextEditor from '@/components/admin/RichTextEditor'
 import ImageUploader from '@/components/admin/ImageUploader'
 import CampaignSendDialog from '@/components/admin/CampaignSendDialog'
+import NewsletterHistoryDialog from '@/components/admin/NewsletterHistoryDialog'
 import api from '@/lib/api'
 import { Newsletter, NewsletterTemplate, Campaign } from '@/types/api'
 import { useToast } from '@/hooks/use-toast'
+import {
+    useNewsletterAutosave,
+    serializeNewsletterForm,
+} from '@/hooks/use-newsletter-autosave'
 import {
     Dialog,
     DialogContent,
@@ -43,6 +48,7 @@ import {
     Newspaper,
     Copy,
     Save,
+    History,
 } from 'lucide-react'
 
 const COLOR_PRESETS = [
@@ -73,6 +79,20 @@ const AdminNewslettersPage = () => {
     const [form, setForm] = useState<Partial<Newsletter>>(EMPTY_FORM)
     const [isSaving, setIsSaving] = useState(false)
     const [editorTab, setEditorTab] = useState('content')
+    const [baseline, setBaseline] = useState(() => serializeNewsletterForm(EMPTY_FORM))
+    const [historyOpen, setHistoryOpen] = useState(false)
+
+    const autosave = useNewsletterAutosave({
+        enabled: showForm,
+        form,
+        editingId,
+        baseline,
+        onSynced: (saved, _source, sentSerialized) => {
+            setEditingId(saved.id)
+            setBaseline(sentSerialized)
+            mutate()
+        },
+    })
 
     const { data: templates, mutate: mutateTemplates } = useApi<NewsletterTemplate[]>(
         showForm ? '/newsletter-templates' : null
@@ -92,11 +112,44 @@ const AdminNewslettersPage = () => {
         setPreviewHtml(null)
     }
 
+    const requestClose = async () => {
+        if (autosave.dirty) {
+            const result = await autosave.flush()
+            if (
+                result === 'blocked' &&
+                !confirm('This draft needs a title and subject before it can be saved. Discard your changes?')
+            ) {
+                return
+            }
+            if (
+                result === 'error' &&
+                !confirm('Autosave could not save your latest changes. Close anyway?')
+            ) {
+                return
+            }
+        }
+        setHistoryOpen(false)
+        resetForm()
+    }
+
+    const openCreate = () => {
+        // Defers the heavy editor mount to a low-priority transition so the
+        // click paints first (INP: the button previously blocked ~200ms).
+        React.startTransition(() => {
+            setForm(EMPTY_FORM)
+            setEditingId(null)
+            setBaseline(serializeNewsletterForm(EMPTY_FORM))
+            setPreviewHtml(null)
+            setEditorTab('content')
+            setShowForm(true)
+        })
+    }
+
     const handleEdit = (newsletter: Newsletter) => {
         // Defers the heavy editor mount to a low-priority transition so the
         // click paints first (INP: the button previously blocked ~200ms).
         React.startTransition(() => {
-            setForm({
+            const fields = {
                 title: newsletter.title,
                 subject: newsletter.subject,
                 preheader: newsletter.preheader || '',
@@ -105,12 +158,32 @@ const AdminNewslettersPage = () => {
                 background_color: newsletter.background_color,
                 text_color: newsletter.text_color,
                 accent_color: newsletter.accent_color,
-            })
+            }
+            setForm(fields)
+            setBaseline(serializeNewsletterForm(fields))
             setEditingId(newsletter.id)
             setPreviewHtml(null)
             setEditorTab('content')
             setShowForm(true)
         })
+    }
+
+    const handleRestored = (updated: Newsletter) => {
+        const fields = {
+            title: updated.title,
+            subject: updated.subject,
+            preheader: updated.preheader || '',
+            content: updated.content || '',
+            header_image: updated.header_image || '',
+            background_color: updated.background_color,
+            text_color: updated.text_color,
+            accent_color: updated.accent_color,
+        }
+        setForm(fields)
+        setBaseline(serializeNewsletterForm(fields))
+        setEditingId(updated.id)
+        setHistoryOpen(false)
+        mutate()
     }
 
     const handleSave = async () => {
@@ -125,14 +198,17 @@ const AdminNewslettersPage = () => {
 
         setIsSaving(true)
         try {
-            if (editingId) {
-                await api.put(`/newsletters/${editingId}`, form)
+            await autosave.whenIdle()
+            const targetId = editingId ?? autosave.getId()
+            const payload = { ...form, snapshot: 'manual' }
+            if (targetId) {
+                await api.put(`/newsletters/${targetId}`, payload)
             } else {
-                await api.post('/newsletters', form)
+                await api.post('/newsletters', payload)
             }
             toast({
                 title: 'Success',
-                description: `Newsletter ${editingId ? 'updated' : 'created'} successfully.`,
+                description: `Newsletter ${targetId ? 'updated' : 'created'} successfully.`,
             })
             mutate()
             resetForm()
@@ -263,7 +339,7 @@ const AdminNewslettersPage = () => {
                     </div>
                     <Button
                         className="gap-2 bg-primary hover:bg-primary/90 text-white"
-                        onClick={() => React.startTransition(() => { setForm(EMPTY_FORM); setEditingId(null); setPreviewHtml(null); setEditorTab('content'); setShowForm(true) })}
+                        onClick={openCreate}
                     >
                         <Plus size={18} />
                         Create Newsletter
@@ -355,7 +431,7 @@ const AdminNewslettersPage = () => {
                     <div className="py-20 text-center border-2 border-dashed border-border/50 rounded-xl">
                         <Newspaper size={40} className="mx-auto mb-4 text-muted-foreground/40" />
                         <p className="text-muted-foreground mb-4">No newsletters yet. Build your first one.</p>
-                        <Button onClick={() => React.startTransition(() => { setForm(EMPTY_FORM); setEditingId(null); setShowForm(true) })} className="gap-2">
+                        <Button onClick={openCreate} className="gap-2">
                             <Plus size={16} /> Create Newsletter
                         </Button>
                     </div>
@@ -363,7 +439,7 @@ const AdminNewslettersPage = () => {
             </div>
 
             {/* Builder Modal */}
-            <Dialog open={showForm} onOpenChange={(open) => !open && resetForm()}>
+            <Dialog open={showForm} onOpenChange={(open) => !open && void requestClose()}>
                 <DialogContent aria-describedby={undefined} className="flex h-[90vh] w-full max-w-4xl flex-col overflow-hidden bg-background border-border text-foreground">
                     <DialogHeader className="shrink-0 pr-8">
                         <DialogTitle>{editingId ? 'Edit' : 'New'} Newsletter</DialogTitle>
@@ -561,7 +637,44 @@ const AdminNewslettersPage = () => {
                     </div>
 
                     <DialogFooter className="shrink-0 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-border/50 pt-4">
-                        <Button variant="outline" onClick={resetForm} disabled={isSaving}>Cancel</Button>
+                        <div className="flex flex-wrap items-center gap-2">
+                            <Button
+                                variant="outline"
+                                onClick={() => void requestClose()}
+                                disabled={isSaving || autosave.status === 'saving'}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="gap-1.5 text-muted-foreground"
+                                disabled={!editingId}
+                                onClick={() => setHistoryOpen(true)}
+                                title={editingId ? 'View and restore previous versions' : 'Save once to start version history'}
+                            >
+                                <History size={14} /> History
+                            </Button>
+                            {isSaving || autosave.status === 'saving' ? (
+                                <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                    <Loader2 size={12} className="animate-spin" /> Saving...
+                                </span>
+                            ) : autosave.blocked ? (
+                                <span className="text-xs text-amber-500">
+                                    Autosave waiting for title &amp; subject
+                                </span>
+                            ) : autosave.status === 'error' ? (
+                                <span className="text-xs text-destructive">
+                                    Autosave failed - press Save
+                                </span>
+                            ) : autosave.dirty ? (
+                                <span className="text-xs text-muted-foreground">Unsaved changes...</span>
+                            ) : autosave.lastSavedAt ? (
+                                <span className="text-xs text-muted-foreground">
+                                    Saved {autosave.lastSavedAt.toLocaleTimeString()}
+                                </span>
+                            ) : null}
+                        </div>
                         <div className="flex gap-2">
                             <Button
                                 variant="outline"
@@ -579,6 +692,14 @@ const AdminNewslettersPage = () => {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* Version history */}
+            <NewsletterHistoryDialog
+                open={historyOpen}
+                onOpenChange={setHistoryOpen}
+                newsletterId={editingId}
+                onRestored={handleRestored}
+            />
 
             {/* Share via campaign */}
             <CampaignSendDialog
