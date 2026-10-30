@@ -42,7 +42,7 @@ it('persists description, document, thumbnail and tags', function () {
     $payload = [
         'title' => 'Kenya-Ethiopia Power Report',
         'type' => 'report',
-        'description' => str_repeat('Ethiopia now supplies a tenth of Kenya’s electricity. ', 20),
+        'description' => "Ethiopia now supplies a tenth of Kenya’s electricity, and in December 2026 the import allowance doubles to 400 MW.\nThe report begins in Ethiopia. It tracks how Ethiopia’s export revenue grew from US\$118m to US\$140m in a year, with Kenya paying three of every four dollars.",
         'file_path' => 'https://api.example.com/storage/uploads/report.pdf',
         'thumbnail' => 'https://api.example.com/storage/uploads/cover.jpg',
         'tags' => ['Energy', 'Kenya'],
