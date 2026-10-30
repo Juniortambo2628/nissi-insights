@@ -38,6 +38,36 @@ it('creates a resource when authenticated', function () {
         ->assertJsonPath('title', 'Test Resource');
 });
 
+it('persists description, document, thumbnail and tags', function () {
+    $payload = [
+        'title' => 'Kenya-Ethiopia Power Report',
+        'type' => 'report',
+        'description' => "Ethiopia now supplies a tenth of Kenya’s electricity, and in December 2026 the import allowance doubles to 400 MW.\nThe report begins in Ethiopia. It tracks how Ethiopia’s export revenue grew from US\$118m to US\$140m in a year, with Kenya paying three of every four dollars.",
+        'file_path' => 'https://api.example.com/storage/uploads/report.pdf',
+        'thumbnail' => 'https://api.example.com/storage/uploads/cover.jpg',
+        'tags' => ['Energy', 'Kenya'],
+        'is_published' => true,
+    ];
+
+    $id = $this->actingAs($this->user)
+        ->postJson('/api/resources', $payload)
+        ->assertCreated()
+        ->json('id');
+
+    $resource = Resource::findOrFail($id);
+    expect($resource->description)->toBe($payload['description'])
+        ->and($resource->file_path)->toBe($payload['file_path'])
+        ->and($resource->thumbnail)->toBe($payload['thumbnail'])
+        ->and($resource->tags)->toBe($payload['tags']);
+
+    $this->actingAs($this->user)
+        ->putJson("/api/resources/{$id}", ['description' => 'Updated', 'file_path' => 'https://api.example.com/storage/uploads/v2.pdf'])
+        ->assertOk();
+
+    expect($resource->fresh()->description)->toBe('Updated')
+        ->and($resource->fresh()->file_path)->toBe('https://api.example.com/storage/uploads/v2.pdf');
+});
+
 it('validates required fields on create', function () {
     $response = $this->actingAs($this->user)
         ->postJson('/api/resources', []);
