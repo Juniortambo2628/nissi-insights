@@ -33,11 +33,7 @@ class ResourceController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'type' => 'required|string',
-            'content' => 'nullable|string',
-            'external_link' => 'nullable|string|max:255',
-            'is_published' => 'boolean',
-            'meta_title' => 'nullable|string|max:255',
-            'meta_description' => 'nullable|string|max:500',
+            ...$this->optionalRules(),
         ]);
 
         $validated['slug'] = $this->generateSlug($validated['title'], Resource::class);
@@ -58,11 +54,7 @@ class ResourceController extends Controller
         $validated = $request->validate([
             'title' => 'string|max:255',
             'type' => 'string',
-            'content' => 'nullable|string',
-            'external_link' => 'nullable|string|max:255',
-            'is_published' => 'boolean',
-            'meta_title' => 'nullable|string|max:255',
-            'meta_description' => 'nullable|string|max:500',
+            ...$this->optionalRules(),
         ]);
 
         if (isset($validated['title']) && $validated['title'] !== $resource->title) {
@@ -72,6 +64,22 @@ class ResourceController extends Controller
         $resource->update($validated);
 
         return response()->json($resource);
+    }
+
+    private function optionalRules(): array
+    {
+        return [
+            'description' => 'nullable|string',
+            'content' => 'nullable|string',
+            'file_path' => 'nullable|string|max:255',
+            'thumbnail' => 'nullable|string|max:255',
+            'external_link' => 'nullable|string|max:255',
+            'tags' => 'nullable|array',
+            'tags.*' => 'string',
+            'is_published' => 'boolean',
+            'meta_title' => 'nullable|string|max:255',
+            'meta_description' => 'nullable|string|max:500',
+        ];
     }
 
     public function destroy(Resource $resource)
