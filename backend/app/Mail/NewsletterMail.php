@@ -25,7 +25,8 @@ class NewsletterMail extends Mailable
         public Campaign $campaign,
         public string $recipientEmail,
         public ?string $recipientName = null,
-        public ?string $unsubscribeUrl = null
+        public ?string $unsubscribeUrl = null,
+        public ?string $oneClickUnsubscribeUrl = null
     ) {}
 
     public function envelope(): Envelope
@@ -59,14 +60,20 @@ class NewsletterMail extends Mailable
 
     public function headers(): Headers
     {
+        $text = [
+            'X-Mailer' => 'NissiInsightsMailer/1.0',
+            'X-Priority' => '3',
+        ];
+
+        if ($this->unsubscribeUrl) {
+            // RFC 2369 requires the URL in angle brackets.
+            $text['List-Unsubscribe'] = '<'.($this->oneClickUnsubscribeUrl ?: $this->unsubscribeUrl).'>';
+            $text['List-Unsubscribe-Post'] = 'List-Unsubscribe=One-Click';
+        }
+
         return new Headers(
             messageId: $this->generateMessageId(),
-            text: [
-                'X-Mailer' => 'NissiInsightsMailer/1.0',
-                'X-Priority' => '3',
-                'List-Unsubscribe' => $this->unsubscribeUrl,
-                'List-Unsubscribe-Post' => 'List-Unsubscribe=One-Click',
-            ],
+            text: $text,
         );
     }
 

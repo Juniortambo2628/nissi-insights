@@ -11,9 +11,14 @@ class Campaign extends Model
 
     public const STATUS_DRAFT = 'draft';
 
+    public const STATUS_PARTIAL = 'partial';
+
     public const STATUS_SENT = 'sent';
 
     public const STATUS_FAILED = 'failed';
+
+    /** Statuses from which send() may (re)start delivery. */
+    public const SENDABLE_STATUSES = [self::STATUS_DRAFT, self::STATUS_PARTIAL];
 
     protected $fillable = [
         'user_id',

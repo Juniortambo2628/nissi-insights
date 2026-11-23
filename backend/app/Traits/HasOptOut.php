@@ -55,4 +55,18 @@ trait HasOptOut
 
         return frontend_url('/unsubscribe?token='.$this->unsubscribe_token);
     }
+
+    /**
+     * API endpoint for the List-Unsubscribe header. Mail clients POST to it
+     * directly (RFC 8058 one-click unsubscribe), so it must hit the API rather
+     * than the website's unsubscribe page.
+     */
+    public function oneClickUnsubscribeUrl(): ?string
+    {
+        if (! $this->unsubscribe_token) {
+            return null;
+        }
+
+        return rtrim((string) config('app.url'), '/').'/api/unsubscribe?token='.$this->unsubscribe_token;
+    }
 }

@@ -66,7 +66,7 @@ it('sends a campaign to all opted-in recipients from both lists', function () {
     EmailContact::factory()->count(2)->create();
 
     $response = $this->actingAs($this->user)
-        ->postJson("/api/campaigns/{$campaign->id}/send");
+        ->postJson("/api/campaigns/{$campaign->id}/send", ['consent_confirmed' => true]);
 
     $response->assertOk()
         ->assertJsonPath('sent', 4)
@@ -94,6 +94,7 @@ it('sends a campaign to selected subscribers only', function () {
 
     $response = $this->actingAs($this->user)
         ->postJson("/api/campaigns/{$campaign->id}/send", [
+            'consent_confirmed' => true,
             'subscriber_ids' => $selected->pluck('id')->all(),
         ]);
 
@@ -114,6 +115,7 @@ it('sends a campaign to selected contacts only', function () {
 
     $response = $this->actingAs($this->user)
         ->postJson("/api/campaigns/{$campaign->id}/send", [
+            'consent_confirmed' => true,
             'contact_ids' => $selected->pluck('id')->all(),
         ]);
 
@@ -134,6 +136,7 @@ it('sends to both selected subscribers and contacts', function () {
 
     $response = $this->actingAs($this->user)
         ->postJson("/api/campaigns/{$campaign->id}/send", [
+            'consent_confirmed' => true,
             'subscriber_ids' => $subs->pluck('id')->all(),
             'contact_ids' => $contacts->pluck('id')->all(),
         ]);
@@ -155,6 +158,7 @@ it('never sends to opted-out subscribers', function () {
 
     $response = $this->actingAs($this->user)
         ->postJson("/api/campaigns/{$campaign->id}/send", [
+            'consent_confirmed' => true,
             'subscriber_ids' => [$active->id, $optedOut->id],
         ]);
 
@@ -179,6 +183,7 @@ it('never sends to opted-out contacts', function () {
 
     $response = $this->actingAs($this->user)
         ->postJson("/api/campaigns/{$campaign->id}/send", [
+            'consent_confirmed' => true,
             'contact_ids' => [$active->id, $optedOut->id],
         ]);
 
@@ -201,7 +206,7 @@ it('never sends to deactivated subscribers', function () {
     Subscriber::factory()->create(['is_active' => false]);
 
     $response = $this->actingAs($this->user)
-        ->postJson("/api/campaigns/{$campaign->id}/send");
+        ->postJson("/api/campaigns/{$campaign->id}/send", ['consent_confirmed' => true]);
 
     $response->assertUnprocessable();
     Mail::assertNothingSent();
@@ -215,7 +220,7 @@ it('fails validation when there are no eligible recipients', function () {
     ]);
 
     $response = $this->actingAs($this->user)
-        ->postJson("/api/campaigns/{$campaign->id}/send");
+        ->postJson("/api/campaigns/{$campaign->id}/send", ['consent_confirmed' => true]);
 
     $response->assertUnprocessable();
 });
@@ -229,7 +234,7 @@ it('cannot send the same campaign twice', function () {
     Subscriber::factory()->create();
 
     $response = $this->actingAs($this->user)
-        ->postJson("/api/campaigns/{$campaign->id}/send");
+        ->postJson("/api/campaigns/{$campaign->id}/send", ['consent_confirmed' => true]);
 
     $response->assertUnprocessable();
     Mail::assertNothingSent();
@@ -248,7 +253,7 @@ it('uses the campaign subject override in the mailable', function () {
     $subscriber = Subscriber::factory()->create();
 
     $this->actingAs($this->user)
-        ->postJson("/api/campaigns/{$campaign->id}/send");
+        ->postJson("/api/campaigns/{$campaign->id}/send", ['consent_confirmed' => true]);
 
     Mail::assertSent(NewsletterMail::class, function ($mail) use ($subscriber, $campaign) {
         return $mail->recipientEmail === $subscriber->email
@@ -266,7 +271,7 @@ it('includes an unsubscribe link in the newsletter mail headers', function () {
     $subscriber = Subscriber::factory()->create();
 
     $this->actingAs($this->user)
-        ->postJson("/api/campaigns/{$campaign->id}/send");
+        ->postJson("/api/campaigns/{$campaign->id}/send", ['consent_confirmed' => true]);
 
     Mail::assertSent(NewsletterMail::class, function ($mail) use ($subscriber) {
         $headers = $mail->headers()->text;
@@ -285,6 +290,7 @@ it('includes an unsubscribe link for contacts', function () {
 
     $this->actingAs($this->user)
         ->postJson("/api/campaigns/{$campaign->id}/send", [
+            'consent_confirmed' => true,
             'contact_ids' => [$contact->id],
         ]);
 
@@ -307,6 +313,7 @@ it('dedupes recipients that appear in both lists', function () {
 
     $response = $this->actingAs($this->user)
         ->postJson("/api/campaigns/{$campaign->id}/send", [
+            'consent_confirmed' => true,
             'subscriber_ids' => [$sub->id],
             'contact_ids' => [$contact->id],
         ]);

@@ -15,7 +15,8 @@ const statusVariant = (status: Campaign['status']) => {
     switch (status) {
         case 'sent': return 'success' as const
         case 'failed': return 'danger' as const
-        case 'sending': return 'warning' as const
+        case 'sending':
+        case 'partial': return 'warning' as const
         default: return 'muted' as const
     }
 }
@@ -128,9 +129,9 @@ const AdminCampaignsPage = () => {
                                         </td>
                                         <td className="p-4 text-right">
                                             <div className="flex items-center justify-end gap-2">
-                                                {campaign.status === 'draft' && (
+                                                {(campaign.status === 'draft' || campaign.status === 'partial') && (
                                                     <Button size="sm" className="gap-1.5" onClick={() => handleSendClick(campaign)}>
-                                                        <Send size={14} /> Send
+                                                        <Send size={14} /> {campaign.status === 'partial' ? 'Resume' : 'Send'}
                                                     </Button>
                                                 )}
                                                 <Button

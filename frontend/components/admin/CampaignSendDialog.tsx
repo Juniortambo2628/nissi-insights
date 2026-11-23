@@ -54,6 +54,9 @@ const CampaignSendDialog = ({
     const [selectedContactIds, setSelectedContactIds] = useState<Set<number>>(new Set())
     const [searchTerm, setSearchTerm] = useState('')
     const [isSending, setIsSending] = useState(false)
+    const [consentConfirmed, setConsentConfirmed] = useState(false)
+
+    const isResume = existingCampaign?.status === 'partial'
 
     const eligibleSubscribers = useMemo(
         () => subscribers?.filter((s) => s.is_active && !s.is_opted_out) || [],
@@ -82,6 +85,7 @@ const CampaignSendDialog = ({
         setSelectedContactIds(new Set())
         setSearchTerm('')
         setMode('all')
+        setConsentConfirmed(false)
 
         if (existingCampaign) {
             setName(existingCampaign.name)
@@ -119,6 +123,12 @@ const CampaignSendDialog = ({
         )
     }, [contacts, searchTerm])
 
+    // Saved contacts did not sign up through the website, so the sender has to
+    // confirm they agreed to receive email before they can be included.
+    const includesContacts = !isResume && (
+        mode === 'all' ? eligibleContacts.length > 0 : selectedContactIds.size > 0
+    )
+
     const toggleSubscriber = (id: number) => {
         setSelectedSubscriberIds((prev) => {
             const next = new Set(prev)
@@ -146,7 +156,7 @@ const CampaignSendDialog = ({
             toast({ variant: 'destructive', title: 'Name required', description: 'Give this campaign a name.' })
             return
         }
-        if (mode === 'selected' && totalSelected === 0) {
+        if (!isResume && mode === 'selected' && totalSelected === 0) {
             toast({ variant: 'destructive', title: 'No recipients', description: 'Select at least one recipient.' })
             return
         }
@@ -164,8 +174,8 @@ const CampaignSendDialog = ({
                 campaignId = res.data.id
             }
 
-            const payload: Record<string, unknown> = {}
-            if (mode === 'selected') {
+            const payload: Record<string, unknown> = { consent_confirmed: consentConfirmed }
+            if (!isResume && mode === 'selected') {
                 if (selectedSubscriberIds.size > 0) {
                     payload.subscriber_ids = Array.from(selectedSubscriberIds)
                 }
@@ -175,8 +185,9 @@ const CampaignSendDialog = ({
             }
             const result = await api.post<CampaignSendResult>(`/campaigns/${campaignId}/send`, payload)
 
+            const remaining = result.data.remaining ?? 0
             toast({
-                title: 'Campaign sent',
+                title: remaining > 0 ? 'Batch sent' : 'Campaign sent',
                 description: result.data.message,
             })
             onSent()
@@ -198,7 +209,7 @@ const CampaignSendDialog = ({
         <Dialog open={open} onOpenChange={(o) => !isSending && onOpenChange(o)}>
             <DialogContent aria-describedby={undefined} className="max-w-2xl max-h-[90vh] overflow-y-auto bg-background border-border text-foreground">
                 <DialogHeader>
-                    <DialogTitle>{existingCampaign ? 'Send Campaign' : 'Share Newsletter'}</DialogTitle>
+                    <DialogTitle>{isResume ? 'Resume Campaign' : existingCampaign ? 'Send Campaign' : 'Share Newsletter'}</DialogTitle>
                 </DialogHeader>
 
                 <div className="space-y-5 py-2">
@@ -242,6 +253,12 @@ const CampaignSendDialog = ({
                         </div>
                     </div>
 
+                    {isResume ? (
+                        <div className="border border-border/50 rounded-lg p-4 text-sm text-muted-foreground bg-secondary/5">
+                            {existingCampaign.sent_count} of {existingCampaign.total_recipients} recipients have been emailed.
+                            Sending continues with the next batch of the remaining recipients.
+                        </div>
+                    ) : (
                     <div className="border border-border/50 rounded-lg p-4 space-y-3 bg-secondary/5">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
@@ -375,17 +392,42 @@ const CampaignSendDialog = ({
                             </div>
                         )}
                     </div>
+                    )}
+
+                    {includesContacts && (
+                        <div className="flex items-start gap-2 p-3 rounded-md border border-amber-500/30 bg-amber-500/10">
+                            <Checkbox
+                                id="campaign-consent"
+                                checked={consentConfirmed}
+                                onCheckedChange={(checked) => setConsentConfirmed(checked === true)}
+                                className="mt-0.5 border-border"
+                            />
+                            <label htmlFor="campaign-consent" className="text-xs text-foreground">
+                                I confirm every saved contact included has agreed to receive emails from Nissi Insights.
+                                Each email includes an unsubscribe link.
+                            </label>
+                        </div>
+                    )}
+
+                    <p className="text-[11px] text-muted-foreground">
+                        Large campaigns go out in small, spaced-out batches to stay within the mail server&apos;s limits.
+                        If recipients are left over, use Resume on the campaign later to send the next batch.
+                    </p>
                 </div>
 
                 <DialogFooter>
                     <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSending}>
                         Cancel
                     </Button>
-                    <Button onClick={handleSend} disabled={isSending || !newsletterId} className="gap-2">
+                    <Button
+                        onClick={handleSend}
+                        disabled={isSending || !newsletterId || (includesContacts && !consentConfirmed)}
+                        className="gap-2"
+                    >
                         {isSending ? (
                             <><Loader2 size={16} className="animate-spin" /> Sending...</>
                         ) : (
-                            <><Send size={16} /> Send Campaign</>
+                            <><Send size={16} /> {isResume ? 'Send Next Batch' : 'Send Campaign'}</>
                         )}
                     </Button>
                 </DialogFooter>
