@@ -21,6 +21,11 @@
         <env name="APP_ENV" value="testing"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
+        <env name="BULK_MAIL_ENABLED" value="true"/>
+        <env name="BULK_MAIL_DELAY_MS" value="0"/>
+        <env name="BULK_MAIL_PER_SEND_LIMIT" value="1000"/>
+        <env name="BULK_MAIL_HOURLY_LIMIT" value="1000"/>
+        <env name="BULK_MAIL_DAILY_LIMIT" value="1000"/>
         <env name="CACHE_STORE" value="array"/>
         <env name="DB_CONNECTION" value="sqlite"/>
         <env name="DB_DATABASE" value=":memory:"/>

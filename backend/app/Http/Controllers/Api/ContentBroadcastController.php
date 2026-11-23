@@ -3,20 +3,20 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Mail\TemplatedMail;
 use App\Models\EmailContact;
 use App\Models\Insight;
 use App\Models\Resource;
 use App\Models\Subscriber;
-use App\Traits\SendsTemplatedMail;
+use App\Services\BulkMailGuard;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class ContentBroadcastController extends Controller
 {
-    use SendsTemplatedMail;
-
     protected const MAX_RECIPIENTS = 1000;
 
-    public function send(Request $request)
+    public function send(Request $request, BulkMailGuard $guard)
     {
         $validated = $request->validate([
             'content_type' => 'required|string|in:insight,resource',
@@ -27,6 +27,7 @@ class ContentBroadcastController extends Controller
             'contact_ids.*' => 'integer|exists:email_contacts,id',
             'to_subscribers' => 'nullable|boolean',
             'save_contacts' => 'nullable|boolean',
+            'consent_confirmed' => 'nullable|boolean',
         ]);
 
         [$content, $notFound] = $this->resolveContent(
@@ -44,7 +45,12 @@ class ContentBroadcastController extends Controller
             ], 422);
         }
 
-        $emails = $this->normalizeEmails($validated['recipients'] ?? []);
+        if (! $guard->enabled()) {
+            return response()->json(['message' => $guard->disabledMessage()], 503);
+        }
+
+        $pasted = $this->normalizeEmails($validated['recipients'] ?? []);
+        $emails = $pasted;
 
         if (! empty($validated['contact_ids'])) {
             $contactEmails = EmailContact::whereIn('id', $validated['contact_ids'])
@@ -53,14 +59,28 @@ class ContentBroadcastController extends Controller
             $emails = $this->mergeEmails($emails, $contactEmails->all());
         }
 
+        // Pasted addresses and saved contacts did not sign up through the
+        // website, so the sender must confirm they agreed to receive email.
+        $needsConsent = ! empty($pasted) || ! empty($validated['contact_ids']);
+        if ($needsConsent && ! ($validated['consent_confirmed'] ?? false)) {
+            return response()->json([
+                'message' => 'Confirm that every pasted address and saved contact has agreed to receive these emails before sending.',
+            ], 422);
+        }
+
         if ($validated['to_subscribers'] ?? false) {
             $subscriberEmails = Subscriber::optedIn()->pluck('email');
             $emails = $this->mergeEmails($emails, $subscriberEmails->all());
         }
 
+        // Never email anyone who has opted out on either list, even if their
+        // address was pasted in again.
+        $suppressed = $guard->suppressed($emails);
+        $emails = array_values(array_filter($emails, fn ($email) => ! isset($suppressed[$email])));
+
         if (empty($emails)) {
             return response()->json([
-                'message' => 'Choose at least one valid recipient (emails, saved contacts, or subscribers).',
+                'message' => 'Choose at least one valid recipient (emails, saved contacts, or subscribers) who has not opted out.',
             ], 422);
         }
 
@@ -70,27 +90,59 @@ class ContentBroadcastController extends Controller
             ], 422);
         }
 
-        if ($validated['save_contacts'] ?? true) {
-            $this->saveAsContacts($emails);
+        $allowance = $guard->batchAllowance();
+
+        if ($allowance === 0) {
+            return response()->json(['message' => $guard->quotaExhaustedMessage()], 429);
+        }
+
+        if (count($emails) > $allowance) {
+            return response()->json([
+                'message' => sprintf(
+                    'This send has %d recipients but only %d can go out right now (sending limits: %d per send, %d per hour, %d per day). '
+                    .'Send to fewer recipients, or share a newsletter campaign, which sends in batches.',
+                    count($emails),
+                    $allowance,
+                    config('bulk_mail.per_send_limit'),
+                    config('bulk_mail.hourly_limit'),
+                    config('bulk_mail.daily_limit')
+                ),
+            ], 429);
         }
 
         $data = $this->templateDataFor($content, $validated['content_type']);
+        $mailer = $guard->mailer();
+        $guard->prepareForBatch(count($emails));
 
         $sent = 0;
         $failed = 0;
         $errors = [];
 
-        foreach ($emails as $email) {
-            $success = $this->sendTemplatedMail(
+        foreach ($emails as $index => $email) {
+            if ($index > 0) {
+                $guard->pause();
+            }
+
+            // Every recipient needs an opt-out record so the unsubscribe link
+            // works; non-subscribers are kept as saved contacts for that reason.
+            $record = Subscriber::where('email', $email)->first()
+                ?? EmailContact::firstOrCreate(['email' => $email], ['source' => 'broadcast']);
+
+            $mail = new TemplatedMail(
                 'content_update_notification',
-                $email,
                 $data,
-                $content
+                $content,
+                $record->unsubscribeUrl(),
+                $record->oneClickUnsubscribeUrl()
             );
 
-            if ($success) {
+            try {
+                $mailer->to($email)->send($mail);
+                $mail->log($email, 'sent');
                 $sent++;
-            } else {
+            } catch (\Exception $e) {
+                Log::error("Failed to send content_update_notification to {$email}: ".$e->getMessage());
+                $mail->log($email, 'failed', $e->getMessage());
                 $failed++;
                 $errors[] = "{$email}: Failed to send";
             }
@@ -146,16 +198,6 @@ class ContentBroadcastController extends Controller
                 ? config('app.url').'/api/storage/'.ltrim($content->thumbnail, '/')
                 : null,
         ];
-    }
-
-    protected function saveAsContacts(array $emails): void
-    {
-        foreach ($emails as $email) {
-            EmailContact::firstOrCreate(
-                ['email' => $email],
-                ['source' => 'broadcast']
-            );
-        }
     }
 
     protected function summarise(?string $html, int $limit = 300): string

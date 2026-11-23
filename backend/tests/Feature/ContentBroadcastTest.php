@@ -18,6 +18,7 @@ it('requires authentication', function () {
     $insight = Insight::factory()->create();
 
     $this->postJson('/api/content-broadcasts', [
+        'consent_confirmed' => true,
         'content_type' => 'insight',
         'content_id' => $insight->id,
         'recipients' => ['someone@example.com'],
@@ -33,6 +34,7 @@ it('validates required fields', function () {
 
 it('returns 404 when the content does not exist', function () {
     $response = $this->actingAs($this->user)->postJson('/api/content-broadcasts', [
+        'consent_confirmed' => true,
         'content_type' => 'insight',
         'content_id' => 999,
         'recipients' => ['someone@example.com'],
@@ -45,6 +47,7 @@ it('rejects unpublished content', function () {
     $insight = Insight::factory()->draft()->create();
 
     $response = $this->actingAs($this->user)->postJson('/api/content-broadcasts', [
+        'consent_confirmed' => true,
         'content_type' => 'insight',
         'content_id' => $insight->id,
         'recipients' => ['someone@example.com'],
@@ -58,6 +61,7 @@ it('rejects a send with no valid recipients', function () {
     $insight = Insight::factory()->create();
 
     $response = $this->actingAs($this->user)->postJson('/api/content-broadcasts', [
+        'consent_confirmed' => true,
         'content_type' => 'insight',
         'content_id' => $insight->id,
         'recipients' => ['not-an-email'],
@@ -77,6 +81,7 @@ it('emails a published insight to a pasted list of contacts', function () {
     ]);
 
     $response = $this->actingAs($this->user)->postJson('/api/content-broadcasts', [
+        'consent_confirmed' => true,
         'content_type' => 'insight',
         'content_id' => $insight->id,
         'recipients' => [
@@ -117,6 +122,7 @@ it('emails a published knowledge base report', function () {
     ]);
 
     $response = $this->actingAs($this->user)->postJson('/api/content-broadcasts', [
+        'consent_confirmed' => true,
         'content_type' => 'resource',
         'content_id' => $resource->id,
         'recipients' => ['reader@example.com'],
@@ -140,6 +146,7 @@ it('merges saved contacts and subscribers and dedupes recipients', function () {
     $insight = Insight::factory()->create();
 
     $response = $this->actingAs($this->user)->postJson('/api/content-broadcasts', [
+        'consent_confirmed' => true,
         'content_type' => 'insight',
         'content_id' => $insight->id,
         'recipients' => ['dupe@example.com', 'extra@example.com'],
@@ -156,6 +163,7 @@ it('saves recipients as contacts for future sends by default', function () {
     $insight = Insight::factory()->create();
 
     $this->actingAs($this->user)->postJson('/api/content-broadcasts', [
+        'consent_confirmed' => true,
         'content_type' => 'insight',
         'content_id' => $insight->id,
         'recipients' => ['future@example.com'],
@@ -167,17 +175,21 @@ it('saves recipients as contacts for future sends by default', function () {
     ]);
 });
 
-it('does not save contacts when save_contacts is false', function () {
+it('keeps an opt-out record even when save_contacts is false', function () {
+    // Every broadcast recipient needs a contact record so their unsubscribe
+    // link works, so save_contacts no longer prevents saving.
     $insight = Insight::factory()->create();
 
     $this->actingAs($this->user)->postJson('/api/content-broadcasts', [
+        'consent_confirmed' => true,
         'content_type' => 'insight',
         'content_id' => $insight->id,
         'recipients' => ['private@example.com'],
         'save_contacts' => false,
+        'consent_confirmed' => true,
     ])->assertOk();
 
-    $this->assertDatabaseMissing('email_contacts', ['email' => 'private@example.com']);
+    $this->assertDatabaseHas('email_contacts', ['email' => 'private@example.com']);
 });
 
 it('excludes opted-out contacts from broadcasts', function () {
@@ -187,6 +199,7 @@ it('excludes opted-out contacts from broadcasts', function () {
     $insight = Insight::factory()->create();
 
     $response = $this->actingAs($this->user)->postJson('/api/content-broadcasts', [
+        'consent_confirmed' => true,
         'content_type' => 'insight',
         'content_id' => $insight->id,
         'contact_ids' => [$active->id, $optedOut->id],
@@ -209,6 +222,7 @@ it('excludes opted-out subscribers from broadcasts', function () {
     $insight = Insight::factory()->create();
 
     $response = $this->actingAs($this->user)->postJson('/api/content-broadcasts', [
+        'consent_confirmed' => true,
         'content_type' => 'insight',
         'content_id' => $insight->id,
         'to_subscribers' => true,

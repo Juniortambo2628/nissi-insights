@@ -123,7 +123,7 @@ export interface Campaign {
   newsletter?: Pick<Newsletter, 'id' | 'title' | 'subject' | 'status'>;
   name: string;
   subject: string | null;
-  status: 'draft' | 'sending' | 'sent' | 'failed';
+  status: 'draft' | 'sending' | 'partial' | 'sent' | 'failed';
   total_recipients: number;
   sent_count: number;
   failed_count: number;
@@ -137,6 +137,9 @@ export interface CampaignSendResult {
   sent: number;
   failed: number;
   total: number;
+  /** Recipients still queued; the campaign stays 'partial' until this reaches 0. */
+  remaining?: number;
+  status?: Campaign['status'];
   errors: { email: string; error: string }[];
 }
 

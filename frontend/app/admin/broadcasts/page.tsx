@@ -79,7 +79,7 @@ const BroadcastContent = () => {
     const [pastedText, setPastedText] = useState('')
     const [selectedContactIds, setSelectedContactIds] = useState<number[]>([])
     const [toSubscribers, setToSubscribers] = useState(false)
-    const [saveContacts, setSaveContacts] = useState(true)
+    const [consentConfirmed, setConsentConfirmed] = useState(false)
     const [isSending, setIsSending] = useState(false)
     const [result, setResult] = useState<ContentBroadcastResult | null>(null)
     const [contactSearch, setContactSearch] = useState('')
@@ -115,6 +115,10 @@ const BroadcastContent = () => {
         if (toSubscribers) all.push(...activeSubscriberEmails)
         return Array.from(new Set(all))
     }, [pastedEmails, selectedContactEmails, toSubscribers, activeSubscriberEmails])
+
+    // Pasted addresses and saved contacts did not sign up through the website,
+    // so the sender has to confirm they agreed to receive email.
+    const needsConsent = pastedEmails.length > 0 || selectedContactIds.length > 0
 
     const contentOptions = contentType === 'insight' ? publishedInsights : resources
     const selectedContent = contentOptions.find((c) => c.id === contentId)
@@ -157,15 +161,16 @@ const BroadcastContent = () => {
                 recipients: pastedEmails,
                 contact_ids: selectedContactIds,
                 to_subscribers: toSubscribers,
-                save_contacts: saveContacts,
+                consent_confirmed: consentConfirmed,
             })
             setResult(response.data)
             toast({
                 title: 'Campaign sent',
                 description: response.data.message,
             })
-            if (saveContacts && pastedEmails.length > 0) mutateContacts()
+            if (pastedEmails.length > 0) mutateContacts()
             setPastedText('')
+            setConsentConfirmed(false)
         } catch (err) {
             toast({
                 variant: 'destructive',
@@ -300,16 +305,9 @@ const BroadcastContent = () => {
                                 </span>
                             )}
                         </div>
-                        <div className="flex items-center gap-2 pt-1">
-                            <Checkbox
-                                id="save-contacts"
-                                checked={saveContacts}
-                                onCheckedChange={(checked) => setSaveContacts(checked === true)}
-                            />
-                            <label htmlFor="save-contacts" className="text-xs text-muted-foreground">
-                                Save pasted emails to contacts so you can email them again later
-                            </label>
-                        </div>
+                        <p className="text-xs text-muted-foreground pt-1">
+                            Pasted emails are saved to contacts so their unsubscribe links keep working.
+                        </p>
                     </div>
 
                     {/* Saved contacts + subscribers */}
@@ -395,6 +393,21 @@ const BroadcastContent = () => {
                     </div>
                 )}
 
+                {needsConsent && (
+                    <div className="flex items-start gap-2 p-3 rounded-md border border-amber-500/30 bg-amber-500/10">
+                        <Checkbox
+                            id="broadcast-consent"
+                            checked={consentConfirmed}
+                            onCheckedChange={(checked) => setConsentConfirmed(checked === true)}
+                            className="mt-0.5"
+                        />
+                        <label htmlFor="broadcast-consent" className="text-xs text-foreground">
+                            I confirm every pasted address and saved contact has agreed to receive emails from Nissi Insights.
+                            Do not paste address books or lists of people who have not opted in. Each email includes an unsubscribe link.
+                        </label>
+                    </div>
+                )}
+
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-2 border-t border-border/50">
                     <p className="text-sm text-muted-foreground">
                         {recipientPreview.length === 0
@@ -403,7 +416,7 @@ const BroadcastContent = () => {
                     </p>
                     <Button
                         onClick={handleSend}
-                        disabled={isSending || !contentId || recipientPreview.length === 0}
+                        disabled={isSending || !contentId || recipientPreview.length === 0 || (needsConsent && !consentConfirmed)}
                         className="gap-2 bg-primary hover:bg-primary/90 text-white"
                     >
                         {isSending ? <Loader2 className="animate-spin" size={16} /> : <Send size={16} />}

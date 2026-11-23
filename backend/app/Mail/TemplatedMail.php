@@ -25,10 +25,23 @@ class TemplatedMail extends Mailable
 {
     use Queueable, SerializesModels;
 
+    /**
+     * Appended to bulk emails so every recipient can opt out.
+     */
+    protected const UNSUBSCRIBE_FOOTER = <<<'BLADE'
+
+<p style="color:#64748b; font-size:12px; margin-top:32px; border-top:1px solid #e2e8f0; padding-top:16px;">
+    You are receiving this email because you are on the Nissi Insights mailing list.
+    <a href="{{ $unsubscribeUrl }}" style="color:#64748b; text-decoration:underline;">Unsubscribe</a>
+</p>
+BLADE;
+
     public function __construct(
         public string $templateKey,
         public array $data = [],
-        public ?object $sendable = null
+        public ?object $sendable = null,
+        public ?string $unsubscribeUrl = null,
+        public ?string $oneClickUnsubscribeUrl = null
     ) {}
 
     public function envelope(): Envelope
@@ -50,10 +63,14 @@ class TemplatedMail extends Mailable
     {
         $template = $this->getTemplate();
 
+        $body = $template ? $template->body : $this->fallbackBody();
+
+        if ($this->unsubscribeUrl) {
+            $body .= self::UNSUBSCRIBE_FOOTER;
+        }
+
         return new Content(
-            htmlString: $this->renderString(EmailTemplate::wrapInLayout(
-                $template ? $template->body : $this->fallbackBody()
-            )),
+            htmlString: $this->renderString(EmailTemplate::wrapInLayout($body)),
         );
     }
 
@@ -64,12 +81,19 @@ class TemplatedMail extends Mailable
 
     public function headers(): Headers
     {
+        $text = [
+            'X-Mailer' => 'NissiInsightsMailer/1.0',
+            'X-Priority' => '3',
+        ];
+
+        if ($this->unsubscribeUrl) {
+            $text['List-Unsubscribe'] = '<'.($this->oneClickUnsubscribeUrl ?: $this->unsubscribeUrl).'>';
+            $text['List-Unsubscribe-Post'] = 'List-Unsubscribe=One-Click';
+        }
+
         return new Headers(
             messageId: $this->generateMessageId(),
-            text: [
-                'X-Mailer' => 'NissiInsightsMailer/1.0',
-                'X-Priority' => '3',
-            ],
+            text: $text,
         );
     }
 
@@ -120,7 +144,9 @@ BLADE;
 
     protected function renderString(string $content): string
     {
-        return Blade::render($content, $this->data);
+        return Blade::render($content, array_merge($this->data, [
+            'unsubscribeUrl' => $this->unsubscribeUrl,
+        ]));
     }
 
     /**
